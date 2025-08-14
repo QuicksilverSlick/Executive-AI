@@ -1,21 +1,12 @@
-# Cloudflare Pages configuration for Executive AI Training
+# Cloudflare configuration for Executive AI Training
+# This file is for local development with wrangler
+# Pages deployment is configured in Cloudflare dashboard
+
 name = "executive-ai-training"
 compatibility_date = "2025-01-31"
 compatibility_flags = ["nodejs_compat"]
 
-# Pages configuration
-pages_build_output_dir = "dist"
-
-# Environment variables will be set in Cloudflare dashboard
-# DO NOT commit actual values here
-[vars]
-# OPENAI_API_KEY = "sk-..." # Set in Cloudflare dashboard
-
-# Advanced mode settings for Pages Functions
-[env.production]
-compatibility_date = "2025-01-31"
-compatibility_flags = ["nodejs_compat"]
-
-[env.preview]
-compatibility_date = "2025-01-31"
-compatibility_flags = ["nodejs_compat"]
+# Note: For Pages deployment, configure build settings in Cloudflare dashboard:
+# - Build command: npm run build
+# - Build output directory: dist
+# - Environment variables: Set in dashboard Settings
