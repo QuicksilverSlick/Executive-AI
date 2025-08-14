@@ -58,21 +58,21 @@ export default defineConfig({
       },
     },
     ssr: {
-      noExternal: ['@fontsource/*'],
+      noExternal: ['@fontsource/*', 'react', 'react-dom'],
+      external: ['node:crypto', 'crypto']
     },
+    resolve: {
+      alias: {
+        'react-dom/server': 'react-dom/server.browser'
+      }
+    }
   },
   output: 'server',
   adapter: cloudflare({
     mode: 'advanced',
     runtime: {
       mode: 'local',
-      type: 'pages',
-      bindings: {
-        "OPENAI_API_KEY": {
-          type: "var",
-          value: process.env.OPENAI_API_KEY,
-        }
-      }
+      type: 'pages'
     }
   }),
   prefetch: {
