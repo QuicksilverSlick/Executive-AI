@@ -1,0 +1,73 @@
+---
+// CSS Debug Component to check if styles are loading
+---
+
+<div id="css-debug" class="fixed bottom-4 right-4 bg-black text-white p-4 rounded-lg text-xs z-50 max-w-sm">
+  <h3 class="font-bold mb-2">CSS Debug Info</h3>
+  <div id="debug-content"></div>
+</div>
+
+<script>
+  // Check if CSS custom properties are loaded
+  const debugContent = document.getElementById('debug-content');
+  const computedStyles = getComputedStyle(document.documentElement);
+  
+  // Check for our custom CSS variables
+  const checks = [
+    { name: 'Modern Responsive CSS', property: '--space-md', expected: 'clamp(1rem, 3vw, 2rem)' },
+    { name: 'Content Width', property: '--content-wide', expected: 'min(95%, 1400px)' },
+    { name: 'Text Base', property: '--text-base', expected: 'clamp(1rem, 1vw + 0.875rem, 1.25rem)' }
+  ];
+  
+  let debugHTML = '<ul class="space-y-1">';
+  
+  checks.forEach(check => {
+    const value = computedStyles.getPropertyValue(check.property);
+    const loaded = value.trim() !== '';
+    debugHTML += `<li class="${loaded ? 'text-green-400' : 'text-red-400'}">
+      ${check.name}: ${loaded ? '✓ Loaded' : '✗ Not Found'}
+      ${loaded ? `<br><span class="text-gray-300 text-xs">${value}</span>` : ''}
+    </li>`;
+  });
+  
+  // Check for key classes
+  const testClasses = ['container-modern', 'text-content-modern', 'section-responsive'];
+  debugHTML += '<li class="mt-2 font-bold">Class Checks:</li>';
+  
+  testClasses.forEach(className => {
+    const elements = document.getElementsByClassName(className);
+    debugHTML += `<li class="${elements.length > 0 ? 'text-green-400' : 'text-yellow-400'}">
+      .${className}: ${elements.length} elements
+    </li>`;
+  });
+  
+  // Check stylesheets
+  debugHTML += '<li class="mt-2 font-bold">Stylesheets:</li>';
+  Array.from(document.styleSheets).forEach((sheet, index) => {
+    try {
+      const href = sheet.href || 'inline';
+      const rules = sheet.cssRules ? sheet.cssRules.length : 0;
+      debugHTML += `<li class="text-gray-300">${index}: ${href.split('/').pop()} (${rules} rules)</li>`;
+    } catch (e) {
+      debugHTML += `<li class="text-red-400">${index}: Error accessing stylesheet</li>`;
+    }
+  });
+  
+  debugHTML += '</ul>';
+  debugContent.innerHTML = debugHTML;
+  
+  // Add close button
+  const closeBtn = document.createElement('button');
+  closeBtn.innerHTML = '×';
+  closeBtn.className = 'absolute top-2 right-2 text-white hover:text-red-400';
+  closeBtn.onclick = () => document.getElementById('css-debug').remove();
+  document.getElementById('css-debug').appendChild(closeBtn);
+</script>
+
+<style>
+  #css-debug {
+    font-family: monospace;
+    backdrop-filter: blur(10px);
+    background-color: rgba(0, 0, 0, 0.9);
+  }
+</style>

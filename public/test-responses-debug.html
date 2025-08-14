@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenAI Responses API Debug Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        button {
+            padding: 12px 24px;
+            margin: 5px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        #results {
+            margin-top: 20px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            min-height: 200px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            border: 2px solid #e9ecef;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .warning {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        .loading {
+            color: #6c757d;
+            font-style: italic;
+        }
+        input {
+            width: 500px;
+            padding: 12px;
+            font-size: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            margin-right: 10px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 15px;
+        }
+        .log-entry {
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+        .log-entry.api-call {
+            background: #e3f2fd;
+        }
+        .log-entry.api-response {
+            background: #e8f5e9;
+        }
+        .log-entry.error {
+            background: #ffebee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 OpenAI Responses API - Debug Console</h1>
+        <p class="subtitle">Testing web_search_preview tool with detailed response inspection</p>
+        
+        <div class="info-box">
+            <strong>Purpose:</strong> This debug console tests the OpenAI Responses API with web_search_preview tool 
+            and displays the complete raw response to understand the actual data structure.
+        </div>
+
+        <div class="test-section">
+            <div class="section-title">Quick Test Queries</div>
+            <button onclick="testSearch('current weather in New York City')">Weather in NYC</button>
+            <button onclick="testSearch('latest news about OpenAI')">OpenAI News</button>
+            <button onclick="testSearch('Tesla stock price today')">Tesla Stock</button>
+            <button onclick="testSearch('best coffee shops in Seattle 2025')">Seattle Coffee</button>
+            <button onclick="testSearch('how to use ChatGPT for business')">ChatGPT Business</button>
+        </div>
+
+        <div class="test-section">
+            <div class="section-title">Custom Query</div>
+            <input type="text" id="customQuery" placeholder="Enter your search query..." value="What is the population of Tokyo?">
+            <button onclick="testCustomSearch()">🔍 Search</button>
+        </div>
+
+        <div class="test-section">
+            <div class="section-title">Debug Output</div>
+            <div id="results">Ready for testing...</div>
+        </div>
+    </div>
+
+    <script>
+        let logCounter = 0;
+
+        function log(message, type = 'info') {
+            const output = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const logId = ++logCounter;
+            
+            let className = '';
+            let prefix = '';
+            
+            switch(type) {
+                case 'api-call':
+                    className = 'api-call';
+                    prefix = '📤 API CALL';
+                    break;
+                case 'api-response':
+                    className = 'api-response';
+                    prefix = '📥 API RESPONSE';
+                    break;
+                case 'success':
+                    className = 'success';
+                    prefix = '✅ SUCCESS';
+                    break;
+                case 'error':
+                    className = 'error';
+                    prefix = '❌ ERROR';
+                    break;
+                case 'warning':
+                    className = 'warning';
+                    prefix = '⚠️ WARNING';
+                    break;
+                case 'loading':
+                    className = 'loading';
+                    prefix = '⏳ LOADING';
+                    break;
+                default:
+                    prefix = 'ℹ️ INFO';
+            }
+            
+            const logEntry = `[${timestamp}] #${logId} ${prefix}: ${message}\n`;
+            
+            if (type === 'clear') {
+                output.innerHTML = message;
+            } else {
+                output.innerHTML += `<span class="${className}">${logEntry}</span>`;
+            }
+            
+            // Auto-scroll to bottom
+            output.scrollTop = output.scrollHeight;
+        }
+
+        async function testSearch(query) {
+            log('', 'clear');
+            log(`Starting search for: "${query}"`, 'loading');
+            
+            const startTime = Date.now();
+            
+            try {
+                // Test our endpoint
+                log('Calling our /api/voice-agent/responses-search endpoint...', 'api-call');
+                
+                const response = await fetch('/api/voice-agent/responses-search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        query,
+                        conversationContext: 'Testing web search functionality in debug mode'
+                    })
+                });
+                
+                const elapsed = Date.now() - startTime;
+                log(`Response received in ${elapsed}ms`, 'api-response');
+                
+                const responseText = await response.text();
+                log(`Raw response text:\n${responseText}`, 'info');
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                    log('Successfully parsed JSON response', 'success');
+                } catch (e) {
+                    log(`Failed to parse JSON: ${e.message}`, 'error');
+                    return;
+                }
+                
+                // Display parsed data
+                log('Parsed response structure:', 'info');
+                log(`- success: ${data.success}`, 'info');
+                log(`- response: ${data.response ? data.response.substring(0, 200) + '...' : 'null'}`, 'info');
+                log(`- searchResults: ${data.searchResults ? data.searchResults.length + ' results' : 'null'}`, 'info');
+                log(`- citations: ${data.citations ? data.citations.length + ' citations' : 'null'}`, 'info');
+                
+                if (data.searchResults && data.searchResults.length > 0) {
+                    log('\nSearch Results:', 'success');
+                    data.searchResults.forEach((result, i) => {
+                        log(`\n[Result ${i+1}]`, 'info');
+                        log(`Title: ${result.title}`, 'info');
+                        log(`URL: ${result.url}`, 'info');
+                        log(`Snippet: ${result.snippet}`, 'info');
+                        log(`Source: ${result.source}`, 'info');
+                    });
+                } else {
+                    log('\n⚠️ No search results returned!', 'warning');
+                    log('This indicates the OpenAI API is not returning search data.', 'warning');
+                }
+                
+                if (data.citations && data.citations.length > 0) {
+                    log('\nCitations:', 'success');
+                    data.citations.forEach((citation, i) => {
+                        log(`[${i+1}] ${citation.title} - ${citation.url}`, 'info');
+                    });
+                }
+                
+                // Display full response for debugging
+                log('\n=== COMPLETE RESPONSE DATA ===', 'info');
+                log(JSON.stringify(data, null, 2), 'info');
+                
+                // Now test directly against OpenAI API to compare
+                log('\n=== TESTING DIRECT OPENAI API CALL ===', 'api-call');
+                await testDirectOpenAI(query);
+                
+            } catch (error) {
+                log(`Request failed: ${error.message}`, 'error');
+                log(`Stack trace:\n${error.stack}`, 'error');
+            }
+        }
+        
+        async function testDirectOpenAI(query) {
+            log('Note: Direct API calls from browser will fail due to CORS.', 'warning');
+            log('This is expected. The server-side implementation should work.', 'info');
+            
+            // Show what the request would look like
+            const requestBody = {
+                model: 'gpt-4o',
+                input: [{ 
+                    role: 'user', 
+                    content: [{ 
+                        type: 'input_text', 
+                        text: query
+                    }] 
+                }],
+                tools: [{ type: 'web_search_preview' }],
+                tool_choice: { type: 'web_search_preview' }
+            };
+            
+            log('Request body that would be sent to OpenAI:', 'info');
+            log(JSON.stringify(requestBody, null, 2), 'info');
+        }
+        
+        function testCustomSearch() {
+            const query = document.getElementById('customQuery').value;
+            if (query) {
+                testSearch(query);
+            }
+        }
+        
+        // Allow Enter key in input
+        document.getElementById('customQuery').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                testCustomSearch();
+            }
+        });
+        
+        // Test on page load
+        window.addEventListener('load', () => {
+            log('Debug console ready. Click a button to test the search functionality.', 'success');
+        });
+    </script>
+</body>
+</html>

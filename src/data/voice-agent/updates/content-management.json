@@ -1,0 +1,310 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-08-01T06:00:00Z",
+    "description": "Dynamic content update system for maintaining current and relevant voice agent knowledge",
+    "contextForAI": "This system ensures the voice agent always has current information about services, pricing, case studies, and market conditions. Check for updates regularly and incorporate new information naturally."
+  },
+
+  "contentUpdateSystem": {
+    "updateSchedule": {
+      "daily": [
+        "Calendar availability and booking slots",
+        "Current promotions or special offers",
+        "Recent blog posts or thought leadership content"
+      ],
+      "weekly": [
+        "Case study outcomes and new success stories",
+        "Market conditions and competitive intelligence",
+        "Resource downloads and content performance"
+      ],
+      "monthly": [
+        "Service pricing and package updates",
+        "Program curriculum and format changes",
+        "Industry trends and benchmark data",
+        "Founder achievements and recognition"
+      ],
+      "quarterly": [
+        "Major strategic updates and new services",
+        "Comprehensive case study reviews",
+        "Market positioning and messaging updates",
+        "Technology platform and integration updates"
+      ]
+    },
+
+    "contentSources": {
+      "internal": [
+        {
+          "source": "CRM System",
+          "frequency": "daily",
+          "dataTypes": ["client outcomes", "lead conversion rates", "feedback scores"],
+          "integration": "API pull from CRM database"
+        },
+        {
+          "source": "Calendly Analytics",
+          "frequency": "daily", 
+          "dataTypes": ["booking rates", "show rates", "popular time slots"],
+          "integration": "Calendly API webhook"
+        },
+        {
+          "source": "Website Analytics",
+          "frequency": "weekly",
+          "dataTypes": ["popular content", "conversion paths", "user behavior"],
+          "integration": "Google Analytics API"
+        },
+        {
+          "source": "Email Marketing Platform",
+          "frequency": "weekly",
+          "dataTypes": ["engagement rates", "popular resources", "unsubscribe feedback"],
+          "integration": "Email platform API"
+        }
+      ],
+      "external": [
+        {
+          "source": "Industry Reports",
+          "frequency": "monthly",
+          "dataTypes": ["AI adoption rates", "market trends", "ROI benchmarks"],
+          "integration": "Manual research and updates"
+        },
+        {
+          "source": "Competitive Intelligence",
+          "frequency": "monthly",
+          "dataTypes": ["competitor offerings", "pricing changes", "market positioning"],
+          "integration": "Market research tools and manual monitoring"
+        },
+        {
+          "source": "Economic Indicators",
+          "frequency": "quarterly",
+          "dataTypes": ["technology spending", "training budgets", "economic conditions"],
+          "integration": "Economic data feeds and research reports"
+        }
+      ]
+    },
+
+    "dynamicContent": {
+      "currentMarketConditions": {
+        "description": "Real-time market conditions affecting AI adoption and executive training demand",
+        "lastUpdated": "2025-08-01T06:00:00Z",
+        "data": {
+          "aiAdoptionRate": {
+            "current": "67% of Fortune 500 companies have active AI initiatives",
+            "trend": "increasing",
+            "source": "McKinsey Global AI Survey 2024",
+            "useInConversation": "More than 2/3 of Fortune 500 companies now have active AI initiatives - the question isn't whether to adopt AI, but how to do it strategically."
+          },
+          "executiveConfidence": {
+            "current": "Only 23% of executives feel confident in their AI strategy",
+            "trend": "improving_slowly",
+            "source": "Deloitte Executive AI Readiness Survey 2024",
+            "useInConversation": "Despite widespread AI adoption, only 23% of executives feel confident in their AI strategy - which is exactly why strategic training is so valuable."
+          },
+          "failureRates": {
+            "current": "70% of AI projects fail to meet business objectives",
+            "trend": "stable", 
+            "source": "Gartner AI Project Success Analysis 2024",
+            "useInConversation": "The 70% failure rate for AI projects hasn't improved much because most companies focus on technology before strategy."
+          },
+          "trainingInvestment": {
+            "current": "Executive AI training budgets increased 45% year-over-year",
+            "trend": "increasing",
+            "source": "Corporate Training Industry Report 2024",
+            "useInConversation": "Smart executives are investing heavily in AI education - training budgets are up 45% this year as leaders recognize the need for strategic clarity."
+          }
+        }
+      },
+
+      "recentSuccessStories": {
+        "description": "Most recent client successes and outcomes for social proof",
+        "lastUpdated": "2025-08-01T06:00:00Z",
+        "stories": [
+          {
+            "timeframe": "Q2 2024",
+            "outcome": "Manufacturing client achieved 40% operational efficiency improvement",
+            "industry": "Manufacturing",
+            "context": "Used our AI Dominance Blueprint to implement predictive maintenance across 12 facilities",
+            "useInConversation": "Just last quarter, a manufacturing client used our framework to achieve 40% efficiency improvements across their operations."
+          },
+          {
+            "timeframe": "Q1 2024",
+            "outcome": "Financial services firm launched AI-powered customer service with 99.2% uptime",
+            "industry": "Financial Services",
+            "context": "Completed our 6-week program and deployed customer service AI within 4 months",
+            "useInConversation": "A financial services client who completed our program recently launched AI customer service with over 99% uptime - exactly the kind of strategic implementation we teach."
+          }
+        ]
+      },
+
+      "currentPricing": {
+        "description": "Current pricing and any active promotions",
+        "lastUpdated": "2025-08-01T06:00:00Z",
+        "executiveTraining": {
+          "basePrice": "$15,000",
+          "enterpriseDiscounts": "Available for multiple executives",
+          "paymentPlans": "Available for qualified organizations",
+          "currentPromotions": "None active",
+          "priceIncrease": "Next increase scheduled for Q4 2024",
+          "useInConversation": "Investment starts at $15,000, with enterprise pricing available for multiple executives."
+        },
+        "discoveryCall": {
+          "price": "Complimentary",
+          "value": "Typically worth $500+ in strategic consulting",
+          "availability": "Limited slots per month",
+          "useInConversation": "The discovery call is complimentary - we typically charge $500+ for strategic consulting, but this is our way of providing immediate value."
+        }
+      },
+
+      "currentAvailability": {
+        "description": "Russell's current availability for programs and discovery calls",
+        "lastUpdated": "2025-08-01T06:00:00Z",
+        "discoveryCall": {
+          "currentWaitTime": "Usually available within 1-2 weeks",
+          "peakTimes": "Tuesday-Thursday afternoons book fastest",
+          "slowTimes": "Monday mornings and Friday afternoons typically available",
+          "useInConversation": "Russell typically has availability within 1-2 weeks, with Tuesday through Thursday afternoons being most popular."
+        },
+        "executiveProgram": {
+          "currentWaitTime": "6-8 weeks lead time for new programs",
+          "capacity": "Limited to 3-4 executives per month for quality",
+          "nextAvailable": "September 2024 cohort accepting applications",
+          "useInConversation": "Russell works with a limited number of executives each month to ensure quality - the next available cohort starts in September."
+        }
+      },
+
+      "industryTrends": {
+        "description": "Current AI trends relevant to executive decision-making",
+        "lastUpdated": "2025-08-01T06:00:00Z",
+        "trends": [
+          {
+            "trend": "AI Governance Focus",
+            "description": "Boards increasingly requiring AI governance frameworks",
+            "implication": "Executive AI education now includes significant governance components",
+            "useInConversation": "Boards are now requiring comprehensive AI governance - it's becoming a C-suite responsibility, not just an IT concern."
+          },
+          {
+            "trend": "ROI Measurement Sophistication",
+            "description": "Companies demanding more sophisticated AI ROI tracking",
+            "implication": "Strategic planning must include robust measurement frameworks",
+            "useInConversation": "The days of vague AI promises are over - executives need sophisticated ROI measurement frameworks from day one."
+          },
+          {
+            "trend": "Talent Scarcity",
+            "description": "AI talent shortage driving strategic vs. tactical approaches",
+            "implication": "Companies with clear strategy attract better talent",
+            "useInConversation": "With AI talent so scarce, companies with clear strategic direction have huge advantages in attracting the best people."
+          }
+        ]
+      }
+    },
+
+    "updateTriggers": {
+      "automatic": [
+        {
+          "trigger": "New case study completion",
+          "action": "Add to success stories and industry-specific examples",
+          "frequency": "immediate"
+        },
+        {
+          "trigger": "Pricing changes",
+          "action": "Update all pricing references and value propositions",
+          "frequency": "immediate"
+        },
+        {
+          "trigger": "Calendar availability changes",
+          "action": "Update scheduling language and availability statements",
+          "frequency": "daily"
+        },
+        {
+          "trigger": "New industry report publication",
+          "action": "Update market conditions and competitive intelligence",
+          "frequency": "weekly"
+        }
+      ],
+      "manual": [
+        {
+          "trigger": "Quarterly business review",
+          "action": "Comprehensive content audit and strategy update",
+          "responsible": "Marketing team with Russell's input"
+        },
+        {
+          "trigger": "Competitive landscape changes",
+          "action": "Update positioning and differentiation messaging",
+          "responsible": "Strategic team"
+        },
+        {
+          "trigger": "New service launches",
+          "action": "Full knowledge base update with new offerings",
+          "responsible": "Product and marketing teams"
+        }
+      ]
+    },
+
+    "qualityControl": {
+      "factChecking": {
+        "process": "All updates must be verified against primary sources",
+        "responsible": "Content manager with Russell's approval",
+        "frequency": "Before any update goes live"
+      },
+      "consistencyCheck": {
+        "process": "Ensure new content aligns with brand voice and messaging",
+        "tools": ["Style guide", "Brand voice documentation", "Message hierarchy"],
+        "frequency": "All updates"
+      },
+      "performanceMonitoring": {
+        "metrics": ["Conversation effectiveness", "Conversion rates", "User satisfaction"],
+        "review": "Monthly analysis of content performance",
+        "optimization": "Continuous improvement based on performance data"
+      }
+    }
+  },
+
+  "implementationGuidelines": {
+    "voiceAgentUpdates": {
+      "method": "Hot-swap JSON configuration files",
+      "testingRequired": true,
+      "rollbackPlan": "Immediate revert to previous version if issues detected",
+      "monitoringPeriod": "24 hours after any update"
+    },
+    
+    "contentVersioning": {
+      "system": "Git-based version control for all content",
+      "branches": ["production", "staging", "development"],
+      "approvalProcess": "Russell approval required for major content changes"
+    },
+    
+    "emergencyUpdates": {
+      "process": "Direct update capability for critical information",
+      "examples": ["Service unavailability", "Pricing errors", "Major news events"],
+      "notification": "Immediate alert to all stakeholders"
+    }
+  },
+
+  "contentAuditSchedule": {
+    "monthly": {
+      "focus": "Accuracy and currency of all factual claims",
+      "checklist": [
+        "Verify all statistics and data points",
+        "Confirm pricing and availability information",
+        "Update case study outcomes and metrics",
+        "Review competitive positioning claims"
+      ]
+    },
+    "quarterly": {
+      "focus": "Strategic alignment and message effectiveness",
+      "checklist": [
+        "Evaluate conversation flow effectiveness",
+        "Analyze conversion rate performance",
+        "Review objection handling success rates",
+        "Update strategic messaging and positioning"
+      ]
+    },
+    "annually": {
+      "focus": "Comprehensive overhaul and strategic refresh",
+      "checklist": [
+        "Complete knowledge base restructure review",
+        "Strategic positioning and competitive analysis",
+        "Technology platform evaluation and updates",
+        "Comprehensive user experience optimization"
+      ]
+    }
+  }
+}

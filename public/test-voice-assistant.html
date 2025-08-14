@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Assistant Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .error { background: #ffebee; border-color: #f44336; color: #c62828; }
+        .success { background: #e8f5e8; border-color: #4caf50; color: #2e7d32; }
+        .info { background: #e3f2fd; border-color: #2196f3; color: #1565c0; }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #1976d2; }
+        .disabled { background: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Voice Assistant Test</h1>
+        
+        <div id="status" class="status info">
+            Loading voice assistant...
+        </div>
+        
+        <div>
+            <button onclick="testDefaultConfig()">Test DEFAULT_CONFIG</button>
+            <button onclick="testShowErrorMessage()">Test showErrorMessage</button>
+            <button onclick="testInitialization()">Test Initialization</button>
+            <button onclick="testErrorHandling()">Test Error Handling</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script type="module">
+        // Test DEFAULT_CONFIG import
+        async function testDefaultConfigImport() {
+            try {
+                const module = await import('./src/features/voice-agent/types/index.ts');
+                const { DEFAULT_CONFIG, DEFAULT_SESSION_CONFIG } = module;
+                
+                console.log('DEFAULT_CONFIG:', DEFAULT_CONFIG);
+                console.log('DEFAULT_SESSION_CONFIG:', DEFAULT_SESSION_CONFIG);
+                
+                return {
+                    success: true,
+                    data: { DEFAULT_CONFIG, DEFAULT_SESSION_CONFIG }
+                };
+            } catch (error) {
+                console.error('DEFAULT_CONFIG import failed:', error);
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        }
+
+        // Test WebRTC Voice Agent creation
+        async function testWebRTCVoiceAgent() {
+            try {
+                const module = await import('./src/lib/voice-agent/webrtc/main.ts');
+                const { createWebRTCVoiceAgent } = module;
+                
+                // This should not throw the DEFAULT_CONFIG error anymore
+                const agent = createWebRTCVoiceAgent({
+                    elementId: 'test-widget',
+                    theme: 'light'
+                });
+                
+                console.log('WebRTC Voice Agent created:', agent);
+                
+                return {
+                    success: true,
+                    data: agent
+                };
+            } catch (error) {
+                console.error('WebRTC Voice Agent creation failed:', error);
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        }
+
+        // Test voice assistant core methods
+        function testVoiceAssistantCoreMethods() {
+            if (!window.VoiceAssistantCore) {
+                return {
+                    success: false,
+                    error: 'VoiceAssistantCore not found on window'
+                };
+            }
+
+            const core = window.VoiceAssistantCore;
+            
+            // Test showErrorMessage method exists
+            if (typeof core.showErrorMessage !== 'function') {
+                return {
+                    success: false,
+                    error: 'showErrorMessage method not found'
+                };
+            }
+
+            // Test retryConnection method exists
+            if (typeof core.retryConnection !== 'function') {
+                return {
+                    success: false,
+                    error: 'retryConnection method not found'
+                };
+            }
+
+            return {
+                success: true,
+                data: 'All required methods found'
+            };
+        }
+
+        // Global test functions
+        window.testDefaultConfig = async function() {
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+            
+            status.textContent = 'Testing DEFAULT_CONFIG import...';
+            status.className = 'status info';
+            
+            const result = await testDefaultConfigImport();
+            
+            if (result.success) {
+                status.textContent = 'DEFAULT_CONFIG import successful';
+                status.className = 'status success';
+                results.innerHTML += `<div class="status success">✓ DEFAULT_CONFIG loaded successfully</div>`;
+            } else {
+                status.textContent = 'DEFAULT_CONFIG import failed';
+                status.className = 'status error';
+                results.innerHTML += `<div class="status error">✗ DEFAULT_CONFIG failed: ${result.error}</div>`;
+            }
+        };
+
+        window.testShowErrorMessage = function() {
+            const results = document.getElementById('results');
+            
+            const result = testVoiceAssistantCoreMethods();
+            
+            if (result.success) {
+                results.innerHTML += `<div class="status success">✓ showErrorMessage method exists</div>`;
+                
+                // Test actual method call
+                try {
+                    window.VoiceAssistantCore.showErrorMessage('Test error message', true);
+                    results.innerHTML += `<div class="status success">✓ showErrorMessage executed successfully</div>`;
+                } catch (error) {
+                    results.innerHTML += `<div class="status error">✗ showErrorMessage execution failed: ${error.message}</div>`;
+                }
+            } else {
+                results.innerHTML += `<div class="status error">✗ ${result.error}</div>`;
+            }
+        };
+
+        window.testInitialization = async function() {
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+            
+            status.textContent = 'Testing WebRTC Voice Agent creation...';
+            status.className = 'status info';
+            
+            const result = await testWebRTCVoiceAgent();
+            
+            if (result.success) {
+                status.textContent = 'WebRTC Voice Agent creation successful';
+                status.className = 'status success';
+                results.innerHTML += `<div class="status success">✓ WebRTC Voice Agent created without errors</div>`;
+            } else {
+                status.textContent = 'WebRTC Voice Agent creation failed';
+                status.className = 'status error';
+                results.innerHTML += `<div class="status error">✗ WebRTC Voice Agent failed: ${result.error}</div>`;
+            }
+        };
+
+        window.testErrorHandling = function() {
+            const results = document.getElementById('results');
+            
+            if (!window.VoiceAssistantCore) {
+                results.innerHTML += `<div class="status error">✗ VoiceAssistantCore not available</div>`;
+                return;
+            }
+
+            try {
+                // Test error handling
+                window.VoiceAssistantCore.handleError({
+                    type: 'connection_failed',
+                    message: 'Test connection error',
+                    recoverable: true
+                });
+                
+                results.innerHTML += `<div class="status success">✓ Error handling executed successfully</div>`;
+            } catch (error) {
+                results.innerHTML += `<div class="status error">✗ Error handling failed: ${error.message}</div>`;
+            }
+        };
+
+        // Auto-run tests when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const status = document.getElementById('status');
+                const results = document.getElementById('results');
+                
+                if (window.VoiceAssistantCore) {
+                    status.textContent = 'Voice Assistant Core loaded successfully';
+                    status.className = 'status success';
+                    results.innerHTML += `<div class="status success">✓ VoiceAssistantCore available on window</div>`;
+                } else {
+                    status.textContent = 'Voice Assistant Core failed to load';
+                    status.className = 'status error';
+                    results.innerHTML += `<div class="status error">✗ VoiceAssistantCore not available</div>`;
+                }
+            }, 1000);
+        });
+    </script>
+
+    <!-- Load the voice assistant core -->
+    <script type="module" src="./src/components/voice-agent/voice-assistant-core.js"></script>
+</body>
+</html>

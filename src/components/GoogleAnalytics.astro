@@ -1,0 +1,23 @@
+---
+export interface Props {
+  id: string;
+}
+
+const { id } = Astro.props;
+const isProd = import.meta.env.PROD;
+---
+
+{isProd && (
+  <>
+    <!-- Google Analytics -->
+    <script async src={`https://www.googletagmanager.com/gtag/js?id=${id}`}></script>
+    <script define:vars={{ id }}>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', id, {
+        page_path: window.location.pathname,
+      });
+    </script>
+  </>
+)}

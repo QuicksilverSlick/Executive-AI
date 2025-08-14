@@ -1,0 +1,302 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-08-01T06:00:00Z",  
+    "description": "Master index for Executive AI Training voice agent knowledge base system",
+    "contextForAI": "This is the central reference for all voice agent knowledge. Use this to understand the complete knowledge architecture and locate specific information quickly. Always reference the most current version of each knowledge area."
+  },
+
+  "knowledgeBase": {
+    "overview": {
+      "purpose": "Comprehensive knowledge system for voice agent to understand and communicate about Executive AI Training services, programs, founder background, and business value",
+      "scope": "Complete coverage of services, objection handling, conversation flows, booking processes, and dynamic content updates",
+      "optimization": "Structured for AI context retrieval and natural conversation integration"
+    },
+
+    "coreComponents": {
+      "services": {
+        "file": "/src/data/voice-agent/content/services.json",
+        "description": "Complete service catalog including Executive AI Masterclass, Discovery Calls, and AI Opportunity Audit",
+        "keyElements": [
+          "Service descriptions and value propositions",
+          "Pricing and investment information", 
+          "Target audience and qualification criteria",
+          "Outcomes and deliverables",
+          "Program formats and curriculum"
+        ],
+        "useFor": [
+          "Answering service questions",
+          "Explaining value propositions",
+          "Qualifying prospects",
+          "Setting appropriate expectations"
+        ]
+      },
+
+      "founder": {
+        "file": "/src/data/voice-agent/content/founder.json",
+        "description": "Comprehensive Russell Deming background, expertise, and credibility factors",
+        "keyElements": [
+          "Professional background and experience",
+          "Specific expertise areas and achievements",
+          "Education and certifications",
+          "Thought leadership and recognition",
+          "Client testimonials and social proof"
+        ],
+        "useFor": [
+          "Establishing credibility and expertise",
+          "Answering questions about Russell's background",
+          "Providing relevant experience examples",
+          "Building trust and confidence"
+        ]
+      },
+
+      "caseStudies": {
+        "file": "/src/data/voice-agent/content/case-studies.json",
+        "description": "Detailed success stories with quantified results and industry-specific examples",
+        "keyElements": [
+          "Industry-specific case studies",
+          "Quantified results and ROI examples",
+          "Challenge-solution-outcome narratives",
+          "Client testimonials and quotes",
+          "Lessons learned and best practices"
+        ],
+        "useFor": [
+          "Providing proof of success",
+          "Industry-specific examples",
+          "Addressing skepticism with evidence",
+          "Demonstrating ROI and value"
+        ]
+      },
+
+      "conversationPrompts": {
+        "file": "/src/data/voice-agent/conversation/prompts.json",
+        "description": "Natural conversation flows, greetings, and response templates",
+        "keyElements": [
+          "Greeting variations and context-aware openings",
+          "Service inquiry responses",
+          "Qualification questions and frameworks",
+          "Industry-specific conversation starters",
+          "Transition phrases and closing techniques"
+        ],
+        "useFor": [
+          "Natural conversation flow",
+          "Consistent messaging and voice",
+          "Smooth conversation transitions",
+          "Industry-appropriate communication"
+        ]
+      },
+
+      "objectionHandling": {
+        "file": "/src/data/voice-agent/objections/handling.json", 
+        "description": "Comprehensive objection responses with evidence and reassurance",
+        "keyElements": [
+          "Common objection categories and responses",
+          "Evidence-based reassurance strategies",
+          "ROI and value justification frameworks",
+          "Alternative solutions for different concerns",
+          "Closing techniques and next steps"
+        ],
+        "useFor": [
+          "Addressing prospect concerns",
+          "Overcoming resistance professionally",
+          "Providing evidence-based reassurance",
+          "Moving conversations forward positively"
+        ]
+      },
+
+      "bookingFlow": {
+        "file": "/src/data/voice-agent/discovery/booking-flow.json",
+        "description": "Complete discovery call qualification and scheduling process",
+        "keyElements": [
+          "Qualification criteria and questions",
+          "Scheduling preferences and logistics",
+          "Pre-call preparation and nurturing",
+          "Confirmation and follow-up processes",
+          "Disqualification handling"
+        ],
+        "useFor": [
+          "Qualifying prospects effectively",
+          "Scheduling discovery calls efficiently",
+          "Ensuring high-quality appointments",
+          "Managing Russell's time optimally"
+        ]
+      },
+
+      "functions": {
+        "file": "/src/data/voice-agent/functions/definitions.json",
+        "description": "OpenAI Realtime API function definitions for taking actions",
+        "keyElements": [
+          "Scheduling and calendar integration",
+          "Resource sharing and email capture",
+          "Lead qualification and CRM integration",
+          "Objection handling and case study sharing",
+          "Assessment and audit launching"
+        ],
+        "useFor": [
+          "Taking specific actions based on user intent",
+          "Integrating with external systems",
+          "Capturing and managing lead information",
+          "Providing structured responses and resources"
+        ]
+      },
+
+      "dynamicUpdates": {
+        "file": "/src/data/voice-agent/updates/content-management.json",
+        "description": "System for maintaining current and relevant information",
+        "keyElements": [
+          "Update schedules and frequency",
+          "Content sources and integration methods",
+          "Dynamic content areas and triggers",
+          "Quality control and versioning",
+          "Performance monitoring and optimization"
+        ],
+        "useFor": [
+          "Maintaining information currency",
+          "Updating market conditions and trends",
+          "Managing pricing and availability changes",
+          "Ensuring consistent brand messaging"
+        ]
+      }
+    },
+
+    "usagePatterns": {
+      "conversationStart": {
+        "sequence": [
+          "Load greeting from conversation/prompts.json",
+          "Assess user context and industry if available",
+          "Select appropriate greeting variation",
+          "Be ready with services overview from content/services.json"
+        ]
+      },
+
+      "serviceinquiry": {
+        "sequence": [
+          "Reference services.json for accurate details",
+          "Match service to user's expressed needs",
+          "Use relevant case studies from case-studies.json",
+          "Prepare for potential objections using objections/handling.json"
+        ]
+      },
+
+      "objectionResponse": {
+        "sequence": [
+          "Identify objection type using objections/handling.json",
+          "Acknowledge concern as valid",
+          "Provide evidence-based response",
+          "Use relevant case study or founder credibility from respective files",
+          "Guide toward next steps"
+        ]
+      },
+
+      "discoveryCallScheduling": {
+        "sequence": [
+          "Qualify using discovery/booking-flow.json criteria",
+          "Gather necessary information naturally",
+          "Use schedule_discovery_call function",
+          "Confirm details and set expectations",
+          "Capture lead information in CRM"
+        ]
+      }
+    },
+
+    "integrationPoints": {
+      "calendly": {
+        "purpose": "Discovery call scheduling",
+        "integration": "schedule_discovery_call function",
+        "dataFlow": "Voice agent → Function call → Calendly widget"
+      },
+
+      "crm": {
+        "purpose": "Lead capture and management",
+        "integration": "capture_lead_info function",
+        "dataFlow": "Voice agent → Function call → CRM system"
+      },
+
+      "emailMarketing": {
+        "purpose": "Resource delivery and nurturing",
+        "integration": "send_resource_email function", 
+        "dataFlow": "Voice agent → Function call → Email system"
+      },
+
+      "aiAudit": {
+        "purpose": "Alternative engagement path",
+        "integration": "open_ai_audit function",
+        "dataFlow": "Voice agent → Function call → Assessment page"
+      }
+    },
+
+    "qualityAssurance": {
+      "accuracy": {
+        "requirement": "All factual claims must be verifiable",
+        "sources": "CRM data, client feedback, industry reports",
+        "verification": "Monthly accuracy audits"
+      },
+
+      "consistency": {
+        "requirement": "All content must align with brand voice",
+        "standards": "Professional, authoritative, helpful tone",
+        "guidelines": "Executive-appropriate language and concepts"
+      },
+
+      "currency": {
+        "requirement": "Information must be current and relevant",
+        "updates": "Dynamic content management system",
+        "monitoring": "Regular performance and effectiveness review"
+      }
+    }
+  },
+
+  "implementation": {
+    "voiceAgentSetup": {
+      "systemPrompt": "You are Russell Deming's AI assistant, helping executives understand AI strategy and programs. Use the knowledge base to provide accurate, helpful information while maintaining a professional, authoritative tone.",
+      
+      "knowledgeLoading": {
+        "method": "Load all JSON files into context at startup",
+        "priority": "Services and conversation prompts are highest priority",
+        "fallback": "Graceful degradation if specific knowledge unavailable"
+      },
+
+      "conversationFlow": {
+        "start": "Use greeting from conversation/prompts.json",
+        "qualify": "Use questions from discovery/booking-flow.json",
+        "respond": "Reference appropriate knowledge base sections",
+        "close": "Use functions to take appropriate actions"
+      }
+    },
+
+    "maintenanceSchedule": {
+      "daily": "Update availability and calendar information",
+      "weekly": "Review and update case studies and market conditions",
+      "monthly": "Comprehensive accuracy audit and content review",
+      "quarterly": "Strategic review and knowledge architecture updates"
+    },
+
+    "performanceMetrics": {
+      "conversation": ["Average conversation length", "User satisfaction", "Query resolution rate"],
+      "conversion": ["Discovery call booking rate", "Qualification accuracy", "Follow-through rate"],
+      "quality": ["Information accuracy", "Response relevance", "Brand consistency"]
+    }
+  },
+
+  "quickReference": {
+    "keyFacts": {
+      "russellExperience": "Former Fortune 500 CTO, 100+ executives trained, 95% success rate",
+      "programPricing": "Executive AI Masterclass starts at $15,000",
+      "discoveryCall": "15-minute complimentary call, high value, limited availability",
+      "successMetrics": "Average 300% ROI, 2+ year competitive advantage",
+      "differentiators": "Executive-focused, business-first approach, proven methodology"
+    },
+
+    "commonResponses": {
+      "costConcern": "Reference $12.8M average cost of failed AI pilots vs $15K investment",
+      "timeConcern": "Emphasize time saved vs time invested, 6 weeks vs 6-12 months",
+      "readinessConcern": "Business leadership more important than technical knowledge",
+      "skepticism": "70% failure rate due to lack of strategy, not technology"
+    },
+
+    "qualificationCriteria": {
+      "mustHave": ["Executive role", "$5M+ company", "Decision authority", "12-month timeline"],
+      "preferred": ["Current AI challenges", "Competitive pressure", "Immediate timeline"]
+    }
+  }
+}

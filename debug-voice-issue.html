@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Voice Agent</title>
+</head>
+<body>
+    <h1>Voice Agent Debug</h1>
+    <div id="status"></div>
+    
+    <script>
+        // Check if the page loads with the voice agent properly
+        window.addEventListener('voice-agent-ready', (event) => {
+            console.log('Voice agent ready event received:', event.detail);
+            document.getElementById('status').innerHTML += '<p>✅ Voice agent ready event received</p>';
+        });
+        
+        // Check WebRTC Voice Agent global
+        setTimeout(() => {
+            if (window.WebRTCVoiceAgent) {
+                console.log('WebRTC Voice Agent found:', window.WebRTCVoiceAgent);
+                document.getElementById('status').innerHTML += '<p>✅ WebRTC Voice Agent found in window</p>';
+                document.getElementById('status').innerHTML += '<pre>' + JSON.stringify(window.WebRTCVoiceAgent, null, 2) + '</pre>';
+            } else {
+                document.getElementById('status').innerHTML += '<p>❌ WebRTC Voice Agent NOT found in window</p>';
+            }
+        }, 2000);
+        
+        // Test microphone permissions
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                console.log('Microphone access granted');
+                document.getElementById('status').innerHTML += '<p>✅ Microphone permissions granted</p>';
+                stream.getTracks().forEach(track => track.stop());
+            })
+            .catch(err => {
+                console.error('Microphone access denied:', err);
+                document.getElementById('status').innerHTML += '<p>❌ Microphone permissions denied: ' + err.message + '</p>';
+            });
+    </script>
+</body>
+</html>

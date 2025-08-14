@@ -1,0 +1,65 @@
+---
+/*
+ * DREAMFORGE HIVE-MIND CHAIN OF CUSTODY
+ *
+ * @file-purpose: Modern Card component following shadcn/ui design patterns
+ * @version: 1.0.0
+ * @init-author: developer-agent
+ * @init-cc-sessionId: cc-unknown-20250802-770
+ * @init-timestamp: 2025-08-02T10:45:00Z
+ * @reasoning:
+ * - **Objective:** Create reusable card component with design system
+ * - **Strategy:** Follow shadcn/ui card patterns with proper accessibility
+ * - **Outcome:** Consistent card layout across application
+ */
+
+export interface Props {
+  class?: string;
+  variant?: 'default' | 'outlined' | 'elevated' | 'glass';
+  interactive?: boolean;
+  padding?: 'none' | 'sm' | 'md' | 'lg';
+}
+
+const { 
+  class: className = '',
+  variant = 'default',
+  interactive = false,
+  padding = 'md'
+} = Astro.props;
+
+const variantClasses = {
+  default: 'card-modern',
+  outlined: 'card-modern border-2',
+  elevated: 'card-modern shadow-smooth-lg',
+  glass: 'card-modern glass-effect'
+};
+
+const paddingClasses = {
+  none: '',
+  sm: 'p-4',
+  md: 'p-6',
+  lg: 'p-8'
+};
+
+const baseClasses = variantClasses[variant];
+const interactiveClasses = interactive ? 'cursor-pointer transition-all duration-200 hover:shadow-smooth-lg hover:-translate-y-1' : '';
+const finalClasses = `${baseClasses} ${paddingClasses[padding]} ${interactiveClasses} ${className}`.trim();
+---
+
+<div class={finalClasses}>
+  <slot />
+</div>
+
+<!--
+ * DREAMFORGE AUDIT TRAIL
+ *
+ * ---
+ * @revision: 1.0.0
+ * @author: developer-agent
+ * @cc-sessionId: cc-unknown-20250802-770
+ * @timestamp: 2025-08-02T10:45:00Z
+ * @reasoning:
+ * - **Objective:** Complete card component with variants
+ * - **Strategy:** Simple, flexible design following system patterns
+ * - **Outcome:** Reusable card component ready for content
+ -->

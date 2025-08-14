@@ -1,0 +1,106 @@
+---
+export interface Props {
+  src?: string;
+  component?: string;
+  threshold?: number;
+  rootMargin?: string;
+  class?: string;
+  fallback?: string;
+}
+
+const {
+  src,
+  component,
+  threshold = 0.1,
+  rootMargin = '50px',
+  class: className = '',
+  fallback = '<div class="skeleton h-64 w-full"></div>'
+} = Astro.props;
+
+const uniqueId = `lazy-${Math.random().toString(36).substr(2, 9)}`;
+---
+
+<div 
+  id={uniqueId}
+  class={`lazy-load-container ${className}`}
+  data-src={src}
+  data-component={component}
+  data-threshold={threshold}
+  data-root-margin={rootMargin}
+>
+  <div class="lazy-load-placeholder" set:html={fallback} />
+</div>
+
+<script>
+  // Lazy loading implementation
+  if ('IntersectionObserver' in window) {
+    const lazyLoadContainers = document.querySelectorAll('.lazy-load-container');
+    
+    const lazyLoadObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const container = entry.target;
+          const src = container.getAttribute('data-src');
+          const component = container.getAttribute('data-component');
+          
+          if (src) {
+            // Load image
+            const img = new Image();
+            img.onload = () => {
+              container.innerHTML = `<img src="${src}" alt="" class="${container.className.replace('lazy-load-container', '')}" />`;
+              container.classList.add('loaded');
+            };
+            img.src = src;
+          } else if (component) {
+            // Load component dynamically
+            import(component).then(module => {
+              // Component loading logic here
+              container.classList.add('loaded');
+            });
+          }
+          
+          lazyLoadObserver.unobserve(container);
+        }
+      });
+    }, {
+      rootMargin: '50px',
+      threshold: 0.1
+    });
+    
+    lazyLoadContainers.forEach(container => {
+      lazyLoadObserver.observe(container);
+    });
+  } else {
+    // Fallback for browsers without IntersectionObserver
+    document.querySelectorAll('.lazy-load-container').forEach(container => {
+      const src = container.getAttribute('data-src');
+      if (src) {
+        container.innerHTML = `<img src="${src}" alt="" class="${container.className.replace('lazy-load-container', '')}" />`;
+      }
+    });
+  }
+</script>
+
+<style>
+  .lazy-load-container {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .lazy-load-container.loaded .lazy-load-placeholder {
+    display: none;
+  }
+  
+  .lazy-load-container img {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+</style>

@@ -1,0 +1,54 @@
+/* Large Tablet Optimization Styles */
+/* Optimizations for large tablet devices (1024px - 1200px) */
+
+@media (min-width: 1024px) and (max-width: 1200px) {
+  /* Container adjustments */
+  .container-narrow {
+    max-width: 960px;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+
+  /* Typography refinements */
+  h1 {
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+  }
+  
+  h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+  }
+
+  /* Grid system */
+  .lg-tablet\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  
+  .lg-tablet\:grid-cols-4 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Section spacing */
+  .section-padding {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+
+  /* Content width adjustments */
+  .content-width-large-tablet {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Card layouts */
+  .card-grid-large-tablet {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+
+  /* Navigation spacing */
+  .nav-large-tablet {
+    padding: 1rem 2rem;
+  }
+}

@@ -1,0 +1,561 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-08-01T06:00:00Z",
+    "description": "Function definitions for OpenAI Realtime API voice agent capabilities",
+    "contextForAI": "These functions enable the voice agent to take specific actions. Use them when user expresses intent that matches the function purpose. Always confirm before executing high-commitment actions."
+  },
+
+  "functions": {
+    "schedule_discovery_call": {
+      "name": "schedule_discovery_call",
+      "description": "Opens Calendly scheduling widget for 15-minute discovery call with Russell Deming. Use when user expresses interest in scheduling a consultation or discovery call.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "timePreference": {
+            "type": "string",
+            "enum": ["morning", "afternoon", "evening", "flexible"],
+            "description": "User's preferred time of day for the call"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "User's timezone (e.g., 'EST', 'PST', 'CST', 'MST', 'UTC-5', etc.)"
+          },
+          "urgency": {
+            "type": "string",
+            "enum": ["this_week", "next_week", "flexible", "asap"],
+            "description": "How quickly the user wants to schedule the call"
+          },
+          "contactInfo": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "User's full name"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "description": "User's email address"
+              },
+              "company": {
+                "type": "string",
+                "description": "User's company name"
+              },
+              "title": {
+                "type": "string",
+                "description": "User's job title or role"
+              },
+              "phone": {
+                "type": "string",
+                "description": "User's phone number (optional)"
+              }
+            },
+            "required": ["name", "email"]
+          },
+          "specificInterests": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific topics or challenges the user wants to discuss"
+          },
+          "qualificationNotes": {
+            "type": "string",
+            "description": "Notes from qualification conversation for Russell's preparation"
+          }
+        },
+        "required": ["timePreference", "contactInfo"]
+      },
+      "usage": {
+        "triggers": [
+          "User says they want to schedule a call",
+          "User asks about booking a consultation",
+          "User expresses interest in discovery call",
+          "User asks about next steps after showing interest"
+        ],
+        "preparation": [
+          "Ensure user is qualified (executive role, appropriate company size)",
+          "Gather contact information naturally through conversation",
+          "Understand their specific challenges or interests",
+          "Confirm their timezone and scheduling preferences"
+        ],
+        "response": "Perfect! I'm opening Russell's calendar for you now. You'll be able to select the exact time that works best for your schedule."
+      }
+    },
+
+    "get_service_details": {
+      "name": "get_service_details",
+      "description": "Provides detailed information about specific services and programs. Use when user asks for more information about a particular offering.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "serviceType": {
+            "type": "string",
+            "enum": ["executiveAITraining", "discoveryCall", "aiAudit"],
+            "description": "Type of service to get detailed information about"
+          },
+          "specificAspect": {
+            "type": "string",
+            "enum": ["pricing", "curriculum", "outcomes", "timeline", "format", "requirements"],
+            "description": "Specific aspect of the service the user is asking about"
+          },
+          "industryContext": {
+            "type": "string",
+            "description": "User's industry for relevant examples and case studies"
+          },
+          "companySize": {
+            "type": "string",
+            "enum": ["startup", "small", "medium", "large", "enterprise"],
+            "description": "Size of user's company for appropriate recommendations"
+          }
+        },
+        "required": ["serviceType"]
+      },
+      "usage": {
+        "triggers": [
+          "User asks about specific programs or services",
+          "User wants pricing information",
+          "User asks about program details or curriculum",
+          "User inquires about outcomes or benefits"
+        ],
+        "response": "Let me get you the detailed information about [service] that's most relevant to your situation."
+      }
+    },
+
+    "open_ai_audit": {
+      "name": "open_ai_audit",
+      "description": "Opens the AI Opportunity Audit assessment page. Use when user expresses interest in taking the quick assessment or wants to identify their AI opportunities.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": ["voice_agent", "direct_request", "alternative_to_call"],
+            "description": "How the user discovered or was directed to the audit"
+          },
+          "motivation": {
+            "type": "string",
+            "description": "Why the user is interested in taking the audit"
+          },
+          "followUpEmail": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address to send results and follow-up information"
+          }
+        },
+        "required": ["source"]
+      },
+      "usage": {
+        "triggers": [
+          "User asks about the AI audit or assessment",
+          "User wants to identify AI opportunities quickly",
+          "User prefers assessment over scheduling a call",
+          "User wants immediate insights without commitment"
+        ],
+        "response": "Perfect! I'm opening the AI Opportunity Audit for you now. It takes just 2 minutes and will identify your biggest AI opportunities."
+      }
+    },
+
+    "send_resource_email": {
+      "name": "send_resource_email",
+      "description": "Sends AI resources and guides to user's email address. Use when user requests specific resources or wants to receive materials for later review.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User's email address for sending resources"
+          },
+          "resourceType": {
+            "type": "string",
+            "enum": [
+              "readiness-assessment",
+              "roi-framework", 
+              "strategy-template",
+              "implementation-checklist",
+              "industry-benchmarks",
+              "case-studies",
+              "executive-guide",
+              "all-resources"
+            ],
+            "description": "Type of resource(s) to send"
+          },
+          "industryFocus": {
+            "type": "string",
+            "description": "User's industry for relevant case studies and examples"
+          },
+          "specificNeeds": {
+            "type": "string",
+            "description": "Specific challenges or interests mentioned by user"
+          },
+          "followUpPreference": {
+            "type": "string",
+            "enum": ["email_only", "call_follow_up", "no_follow_up"],
+            "description": "User's preference for follow-up communication"
+          }
+        },
+        "required": ["email", "resourceType"]
+      },
+      "usage": {
+        "triggers": [
+          "User asks for resources or materials",
+          "User wants to review information later",
+          "User requests case studies or guides",
+          "User wants to share information with their team"
+        ],
+        "response": "I'll send those resources to your email right away. You should receive them within a few minutes."
+      }
+    },
+
+    "capture_lead_info": {
+      "name": "capture_lead_info",
+      "description": "Captures visitor information for CRM and follow-up purposes. Use when user provides contact information or expresses strong interest but isn't ready to schedule immediately.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "contactInfo": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "User's full name"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "description": "User's email address"
+              },
+              "company": {
+                "type": "string",
+                "description": "User's company name"
+              },
+              "title": {
+                "type": "string",
+                "description": "User's job title or role"
+              },
+              "phone": {
+                "type": "string",
+                "description": "User's phone number"
+              }
+            },
+            "required": ["name", "email"]
+          },
+          "companyInfo": {
+            "type": "object",
+            "properties": {
+              "industry": {
+                "type": "string",
+                "description": "User's industry or business sector"
+              },
+              "size": {
+                "type": "string",
+                "enum": ["startup", "small", "medium", "large", "enterprise"],
+                "description": "Company size category"
+              },
+              "revenue": {
+                "type": "string",
+                "description": "Annual revenue range (if provided)"
+              },
+              "employees": {
+                "type": "string",
+                "description": "Number of employees (if provided)"
+              },
+              "aiMaturity": {
+                "type": "string",
+                "enum": ["exploring", "piloting", "scaling", "mature"],
+                "description": "Current AI maturity level"
+              }
+            }
+          },
+          "needs": {
+            "type": "object",
+            "properties": {
+              "primaryChallenge": {
+                "type": "string",
+                "description": "Main AI challenge or opportunity"
+              },
+              "secondaryNeeds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Additional challenges or interests"
+              },
+              "timeframe": {
+                "type": "string",
+                "description": "Timeline for AI initiatives"
+              },
+              "budget": {
+                "type": "string",
+                "description": "Budget range or considerations (if discussed)"
+              },
+              "decisionMakers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Other people involved in decision making"
+              }
+            }
+          },
+          "conversationSummary": {
+            "type": "string",
+            "description": "Summary of the conversation and user's interests"
+          },
+          "nextSteps": {
+            "type": "string",
+            "description": "Agreed upon next steps or follow-up actions"
+          },
+          "leadSource": {
+            "type": "string",
+            "enum": ["voice_agent", "website", "referral", "content", "advertising"],
+            "description": "How the user found the website/service"
+          }
+        },
+        "required": ["contactInfo"]
+      },
+      "usage": {
+        "triggers": [
+          "User provides contact information during conversation",
+          "User expresses interest but can't schedule immediately",
+          "User wants to be contacted later",
+          "End of conversation with interested prospect"
+        ],
+        "response": "I've captured your information and interests. We'll follow up with relevant resources and information."
+      }
+    },
+
+    "handle_objection": {
+      "name": "handle_objection",
+      "description": "Provides structured response to common objections about AI training or services. Use when user expresses concerns or objections.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "objectionType": {
+            "type": "string",
+            "enum": [
+              "cost",
+              "time", 
+              "readiness",
+              "timing",
+              "alternatives",
+              "authority",
+              "skepticism",
+              "roi_uncertainty",
+              "technical_concerns"
+            ],
+            "description": "Type of objection being raised"
+          },
+          "specificConcern": {
+            "type": "string",
+            "description": "Specific details of the user's concern"
+          },
+          "userContext": {
+            "type": "object",
+            "properties": {
+              "industry": {
+                "type": "string",
+                "description": "User's industry for relevant examples"
+              },
+              "role": {
+                "type": "string", 
+                "description": "User's role for appropriate response level"
+              },
+              "companySize": {
+                "type": "string",
+                "description": "Company size for relevant case studies"
+              }
+            }
+          }
+        },
+        "required": ["objectionType"]
+      },
+      "usage": {
+        "triggers": [
+          "User expresses cost concerns",
+          "User says they don't have time",
+          "User questions their readiness for AI",
+          "User mentions other priorities or timing issues",
+          "User is skeptical about AI or training value"
+        ],
+        "response": "I understand your concern about [objection]. Let me share how other executives in similar situations have thought about this..."
+      }
+    },
+
+    "share_case_study": {
+      "name": "share_case_study",
+      "description": "Shares relevant case study based on user's industry, role, or specific interests. Use when user wants examples or proof of success.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "industry": {
+            "type": "string",
+            "enum": ["manufacturing", "financial_services", "healthcare", "technology", "retail", "general"],
+            "description": "Industry to match case study to user's context"
+          },
+          "challenge": {
+            "type": "string",
+            "enum": [
+              "ai_confusion",
+              "failed_pilots", 
+              "competitive_pressure",
+              "regulatory_concerns",
+              "team_alignment",
+              "roi_uncertainty",
+              "implementation_complexity"
+            ],
+            "description": "Specific challenge that matches user's situation"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "competitive_advantage",
+              "customer_satisfaction",
+              "operational_efficiency",
+              "revenue_growth",
+              "cost_reduction",
+              "compliance_success"
+            ],
+            "description": "Type of outcome user is most interested in"
+          },
+          "detailLevel": {
+            "type": "string",
+            "enum": ["summary", "detailed", "metrics_focused"],
+            "description": "Level of detail appropriate for the conversation"
+          }
+        },
+        "required": ["industry"]
+      },
+      "usage": {
+        "triggers": [
+          "User asks for examples or proof points",
+          "User wants to see relevant success stories",
+          "User asks about results or outcomes",
+          "User needs reassurance about program effectiveness"
+        ],
+        "response": "Let me share a relevant example from [industry] that demonstrates exactly the kind of results you're looking for."
+      }
+    },
+
+    "qualify_prospect": {
+      "name": "qualify_prospect",
+      "description": "Assesses prospect qualification based on role, company size, needs, and timeline. Use to determine if prospect is a good fit for services.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "User's job title or role in the organization"
+          },
+          "companySize": {
+            "type": "object",
+            "properties": {
+              "revenue": {
+                "type": "string",
+                "description": "Annual revenue range"
+              },
+              "employees": {
+                "type": "string", 
+                "description": "Number of employees"
+              }
+            }
+          },
+          "decisionAuthority": {
+            "type": "string",
+            "enum": ["decision_maker", "strong_influence", "recommender", "individual_contributor"],
+            "description": "Level of decision-making authority"
+          },
+          "timeline": {
+            "type": "string",
+            "enum": ["immediate", "30_days", "quarter", "year", "no_timeline"],
+            "description": "Timeline for AI initiatives or decision making"
+          },
+          "budget": {
+            "type": "object",
+            "properties": {
+              "range": {
+                "type": "string",
+                "description": "Budget range if discussed"
+              },
+              "authority": {
+                "type": "string",
+                "enum": ["full_authority", "recommends", "influences", "no_authority"],
+                "description": "Budget decision authority"
+              }
+            }
+          },
+          "painLevel": {
+            "type": "string",
+            "enum": ["high", "medium", "low"],
+            "description": "Intensity of their AI challenges or needs"
+          }
+        },
+        "required": ["role", "decisionAuthority", "timeline"]
+      },
+      "usage": {
+        "triggers": [
+          "Need to assess if prospect is qualified for discovery call",
+          "User has provided enough information to evaluate fit",
+          "Before scheduling to ensure good use of Russell's time"
+        ],
+        "response": "Based on what you've shared, it sounds like our program could be a great fit for your situation."
+      }
+    }
+  },
+
+  "functionUsageGuidelines": {
+    "general": [
+      "Always confirm user intent before executing functions that take actions",
+      "Use functions to enhance conversation, not replace natural dialogue",
+      "Gather context naturally before calling functions with parameters",
+      "Functions should feel seamless within the conversation flow"
+    ],
+    
+    "qualification": [
+      "Qualify prospects before scheduling discovery calls",
+      "Use capture_lead_info for interested but not ready prospects",
+      "Don't schedule unqualified prospects - offer alternatives instead"
+    ],
+    
+    "resource_sharing": [
+      "Offer resources when users want to learn more or share with team",
+      "Match resource type to user's specific interests and industry",
+      "Always get email address before sending resources"
+    ],
+    
+    "objection_handling": [
+      "Acknowledge objections as valid before providing structured responses",
+      "Use relevant case studies and examples in objection responses",
+      "Focus on addressing underlying concerns, not just surface objections"
+    ]
+  },
+
+  "integrationEndpoints": {
+    "calendly": {
+      "url": "https://calendly.com/russell-deming/15min-discovery",
+      "method": "GET",
+      "parameters": ["prefill_name", "prefill_email", "timezone"]
+    },
+    
+    "crm": {
+      "lead_capture": "/api/crm/leads",
+      "method": "POST",
+      "authentication": "API_KEY"
+    },
+    
+    "email": {
+      "send_resources": "/api/email/send-resources",
+      "method": "POST",
+      "templates": ["welcome", "resources", "follow-up"]
+    },
+    
+    "audit": {
+      "url": "/ai-audit",
+      "method": "GET",
+      "parameters": ["source", "utm_campaign"]
+    }
+  }
+}

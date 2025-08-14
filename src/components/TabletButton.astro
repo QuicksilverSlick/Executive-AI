@@ -1,0 +1,58 @@
+---
+import Button from './Button.astro';
+
+// This wrapper ensures consistent button styling across all breakpoints
+export interface Props {
+  variant?: 'primary' | 'secondary' | 'outline';
+  href?: string;
+  size?: 'sm' | 'md' | 'lg';
+  class?: string;
+  target?: string;
+  rel?: string;
+  icon?: string;
+  iconPosition?: 'left' | 'right';
+  fullWidth?: boolean;
+}
+
+const { 
+  fullWidth = false,
+  class: className = '',
+  ...props 
+} = Astro.props;
+
+// Ensure consistent styling for tablets
+const tabletClasses = `
+  w-full 
+  sm:w-full 
+  md:w-auto 
+  md:min-w-[250px] 
+  lg:min-w-[200px]
+  max-w-xs 
+  sm:max-w-sm 
+  md:max-w-none
+  mx-auto 
+  md:mx-0
+  ${fullWidth ? '!w-full' : ''}
+  ${className}
+`.trim();
+---
+
+<Button 
+  {...props} 
+  class={tabletClasses}
+>
+  <slot />
+</Button>
+
+<style>
+  /* Ensure button containers are properly aligned on tablets */
+  :global(.btn-group) {
+    @apply flex flex-col sm:flex-col md:flex-row gap-4 items-center justify-center;
+  }
+  
+  @media (min-width: 640px) and (max-width: 1023px) {
+    :global(.btn-group > *) {
+      @apply w-full max-w-xs;
+    }
+  }
+</style>

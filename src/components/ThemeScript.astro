@@ -1,0 +1,33 @@
+---
+// This script must run before the page renders to prevent flash
+---
+
+<script is:inline>
+  // Theme initialization script (runs immediately)
+  (function() {
+    function getTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        return savedTheme;
+      }
+      // Default to dark theme
+      return 'dark';
+    }
+    
+    function applyTheme() {
+      const theme = getTheme();
+      if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+    
+    // Apply theme immediately
+    applyTheme();
+    
+    // Also set color-scheme for native elements
+    const currentTheme = getTheme();
+    document.documentElement.style.colorScheme = (currentTheme === 'dark' || currentTheme === 'system') ? 'dark' : 'light';
+  })();
+</script>

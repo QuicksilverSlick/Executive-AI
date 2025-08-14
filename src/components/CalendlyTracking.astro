@@ -1,0 +1,65 @@
+---
+// Calendly event tracking
+---
+
+<script>
+
+  // Track Calendly widget interactions
+  document.addEventListener('DOMContentLoaded', () => {
+    // Track CTA clicks
+    const calendlyTriggers = document.querySelectorAll('.calendly-trigger');
+    calendlyTriggers.forEach(trigger => {
+      trigger.addEventListener('click', (e) => {
+        const button = e.currentTarget as HTMLElement;
+        const location = button.closest('section')?.id || 'unknown';
+        
+        if (window.gtag) {
+          window.gtag('event', 'cta_click', {
+            cta_name: 'Schedule Strategy Session',
+            cta_location: location,
+            cta_destination: 'calendly'
+          });
+        }
+      });
+    });
+
+    // Listen for Calendly events
+    window.addEventListener('message', (e) => {
+      if (e.origin !== 'https://calendly.com') return;
+      
+      if (e.data.event === 'calendly.event_scheduled') {
+        if (window.gtag) {
+          // Track schedule conversion
+          window.gtag('event', 'schedule_consultation', {
+            value: 15000,
+            currency: 'USD',
+            conversion: true
+          });
+          
+          // Send enhanced conversion data
+          window.gtag('event', 'calendly_scheduled', {
+            event_type: 'strategy_session',
+            service_interest: 'executive_ai_masterclass',
+            potential_value: 15000
+          });
+        }
+      }
+      
+      if (e.data.event === 'calendly.page_viewed') {
+        if (window.gtag) {
+          window.gtag('event', 'calendly_opened', {
+            trigger_location: document.referrer
+          });
+        }
+      }
+    });
+  });
+</script>
+
+<!-- Calendly inline widget styles -->
+<style>
+  .calendly-inline-widget {
+    min-width: 320px;
+    height: 630px;
+  }
+</style>

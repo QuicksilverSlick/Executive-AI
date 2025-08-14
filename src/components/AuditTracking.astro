@@ -1,0 +1,107 @@
+---
+// Analytics tracking script for AI Audit wizard
+---
+
+<script>
+  // Track form initialization
+  document.addEventListener('DOMContentLoaded', () => {
+    const auditForm = document.querySelector('.audit-wizard');
+    if (!auditForm) return;
+
+    // Track form start
+    if (window.gtag) {
+      window.gtag('event', 'form_start', {
+        form_name: 'AI Opportunity Audit',
+        form_id: 'ai_opportunity_audit'
+      });
+    }
+
+    // Track step navigation
+    const stepButtons = document.querySelectorAll('[data-step-button]');
+    stepButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        const currentStep = parseInt(button.getAttribute('data-current-step') || '1');
+        const action = button.getAttribute('data-action') || 'next';
+        
+        if (window.gtag) {
+          if (action === 'next') {
+            window.gtag('event', 'ai_audit_progress', {
+              step_number: currentStep,
+              step_action: 'complete',
+              step_name: `step_${currentStep}`
+            });
+            window.gtag('event', 'ai_audit_progress', {
+              step_number: currentStep + 1,
+              step_action: 'view',
+              step_name: `step_${currentStep + 1}`
+            });
+          } else if (action === 'prev') {
+            window.gtag('event', 'ai_audit_progress', {
+              step_number: currentStep - 1,
+              step_action: 'view',
+              step_name: `step_${currentStep - 1}`
+            });
+          }
+        }
+      });
+    });
+
+    // Track form submission
+    const submitButton = document.querySelector('[data-submit-audit]');
+    if (submitButton) {
+      submitButton.addEventListener('click', () => {
+        if (window.gtag) {
+          // Track form completion
+          window.gtag('event', 'form_complete', {
+            form_name: 'AI Opportunity Audit',
+            form_id: 'ai_opportunity_audit'
+          });
+          
+          // Track lead conversion
+          window.gtag('event', 'generate_lead', {
+            value: 0,
+            currency: 'USD',
+            conversion: true
+          });
+          
+          // Track form data (anonymized)
+          const formElement = document.getElementById('audit-form') as HTMLFormElement;
+          if (formElement) {
+            const formData = new FormData(formElement);
+            const industry = formData.get('industry');
+            const size = formData.get('size');
+            
+            window.gtag('event', 'audit_submission', {
+              industry: industry,
+              company_size: size,
+              form_type: 'ai_opportunity_audit'
+            });
+          }
+        }
+      });
+    }
+
+    // Track form abandonment
+    let formStarted = false;
+    const formInputs = auditForm.querySelectorAll('input, select, textarea');
+    
+    formInputs.forEach(input => {
+      input.addEventListener('focus', () => {
+        if (!formStarted) {
+          formStarted = true;
+        }
+      }, { once: true });
+    });
+
+    window.addEventListener('beforeunload', (e) => {
+      if (formStarted && !submitButton?.getAttribute('data-submitted')) {
+        if (window.gtag) {
+          window.gtag('event', 'form_abandon', {
+            form_name: 'AI Opportunity Audit',
+            form_id: 'ai_opportunity_audit'
+          });
+        }
+      }
+    });
+  });
+</script>

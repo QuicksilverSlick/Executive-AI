@@ -1,0 +1,75 @@
+---
+// Web Vitals monitoring for performance tracking
+---
+
+<script>
+  // Only load in production
+  if (import.meta.env.PROD) {
+    // Lazy load web-vitals library
+    import('web-vitals').then(({ onCLS, onFID, onFCP, onLCP, onTTFB, onINP }) => {
+      function sendToAnalytics(metric) {
+        // Send to Google Analytics
+        if (window.gtag) {
+          window.gtag('event', metric.name, {
+            value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
+            metric_id: metric.id,
+            metric_value: metric.value,
+            metric_delta: metric.delta,
+            event_category: 'Web Vitals',
+            event_label: metric.id,
+            non_interaction: true,
+          });
+        }
+
+        // Log to console in dev
+        if (import.meta.env.DEV) {
+          console.log(metric);
+        }
+      }
+
+      // Core Web Vitals
+      onCLS(sendToAnalytics);
+      onFID(sendToAnalytics);
+      onFCP(sendToAnalytics);
+      onLCP(sendToAnalytics);
+      onTTFB(sendToAnalytics);
+      onINP(sendToAnalytics);
+    });
+  }
+
+  // Custom performance marks
+  if ('performance' in window) {
+    // Mark when interactive
+    window.addEventListener('load', () => {
+      performance.mark('page-interactive');
+      
+      // Measure time to interactive
+      performance.measure('time-to-interactive', 'navigationStart', 'page-interactive');
+      
+      const measure = performance.getEntriesByName('time-to-interactive')[0];
+      if (measure && window.gtag) {
+        window.gtag('event', 'timing_complete', {
+          name: 'time_to_interactive',
+          value: Math.round(measure.duration),
+          event_category: 'Performance',
+        });
+      }
+    });
+
+    // Resource timing
+    window.addEventListener('load', () => {
+      const resources = performance.getEntriesByType('resource');
+      const totalSize = resources.reduce((sum, resource) => sum + (resource.transferSize || 0), 0);
+      const totalDuration = resources.reduce((sum, resource) => sum + resource.duration, 0);
+
+      if (window.gtag) {
+        window.gtag('event', 'resource_timing', {
+          total_resources: resources.length,
+          total_size_kb: Math.round(totalSize / 1024),
+          total_duration_ms: Math.round(totalDuration),
+          event_category: 'Performance',
+        });
+      }
+    });
+  }
+</script>

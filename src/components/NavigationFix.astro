@@ -1,0 +1,122 @@
+---
+// This component provides navigation fixes for different screen sizes
+---
+
+<style is:global>
+  /* Navigation responsive fixes */
+  
+  /* Standard tablets (768px - 1023px) */
+  @media (min-width: 768px) and (max-width: 1023px) {
+    nav .container-narrow {
+      @apply px-6;
+    }
+
+    nav .flex.items-center.justify-between {
+      gap: 0.5rem; /* gap-2 equivalent */
+    }
+
+    nav a {
+      @apply px-2 text-sm;
+    }
+
+    nav .btn-primary {
+      @apply px-3 py-2 text-sm;
+    }
+  }
+
+  /* Large tablets (1024px - 1366px) */
+  @media (min-width: 1024px) and (max-width: 1366px) {
+    /* Main nav container */
+    nav .container-narrow {
+      @apply max-w-none px-6;
+    }
+
+    /* Nav links wrapper */
+    nav .hidden.md\:flex.items-center.gap-8 {
+      gap: 0.75rem; /* gap-3 equivalent */
+    }
+
+    /* Individual nav links */
+    nav a:not(.btn-primary) {
+      @apply px-2 text-[15px];
+    }
+
+    /* CTA button in nav */
+    nav .btn-primary,
+    nav a.btn-primary {
+      @apply whitespace-nowrap px-4 py-2.5 text-sm ml-3;
+      line-height: 1.2;
+    }
+
+    /* Logo */
+    nav .text-2xl {
+      @apply text-xl;
+    }
+
+    /* Theme toggle */
+    nav .theme-toggle-container {
+      @apply ml-2;
+    }
+  }
+
+  /* Surface Pro specific nav fixes */
+  @media (min-width: 1024px) and (max-width: 1280px) {
+    nav .hidden.md\:flex {
+      gap: 0.5rem; /* gap-2 equivalent */
+    }
+
+    nav a {
+      font-size: 14px;
+    }
+
+    nav .btn-primary {
+      font-size: 13px;
+      @apply px-3;
+    }
+  }
+
+  /* Prevent text wrapping in navigation */
+  nav a {
+    @apply whitespace-nowrap;
+  }
+
+  /* Fix mobile menu for tablets */
+  @media (max-width: 1023px) {
+    #mobile-menu {
+      @apply bg-white dark:bg-dark-surface-2;
+    }
+
+    #mobile-menu a {
+      @apply text-base py-3;
+    }
+
+    #mobile-menu .btn-primary {
+      @apply w-full max-w-sm mx-auto mt-4;
+    }
+  }
+
+  /* Ensure nav stays fixed properly */
+  header {
+    @apply fixed top-0 left-0 right-0 z-50;
+  }
+
+  /* Add proper padding to account for fixed header */
+  main {
+    @apply pt-20;
+  }
+
+  /* Large screen adjustments (1367px+) */
+  @media (min-width: 1367px) {
+    nav .container-narrow {
+      @apply max-w-7xl;
+    }
+
+    nav .hidden.md\:flex {
+      gap: 2rem; /* gap-8 equivalent */
+    }
+
+    nav a:not(.btn-primary) {
+      @apply px-4 text-base;
+    }
+  }
+</style>

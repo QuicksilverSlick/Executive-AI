@@ -1,0 +1,30 @@
+---
+import { Icon as AstroIcon } from 'astro-icon/components';
+
+export interface Props {
+  name: string;
+  size?: number | string;
+  class?: string;
+  color?: string;
+  strokeWidth?: number;
+}
+
+const { 
+  name, 
+  size = 24, 
+  class: className = '', 
+  color = 'currentColor',
+  strokeWidth = 2,
+  ...rest 
+} = Astro.props;
+
+// Convert size to string with px if number
+const sizeStr = typeof size === 'number' ? `${size}px` : size;
+---
+
+<AstroIcon
+  name={name}
+  class={`inline-block ${className}`}
+  style={`width: ${sizeStr}; height: ${sizeStr}; color: ${color}; stroke-width: ${strokeWidth};`}
+  {...rest}
+/>

@@ -1,0 +1,421 @@
+---
+/*
+ * DREAMFORGE HIVE-MIND CHAIN OF CUSTODY
+ *
+ * @file-purpose: Modern Voice Agent Widget component with shadcn/ui design
+ * @version: 1.0.0
+ * @init-author: developer-agent
+ * @init-cc-sessionId: cc-unknown-20250802-770
+ * @init-timestamp: 2025-08-02T10:15:00Z
+ * @reasoning:
+ * - **Objective:** Create modern voice agent interface following design system
+ * - **Strategy:** Use new design tokens with smooth animations and accessibility
+ * - **Outcome:** Professional voice widget matching modern AI applications
+ */
+
+export interface Props {
+  class?: string;
+  position?: 'bottom-right' | 'bottom-left' | 'bottom-center';
+  size?: 'sm' | 'md' | 'lg';
+  theme?: 'light' | 'dark' | 'auto';
+}
+
+const { 
+  class: className = '',
+  position = 'bottom-right',
+  size = 'md',
+  theme = 'auto'
+} = Astro.props;
+
+const positionClasses = {
+  'bottom-right': 'bottom-6 right-6',
+  'bottom-left': 'bottom-6 left-6',
+  'bottom-center': 'bottom-6 left-1/2 transform -translate-x-1/2'
+};
+
+const sizeClasses = {
+  sm: 'w-80 max-h-96',
+  md: 'w-96 max-h-[32rem]',
+  lg: 'w-[28rem] max-h-[36rem]'
+};
+---
+
+<div 
+  class={`voice-agent-widget ${positionClasses[position]} ${sizeClasses[size]} ${className}`}
+  data-voice-agent-widget
+  data-theme={theme}
+>
+  <!-- Widget Header -->
+  <div class="card-header">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="voice-status" data-status="connecting">
+          <div class="voice-status-dot"></div>
+          <span id="voice-status-text">Connecting...</span>
+        </div>
+      </div>
+      <button 
+        class="btn-modern btn-ghost btn-sm"
+        id="voice-widget-close"
+        aria-label="Close voice assistant"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Conversation Area -->
+  <div class="card-content">
+    <div 
+      class="conversation-container overflow-y-auto space-y-3 h-64"
+      id="conversation-container"
+      role="log"
+      aria-live="polite"
+      aria-label="Voice conversation"
+    >
+      <!-- Welcome message -->
+      <div class="message-bubble assistant">
+        <p class="text-sm">
+          Hi! I'm your AI voice assistant. Click the microphone to start talking, or type a message below.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio Visualizer -->
+  <div class="px-6 py-2">
+    <div class="audio-visualizer" id="audio-visualizer" aria-hidden="true">
+      <div class="audio-bar" style="height: 4px;"></div>
+      <div class="audio-bar" style="height: 6px;"></div>
+      <div class="audio-bar" style="height: 8px;"></div>
+      <div class="audio-bar" style="height: 6px;"></div>
+      <div class="audio-bar" style="height: 4px;"></div>
+    </div>
+  </div>
+
+  <!-- Input Area -->
+  <div class="card-footer">
+    <div class="flex space-x-2 w-full">
+      <!-- Text Input -->
+      <input
+        type="text"
+        class="input-modern flex-1"
+        placeholder="Type a message..."
+        id="text-input"
+        maxlength="500"
+        aria-label="Type your message"
+      >
+      
+      <!-- Voice Button -->
+      <button
+        class="btn-modern btn-primary btn-md voice-toggle-btn"
+        id="voice-toggle"
+        aria-label="Start voice conversation"
+        data-recording="false"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+        </svg>
+      </button>
+      
+      <!-- Send Button -->
+      <button
+        class="btn-modern btn-outline btn-md"
+        id="send-button"
+        aria-label="Send message"
+        disabled
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Floating Action Button (when widget is closed) -->
+<button
+  class="voice-fab"
+  id="voice-fab"
+  aria-label="Open voice assistant"
+  data-widget-open="false"
+>
+  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+  </svg>
+</button>
+
+<script>
+  /*
+   * Modern Voice Agent Widget JavaScript
+   * Handles UI interactions and state management
+   */
+  
+  class VoiceAgentWidgetUI {
+    constructor() {
+      this.widget = document.querySelector('[data-voice-agent-widget]');
+      this.fab = document.getElementById('voice-fab');
+      this.isOpen = false;
+      this.isRecording = false;
+      this.conversationContainer = document.getElementById('conversation-container');
+      this.textInput = document.getElementById('text-input');
+      this.sendButton = document.getElementById('send-button');
+      this.voiceToggle = document.getElementById('voice-toggle');
+      this.statusElement = document.getElementById('voice-status-text');
+      this.statusContainer = document.querySelector('.voice-status');
+      this.audioVisualizer = document.getElementById('audio-visualizer');
+      
+      this.initializeEventListeners();
+      this.initializeWidget();
+    }
+    
+    initializeWidget() {
+      // Start with widget closed
+      this.closeWidget();
+      
+      // Enable send button when text is entered
+      this.textInput?.addEventListener('input', () => {
+        const hasText = this.textInput.value.trim().length > 0;
+        this.sendButton.disabled = !hasText;
+        this.sendButton.classList.toggle('btn-primary', hasText);
+        this.sendButton.classList.toggle('btn-outline', !hasText);
+      });
+      
+      // Send message on Enter
+      this.textInput?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          this.sendTextMessage();
+        }
+      });
+    }
+    
+    initializeEventListeners() {
+      // FAB click to open widget
+      this.fab?.addEventListener('click', () => this.openWidget());
+      
+      // Close widget
+      document.getElementById('voice-widget-close')?.addEventListener('click', () => this.closeWidget());
+      
+      // Voice toggle
+      this.voiceToggle?.addEventListener('click', () => this.toggleVoiceRecording());
+      
+      // Send button
+      this.sendButton?.addEventListener('click', () => this.sendTextMessage());
+      
+      // Close on escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && this.isOpen) {
+          this.closeWidget();
+        }
+      });
+    }
+    
+    openWidget() {
+      this.isOpen = true;
+      this.widget?.classList.remove('hidden');
+      this.widget?.classList.add('animate-slide-up');
+      this.fab?.classList.add('hidden');
+      this.fab?.setAttribute('data-widget-open', 'true');
+      
+      // Focus the text input
+      setTimeout(() => {
+        this.textInput?.focus();
+      }, 300);
+    }
+    
+    closeWidget() {
+      this.isOpen = false;
+      this.widget?.classList.add('hidden');
+      this.fab?.classList.remove('hidden');
+      this.fab?.setAttribute('data-widget-open', 'false');
+      
+      // Stop recording if active
+      if (this.isRecording) {
+        this.stopVoiceRecording();
+      }
+    }
+    
+    toggleVoiceRecording() {
+      if (this.isRecording) {
+        this.stopVoiceRecording();
+      } else {
+        this.startVoiceRecording();
+      }
+    }
+    
+    startVoiceRecording() {
+      this.isRecording = true;
+      this.voiceToggle?.setAttribute('data-recording', 'true');
+      this.voiceToggle?.classList.add('bg-voice-recording', 'text-white');
+      this.voiceToggle?.classList.remove('btn-primary');
+      
+      // Update button icon to stop icon
+      if (this.voiceToggle) {
+        this.voiceToggle.innerHTML = `
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+          </svg>
+        `;
+      }
+      
+      this.updateStatus('recording', 'Recording...');
+      this.startAudioVisualization();
+      
+      // Dispatch event for voice agent integration
+      window.dispatchEvent(new CustomEvent('voice-recording-start'));
+    }
+    
+    stopVoiceRecording() {
+      this.isRecording = false;
+      this.voiceToggle?.setAttribute('data-recording', 'false');
+      this.voiceToggle?.classList.remove('bg-voice-recording', 'text-white');
+      this.voiceToggle?.classList.add('btn-primary');
+      
+      // Restore microphone icon
+      if (this.voiceToggle) {
+        this.voiceToggle.innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+          </svg>
+        `;
+      }
+      
+      this.updateStatus('processing', 'Processing...');
+      this.stopAudioVisualization();
+      
+      // Dispatch event for voice agent integration
+      window.dispatchEvent(new CustomEvent('voice-recording-stop'));
+    }
+    
+    sendTextMessage() {
+      const message = this.textInput?.value.trim();
+      if (!message) return;
+      
+      this.addMessage(message, 'user');
+      this.textInput.value = '';
+      this.sendButton.disabled = true;
+      this.sendButton.classList.remove('btn-primary');
+      this.sendButton.classList.add('btn-outline');
+      
+      // Show typing indicator
+      this.showTypingIndicator();
+      
+      // Dispatch event for voice agent integration
+      window.dispatchEvent(new CustomEvent('voice-text-message', {
+        detail: { message }
+      }));
+    }
+    
+    addMessage(content, sender, animate = true) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message-bubble ${sender}`;
+      if (animate) {
+        messageDiv.classList.add('animate-slide-up');
+      }
+      
+      const messageContent = document.createElement('p');
+      messageContent.className = 'text-sm';
+      messageContent.textContent = content;
+      messageDiv.appendChild(messageContent);
+      
+      this.conversationContainer?.appendChild(messageDiv);
+      this.scrollToBottom();
+    }
+    
+    showTypingIndicator() {
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'message-bubble typing';
+      typingDiv.id = 'typing-indicator';
+      
+      const typingContent = document.createElement('div');
+      typingContent.className = 'typing-indicator';
+      typingContent.innerHTML = `
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      `;
+      
+      typingDiv.appendChild(typingContent);
+      this.conversationContainer?.appendChild(typingDiv);
+      this.scrollToBottom();
+    }
+    
+    hideTypingIndicator() {
+      document.getElementById('typing-indicator')?.remove();
+    }
+    
+    updateStatus(status, text) {
+      if (this.statusElement) {
+        this.statusElement.textContent = text;
+      }
+      
+      if (this.statusContainer) {
+        this.statusContainer.className = `voice-status ${status}`;
+        this.statusContainer.setAttribute('data-status', status);
+      }
+    }
+    
+    startAudioVisualization() {
+      this.audioVisualizer?.classList.add('active');
+    }
+    
+    stopAudioVisualization() {
+      this.audioVisualizer?.classList.remove('active');
+    }
+    
+    scrollToBottom() {
+      setTimeout(() => {
+        if (this.conversationContainer) {
+          this.conversationContainer.scrollTop = this.conversationContainer.scrollHeight;
+        }
+      }, 100);
+    }
+    
+    // Public API for voice agent integration
+    onConnected() {
+      this.updateStatus('connected', 'Connected');
+    }
+    
+    onDisconnected() {
+      this.updateStatus('error', 'Disconnected');
+    }
+    
+    onMessage(message) {
+      this.hideTypingIndicator();
+      this.addMessage(message, 'assistant');
+    }
+    
+    onError(error) {
+      this.hideTypingIndicator();
+      this.updateStatus('error', 'Error occurred');
+      this.addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+    }
+  }
+  
+  // Initialize when DOM is loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    window.voiceAgentWidget = new VoiceAgentWidgetUI();
+    
+    // Make the widget globally accessible for voice agent integration
+    window.addEventListener('voice-agent-ready', () => {
+      window.voiceAgentWidget?.onConnected();
+    });
+  });
+</script>
+
+<!--
+ * DREAMFORGE AUDIT TRAIL
+ *
+ * ---
+ * @revision: 1.0.0
+ * @author: developer-agent
+ * @cc-sessionId: cc-unknown-20250802-770
+ * @timestamp: 2025-08-02T10:15:00Z
+ * @reasoning:
+ * - **Objective:** Complete voice widget with modern design system
+ * - **Strategy:** Astro component with vanilla JS for broad compatibility
+ * - **Outcome:** Professional voice interface ready for integration
+ -->

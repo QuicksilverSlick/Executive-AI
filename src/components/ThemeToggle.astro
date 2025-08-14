@@ -1,0 +1,139 @@
+---
+import { Icon } from 'astro-icon/components';
+const uniqueId = Math.random().toString(36).substring(7);
+---
+
+<div class="relative theme-toggle-container">
+  <button
+    class="theme-toggle-btn p-2 rounded-lg bg-gray-100 dark:bg-dark-surface-3 hover:bg-gray-200 dark:hover:bg-dark-surface-4 transition-colors"
+    aria-label="Toggle theme"
+    title="Toggle theme"
+    data-toggle-id={uniqueId}
+  >
+    <Icon name="lucide:sun" class="w-5 h-5 text-brand-charcoal dark:text-dark-text-secondary block dark:hidden" />
+    <Icon name="lucide:moon" class="w-5 h-5 text-brand-charcoal dark:text-dark-text-secondary hidden dark:block" />
+  </button>
+  
+  <!-- Dropdown menu -->
+  <div 
+    class="theme-menu hidden absolute right-0 mt-2 w-36 bg-brand-pearl dark:bg-dark-surface-2 rounded-lg shadow-lg border border-gray-200 dark:border-dark-border overflow-hidden z-50"
+    data-menu-id={uniqueId}
+  >
+    <button
+      data-theme="light"
+      class="theme-option w-full px-4 py-2 text-left text-sm text-brand-charcoal dark:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-surface-3 flex items-center gap-3"
+    >
+      <Icon name="lucide:sun" class="w-4 h-4" />
+      <span>Light</span>
+    </button>
+    <button
+      data-theme="dark"
+      class="theme-option w-full px-4 py-2 text-left text-sm text-brand-charcoal dark:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-surface-3 flex items-center gap-3"
+    >
+      <Icon name="lucide:moon" class="w-4 h-4" />
+      <span>Dark</span>
+    </button>
+    <button
+      data-theme="system"
+      class="theme-option w-full px-4 py-2 text-left text-sm text-brand-charcoal dark:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-surface-3 flex items-center gap-3"
+    >
+      <Icon name="lucide:monitor" class="w-4 h-4" />
+      <span>System</span>
+    </button>
+  </div>
+</div>
+
+<script>
+  // Theme management - works with multiple instances
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggleButtons = document.querySelectorAll('.theme-toggle-btn');
+    const themeMenus = document.querySelectorAll('.theme-menu');
+    
+    // Setup each toggle button
+    toggleButtons.forEach(toggle => {
+      const toggleId = toggle.getAttribute('data-toggle-id');
+      const menu = document.querySelector(`[data-menu-id="${toggleId}"]`);
+      
+      // Show/hide menu
+      toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Close all other menus
+        themeMenus.forEach(m => {
+          if (m !== menu) m.classList.add('hidden');
+        });
+        menu?.classList.toggle('hidden');
+      });
+    });
+    
+    // Close menus when clicking outside
+    document.addEventListener('click', (e) => {
+      const target = e.target as Node;
+      const isInsideToggle = Array.from(document.querySelectorAll('.theme-toggle-container')).some(
+        container => container.contains(target)
+      );
+      
+      if (!isInsideToggle) {
+        themeMenus.forEach(menu => menu.classList.add('hidden'));
+      }
+    });
+    
+    // Handle theme selection for all options
+    const allThemeOptions = document.querySelectorAll('.theme-option');
+    allThemeOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        const theme = option.getAttribute('data-theme');
+        if (theme) {
+          setTheme(theme);
+          themeMenus.forEach(menu => menu.classList.add('hidden'));
+          updateActiveTheme();
+        }
+      });
+    });
+    
+    // Set theme
+    function setTheme(theme: string) {
+      if (theme === 'system') {
+        localStorage.removeItem('theme');
+        applyTheme();
+      } else {
+        localStorage.setItem('theme', theme);
+        applyTheme();
+      }
+    }
+    
+    // Apply theme based on preference
+    function applyTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+    
+    // Update active theme indicator
+    function updateActiveTheme() {
+      const currentTheme = localStorage.getItem('theme') || 'system';
+      allThemeOptions.forEach(option => {
+        const theme = option.getAttribute('data-theme');
+        if (theme === currentTheme) {
+          option.classList.add('bg-gray-100', 'dark:bg-dark-surface-3');
+        } else {
+          option.classList.remove('bg-gray-100', 'dark:bg-dark-surface-3');
+        }
+      });
+    }
+    
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (!localStorage.getItem('theme')) {
+        applyTheme();
+      }
+    });
+    
+    // Initialize
+    updateActiveTheme();
+  });
+</script>

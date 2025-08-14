@@ -1,0 +1,70 @@
+---
+/*
+ * DREAMFORGE HIVE-MIND CHAIN OF CUSTODY
+ *
+ * @file-purpose: Astro wrapper for WebRTC voice assistant widget
+ * @version: 1.0.0
+ * @init-author: engineer-agent
+ * @init-cc-sessionId: cc-eng-20250801-003
+ * @init-timestamp: 2025-08-01T15:30:00Z
+ * @reasoning:
+ * - **Objective:** Create Astro component for WebRTC voice assistant
+ * - **Strategy:** Use client:load directive for React component
+ * - **Outcome:** Easy-to-use voice assistant widget for Astro pages
+ */
+
+import WebRTCVoiceAssistant from './WebRTCVoiceAssistant.tsx';
+
+interface Props {
+  position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  theme?: 'auto' | 'light' | 'dark';
+  apiEndpoint?: string;
+  showTranscript?: boolean;
+  enableKeyboardShortcut?: boolean;
+  autoMinimize?: boolean;
+}
+
+const {
+  position = 'bottom-right',
+  theme = 'auto',
+  apiEndpoint = '/api/voice-agent',
+  showTranscript = true,
+  enableKeyboardShortcut = true,
+  autoMinimize = true
+} = Astro.props;
+---
+
+<!-- WebRTC Voice Assistant Widget -->
+<WebRTCVoiceAssistant
+  client:only="react"
+  position={position}
+  theme={theme}
+  apiEndpoint={apiEndpoint}
+  showTranscript={showTranscript}
+  enableKeyboardShortcut={enableKeyboardShortcut}
+  autoMinimize={autoMinimize}
+  onMessage={(message) => {
+    console.log('Voice message:', message);
+    // Track analytics
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'voice_message', {
+        event_category: 'voice_assistant',
+        event_label: message.type,
+        value: message.content.length
+      });
+    }
+  }}
+  onStatusChange={(status) => {
+    console.log('Voice status:', status);
+  }}
+  onError={(error) => {
+    console.error('Voice assistant error:', error);
+    // Track error
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'voice_error', {
+        event_category: 'voice_assistant',
+        event_label: error.message
+      });
+    }
+  }}
+/>

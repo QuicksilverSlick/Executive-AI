@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive AI Training - Preview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-charcoal': '#1D1D1F',
+                        'brand-blue': '#0A2240',
+                        'brand-gold': '#B48628',
+                        'brand-white': '#F9F9F9',
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .text-gradient {
+            background: linear-gradient(to right, #0A2240, #B48628);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .animate-slide-up {
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animation-delay-200 { animation-delay: 200ms; }
+        .animation-delay-400 { animation-delay: 400ms; }
+    </style>
+</head>
+<body class="bg-brand-white text-brand-charcoal">
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-brand-white/95 backdrop-blur-sm border-b border-gray-100">
+        <nav class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <a href="/" class="flex items-center space-x-2">
+                    <span class="text-2xl font-bold text-brand-charcoal">
+                        Executive<span class="text-gradient">AI</span>
+                    </span>
+                </a>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/" class="text-brand-charcoal hover:text-brand-blue transition-colors">Home</a>
+                    <a href="/about" class="text-brand-charcoal hover:text-brand-blue transition-colors">About</a>
+                    <a href="/case-studies" class="text-brand-charcoal hover:text-brand-blue transition-colors">Case Studies</a>
+                    <a href="#schedule" class="inline-flex items-center justify-center px-6 py-3 font-medium rounded-md transition-all duration-200 bg-brand-gold text-white hover:bg-brand-gold/90">
+                        Schedule Strategy Session
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="pt-20">
+        <!-- Hero Section -->
+        <section class="py-16 md:py-24 bg-gradient-to-br from-brand-white to-gray-50">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="max-w-4xl mx-auto text-center">
+                    <h1 class="text-4xl md:text-6xl font-bold text-brand-charcoal mb-6 animate-fade-in">
+                        Stop Falling Behind.
+                        <span class="block text-gradient">Start Dominating.</span>
+                    </h1>
+                    <p class="text-xl md:text-2xl text-gray-700 mb-8 animate-slide-up animation-delay-200">
+                        Our Private Custom AI masterclass gives leaders the decisive competitive edge. 
+                        In weeks, you'll move from AI confusion to complete confidence.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up animation-delay-400">
+                        <button class="inline-flex items-center justify-center px-8 py-4 text-lg font-medium rounded-md transition-all duration-200 bg-brand-gold text-white hover:bg-brand-gold/90">
+                            Schedule Your Custom Strategy Session
+                        </button>
+                        <button class="inline-flex items-center justify-center px-8 py-4 text-lg font-medium rounded-md transition-all duration-200 border-2 border-brand-charcoal text-brand-charcoal hover:bg-brand-charcoal hover:text-white">
+                            Take the 2-minute AI Opportunity Audit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Credibility Bar -->
+        <section class="py-12 bg-white border-y border-gray-100">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-60">
+                    <div class="text-2xl font-bold text-gray-400">QuantumLeap Capital</div>
+                    <div class="text-2xl font-bold text-gray-400">Summit Health Alliance</div>
+                    <div class="text-2xl font-bold text-gray-400">Apex Logistics</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Problem Agitation -->
+        <section class="py-16 md:py-24">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="max-w-3xl mx-auto text-center">
+                    <h2 class="text-3xl md:text-4xl font-bold text-brand-charcoal mb-6">
+                        The Cost of Waiting is Irrelevance.
+                    </h2>
+                    <p class="text-lg text-gray-700 leading-relaxed">
+                        Every day you delay, your competitors are getting faster. They're leveraging AI to capture 
+                        market share that should be yours, making their teams orders of magnitude more productive 
+                        while you're stuck in meetings. This isn't just a technology gap—it's an existential threat.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Value Proposition -->
+        <section class="py-16 md:py-24 bg-gray-50">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="max-w-4xl mx-auto">
+                    <h2 class="text-3xl md:text-4xl font-bold text-brand-charcoal mb-12 text-center">
+                        The AI Dominance Blueprint: Your Path to Mastery.
+                    </h2>
+                    <div class="grid md:grid-cols-3 gap-8">
+                        <div class="bg-white p-8 rounded-lg shadow-sm">
+                            <div class="text-5xl font-bold text-brand-gold mb-4">1</div>
+                            <h3 class="text-xl font-semibold mb-3">Schedule Your AI Strategy Call</h3>
+                            <p class="text-gray-700">
+                                A no-risk, deep-dive into your specific business challenges and opportunities.
+                            </p>
+                        </div>
+                        <div class="bg-white p-8 rounded-lg shadow-sm">
+                            <div class="text-5xl font-bold text-brand-gold mb-4">2</div>
+                            <h3 class="text-xl font-semibold mb-3">Attend Your Custom AI Masterclass</h3>
+                            <p class="text-gray-700">
+                                A personalized education—no generic fluff—focused entirely on your objectives.
+                            </p>
+                        </div>
+                        <div class="bg-white p-8 rounded-lg shadow-sm">
+                            <div class="text-5xl font-bold text-brand-gold mb-4">3</div>
+                            <h3 class="text-xl font-semibold mb-3">Dominate Your Market</h3>
+                            <p class="text-gray-700">
+                                Implement your new strategy with confidence and watch your productivity and profitability soar.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-brand-charcoal text-white">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="md:col-span-2">
+                    <h3 class="text-2xl font-bold mb-4">
+                        Executive<span class="text-brand-gold">AI</span>
+                    </h3>
+                    <p class="text-gray-300 mb-4">
+                        Transform from overwhelmed observer to Master of Synthetic Intelligence™
+                    </p>
+                    <p class="text-sm text-gray-400">
+                        © 2025 Executive AI Training. All rights reserved.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="/about" class="text-gray-300 hover:text-white transition-colors">About</a></li>
+                        <li><a href="/case-studies" class="text-gray-300 hover:text-white transition-colors">Case Studies</a></li>
+                        <li><a href="/contact" class="text-gray-300 hover:text-white transition-colors">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Legal</h4>
+                    <ul class="space-y-2">
+                        <li><a href="/privacy" class="text-gray-300 hover:text-white transition-colors">Privacy Policy</a></li>
+                        <li><a href="/terms" class="text-gray-300 hover:text-white transition-colors">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+</body>
+</html>

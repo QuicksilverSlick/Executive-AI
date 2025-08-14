@@ -1,0 +1,79 @@
+---
+export interface Props {
+  title: string;
+  description: string;
+  ogImage?: string;
+  canonicalURL?: URL;
+  type?: 'website' | 'article';
+  publishedTime?: string;
+  noindex?: boolean;
+  schema?: Record<string, any>;
+}
+
+const {
+  title,
+  description,
+  ogImage = '/og-image.jpg',
+  canonicalURL = new URL(Astro.url.pathname, Astro.site),
+  type = 'website',
+  publishedTime,
+  noindex = false,
+  schema
+} = Astro.props;
+
+const siteTitle = 'Executive AI Training';
+const fullTitle = `${title} | ${siteTitle}`;
+---
+
+<!-- Primary Meta Tags -->
+<title>{fullTitle}</title>
+<meta name="title" content={fullTitle} />
+<meta name="description" content={description} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<!-- Canonical URL -->
+<link rel="canonical" href={canonicalURL} />
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content={type} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={new URL(ogImage, Astro.site)} />
+<meta property="og:site_name" content={siteTitle} />
+{publishedTime && <meta property="article:published_time" content={publishedTime} />}
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:url" content={canonicalURL} />
+<meta property="twitter:title" content={fullTitle} />
+<meta property="twitter:description" content={description} />
+<meta property="twitter:image" content={new URL(ogImage, Astro.site)} />
+
+<!-- Schema.org Structured Data -->
+{schema && (
+  <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+)}
+
+<!-- Default Schema for Organization -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Executive AI Training",
+  "description": "Transform from overwhelmed observer to Master of Synthetic Intelligence™ with our private custom AI masterclass for executives.",
+  "url": "https://executiveaitraining.com",
+  "logo": "https://executiveaitraining.com/logo.png",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+1-XXX-XXX-XXXX",
+    "contactType": "sales",
+    "areaServed": "US",
+    "availableLanguage": "English"
+  },
+  "sameAs": [
+    "https://www.linkedin.com/company/executive-ai-training",
+    "https://twitter.com/executiveai"
+  ]
+}
+</script>

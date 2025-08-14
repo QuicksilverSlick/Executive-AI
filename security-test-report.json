@@ -1,0 +1,183 @@
+{
+  "timestamp": "2025-08-06T21:12:51.338Z",
+  "testDuration": 881,
+  "summary": {
+    "total": 22,
+    "passed": 13,
+    "failed": 4,
+    "warnings": 5,
+    "passRate": 59.09090909090909
+  },
+  "securityMetrics": {
+    "keyExposure": false,
+    "encryptionWorking": false,
+    "ratelimitingActive": false,
+    "signatureValidation": false,
+    "auditLogging": false
+  },
+  "serverAvailable": true,
+  "details": [
+    {
+      "name": "Environment File Exists",
+      "status": "PASS",
+      "details": ".env file found",
+      "severity": "info",
+      "timestamp": 1754514770459
+    },
+    {
+      "name": "Required Environment Variables",
+      "status": "FAIL",
+      "details": "Missing keys: KEY_ENCRYPTION_SECRET",
+      "severity": "info",
+      "timestamp": 1754514770460
+    },
+    {
+      "name": "API Key Format",
+      "status": "WARN",
+      "details": "API key may not be in valid format (should start with sk- and be 40+ chars)",
+      "severity": "info",
+      "timestamp": 1754514770460
+    },
+    {
+      "name": "Security File: src/api/security/keyManager.ts",
+      "status": "PASS",
+      "details": "Implementation file exists",
+      "severity": "info",
+      "timestamp": 1754514770460
+    },
+    {
+      "name": "Security File: src/api/security/envValidator.ts",
+      "status": "PASS",
+      "details": "Implementation file exists",
+      "severity": "info",
+      "timestamp": 1754514770460
+    },
+    {
+      "name": "Security File: src/api/security/secureProxy.ts",
+      "status": "PASS",
+      "details": "Implementation file exists",
+      "severity": "info",
+      "timestamp": 1754514770460
+    },
+    {
+      "name": "Security File: src/api/security/clientSecureWrapper.ts",
+      "status": "PASS",
+      "details": "Implementation file exists",
+      "severity": "info",
+      "timestamp": 1754514770460
+    },
+    {
+      "name": "Server Availability",
+      "status": "PASS",
+      "details": "Server responding (status: 404)",
+      "severity": "info",
+      "timestamp": 1754514770479
+    },
+    {
+      "name": "Secure Token Endpoint",
+      "status": "FAIL",
+      "details": "Endpoint failed: 503 - Service configuration error",
+      "severity": "info",
+      "timestamp": 1754514770560
+    },
+    {
+      "name": "Legacy Token Endpoint",
+      "status": "FAIL",
+      "details": "Old endpoint still exposes raw API keys",
+      "severity": "info",
+      "timestamp": 1754514770983
+    },
+    {
+      "name": "Rate Limiting",
+      "status": "PASS",
+      "details": "Some requests limited (15 failed)",
+      "severity": "info",
+      "timestamp": 1754514771004
+    },
+    {
+      "name": "Request Validation",
+      "status": "PASS",
+      "details": "Invalid requests properly rejected",
+      "severity": "info",
+      "timestamp": 1754514771007
+    },
+    {
+      "name": "Token Encryption",
+      "status": "WARN",
+      "details": "Cannot test encryption - insufficient token samples",
+      "severity": "info",
+      "timestamp": 1754514771320
+    },
+    {
+      "name": "Key Rotation Endpoint",
+      "status": "PASS",
+      "details": "Rotation endpoint not exposed (secure)",
+      "severity": "info",
+      "timestamp": 1754514771322
+    },
+    {
+      "name": "Token Expiration",
+      "status": "PASS",
+      "details": "Token expiration implemented in code (verified by review)",
+      "severity": "info",
+      "timestamp": 1754514771322
+    },
+    {
+      "name": "Monitoring: /api/security/usage",
+      "status": "WARN",
+      "details": "Monitoring endpoint not found",
+      "severity": "info",
+      "timestamp": 1754514771324
+    },
+    {
+      "name": "Monitoring: /api/security/audit",
+      "status": "WARN",
+      "details": "Monitoring endpoint not found",
+      "severity": "info",
+      "timestamp": 1754514771326
+    },
+    {
+      "name": "Monitoring: /api/security/health",
+      "status": "WARN",
+      "details": "Monitoring endpoint not found",
+      "severity": "info",
+      "timestamp": 1754514771327
+    },
+    {
+      "name": "Anomaly Detection",
+      "status": "PASS",
+      "details": "Anomaly detection implemented in code (verified by review)",
+      "severity": "info",
+      "timestamp": 1754514771327
+    },
+    {
+      "name": "Voice Agent Flow",
+      "status": "FAIL",
+      "details": "Cannot get secure token for voice agent",
+      "severity": "info",
+      "timestamp": 1754514771329
+    },
+    {
+      "name": "Web Search Flow",
+      "status": "PASS",
+      "details": "Web search working (1 results)",
+      "severity": "info",
+      "timestamp": 1754514771338
+    },
+    {
+      "name": "Fallback Modes",
+      "status": "PASS",
+      "details": "Fallback modes implemented in secure architecture",
+      "severity": "info",
+      "timestamp": 1754514771338
+    }
+  ],
+  "recommendations": [
+    "Verify encryption implementation is working correctly",
+    "Consider implementing or adjusting rate limiting",
+    "Address all failed tests before deploying to production",
+    "Consider implementing regular API key rotation (every 7 days)",
+    "Set up monitoring and alerting for API key usage anomalies",
+    "Review and test disaster recovery procedures"
+  ]
+}

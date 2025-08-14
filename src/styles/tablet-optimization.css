@@ -1,0 +1,59 @@
+/* Tablet Optimization Styles */
+/* Optimizations for tablet devices (768px - 1024px) */
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Container adjustments */
+  .container-narrow {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  /* Typography scaling */
+  h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+  }
+  
+  h2 {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+  }
+  
+  h3 {
+    font-size: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  /* Grid adjustments */
+  .grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  
+  .md\:grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Button improvements */
+  .btn {
+    padding: 0.875rem 1.5rem;
+    min-height: 48px;
+  }
+
+  /* Navigation improvements */
+  .nav-tablet {
+    padding: 0.5rem 1rem;
+  }
+
+  /* Form elements */
+  input, textarea, select {
+    min-height: 48px;
+    padding: 0.75rem;
+  }
+
+  /* Card spacing */
+  .card-tablet {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+}

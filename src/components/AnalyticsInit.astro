@@ -1,0 +1,162 @@
+---
+// Initialize all analytics tracking
+---
+
+<script>
+  // Initialize tracking on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    // Initialize scroll depth tracking
+    let maxScroll = 0;
+    const thresholds = [25, 50, 75, 90, 100];
+    const trackedThresholds = new Set();
+
+    const handleScroll = () => {
+      const scrollPercent = Math.round(
+        (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100
+      );
+
+      if (scrollPercent > maxScroll) {
+        maxScroll = scrollPercent;
+
+        thresholds.forEach(threshold => {
+          if (scrollPercent >= threshold && !trackedThresholds.has(threshold)) {
+            trackedThresholds.add(threshold);
+            if (window.gtag) {
+              window.gtag('event', 'scroll_depth', {
+                percent_scrolled: threshold,
+                page_title: document.title,
+                page_location: window.location.pathname
+              });
+            }
+          }
+        });
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Initialize time on page tracking
+    const startTime = Date.now();
+    const pagePath = window.location.pathname;
+
+    window.addEventListener('beforeunload', () => {
+      const timeOnPage = Math.round((Date.now() - startTime) / 1000); // in seconds
+      
+      if (window.gtag) {
+        window.gtag('event', 'time_on_page', {
+          time_seconds: timeOnPage,
+          time_minutes: Math.round(timeOnPage / 60),
+          page_path: pagePath
+        });
+      }
+    });
+
+    // Track all CTA clicks
+    const ctaButtons = document.querySelectorAll('.btn-primary, .btn-secondary');
+    ctaButtons.forEach(button => {
+      if (!button.classList.contains('calendly-trigger')) {
+        button.addEventListener('click', (e) => {
+          const btn = e.currentTarget as HTMLElement;
+          const text = btn.textContent?.trim() || 'Unknown';
+          const href = btn.getAttribute('href') || '#';
+          const section = btn.closest('section')?.id || 'unknown';
+          
+          if (window.gtag) {
+            window.gtag('event', 'cta_click', {
+              cta_name: text,
+              cta_location: section,
+              cta_destination: href
+            });
+          }
+        });
+      }
+    });
+
+    // Track case study views
+    const caseStudies = document.querySelectorAll('[data-case-study]');
+    if (caseStudies.length > 0) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const studyName = entry.target.getAttribute('data-case-study') || 'unknown';
+            if (window.gtag) {
+              window.gtag('event', 'content_engagement', {
+                content_type: 'case_study',
+                content_name: studyName,
+                engagement_action: 'view'
+              });
+            }
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.5 });
+
+      caseStudies.forEach(study => observer.observe(study));
+    }
+
+    // Track service card interactions
+    const serviceCards = document.querySelectorAll('[data-service]');
+    serviceCards.forEach(card => {
+      card.addEventListener('click', (e) => {
+        const serviceName = card.getAttribute('data-service') || 'unknown';
+        if (window.gtag) {
+          window.gtag('event', 'content_engagement', {
+            content_type: 'service',
+            content_name: serviceName,
+            engagement_action: 'view'
+          });
+        }
+      });
+    });
+
+    // Track external link clicks
+    const externalLinks = document.querySelectorAll('a[href^="http"]:not([href*="' + window.location.hostname + '"])');
+    externalLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        const href = link.getAttribute('href') || '';
+        if (window.gtag) {
+          window.gtag('event', 'external_link_click', {
+            link_url: href,
+            link_text: link.textContent?.trim() || 'Unknown',
+            link_location: link.closest('section')?.id || 'unknown'
+          });
+        }
+      });
+    });
+
+    // Track video engagement (if any)
+    const videos = document.querySelectorAll('video, iframe[src*="youtube"], iframe[src*="vimeo"]');
+    videos.forEach(video => {
+      if (video.tagName === 'VIDEO') {
+        video.addEventListener('play', () => {
+          if (window.gtag) {
+            window.gtag('event', 'video_play', {
+              video_src: video.getAttribute('src') || 'unknown',
+              video_location: video.closest('section')?.id || 'unknown'
+            });
+          }
+        });
+        
+        video.addEventListener('ended', () => {
+          if (window.gtag) {
+            window.gtag('event', 'video_complete', {
+              video_src: video.getAttribute('src') || 'unknown'
+            });
+          }
+        });
+      }
+    });
+
+    // Enhanced error tracking
+    window.addEventListener('error', (e) => {
+      if (window.gtag) {
+        window.gtag('event', 'javascript_error', {
+          error_message: e.message,
+          error_source: e.filename,
+          error_line: e.lineno,
+          error_column: e.colno
+        });
+      }
+    });
+  });
+</script>

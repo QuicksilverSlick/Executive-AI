@@ -15,10 +15,34 @@ pnpm-debug.log*
 
 # environment variables
 .env
-.env.production
+.env.*
+!.env.example
+!.env.cloudflare.example
+.env.local
+.env.*.local
+*.env.local
 
 # macOS-specific files
 .DS_Store
 
 # jetbrains setting folder
 .idea/
+
+# Security
+.security/
+*.key
+*.pem
+api-keys.txt
+secrets.json
+
+# Logs
+*.log
+dev-server.log
+dev.log
+test.log
+preview.log
+search-server.log
+
+# Sensitive documentation
+docs/openai-security-setup.md
+**/security-audit-report.md

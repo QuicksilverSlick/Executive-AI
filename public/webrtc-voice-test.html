@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Voice Agent Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .connected { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; }
+        #transcript {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 20px;
+            height: 200px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .user { background-color: #e3f2fd; }
+        .assistant { background-color: #f3e5f5; }
+    </style>
+</head>
+<body>
+    <h1>WebRTC Voice Agent Test</h1>
+    
+    <div id="status" class="status info">Initializing...</div>
+    
+    <div style="text-align: center;">
+        <button id="initBtn" onclick="initialize()">Initialize Voice Agent</button>
+        <button id="testBtn" onclick="testResponse()" disabled>Test Response</button>
+        <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+    </div>
+    
+    <div id="transcript">
+        <div class="message info">Click "Initialize Voice Agent" to start...</div>
+    </div>
+    
+    <script type="module">
+        let voiceAgent = null;
+        
+        window.addMessage = function(text, type = 'info') {
+            const transcript = document.getElementById('transcript');
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+            transcript.appendChild(message);
+            transcript.scrollTop = transcript.scrollHeight;
+        }
+        
+        window.updateStatus = function(text, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = text;
+            status.className = `status ${type}`;
+        }
+        
+        window.initialize = async function() {
+            try {
+                updateStatus('Initializing...', 'info');
+                addMessage('Starting initialization...', 'info');
+                
+                // Get token first
+                addMessage('Fetching authentication token...', 'info');
+                const tokenResponse = await fetch('/api/voice-agent/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!tokenResponse.ok) {
+                    throw new Error(`Failed to get token: ${tokenResponse.statusText}`);
+                }
+                
+                const tokenData = await tokenResponse.json();
+                addMessage(`Token received: ${tokenData.session_id}`, 'info');
+                
+                // Import and create voice agent
+                addMessage('Loading WebRTC Voice Agent module...', 'info');
+                const module = await import('/src/lib/voice-agent/webrtc/main.ts');
+                const WebRTCVoiceAgent = module.WebRTCVoiceAgent;
+                
+                voiceAgent = new WebRTCVoiceAgent({
+                    apiEndpoint: '/api/voice-agent',
+                    features: {
+                        continuousListening: true,
+                        autoReconnect: true,
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    }
+                });
+                
+                // Setup event listeners
+                setupEventListeners();
+                
+                // Initialize
+                addMessage('Initializing voice agent...', 'info');
+                await voiceAgent.initialize();
+                
+                updateStatus('Connected - Listening', 'connected');
+                addMessage('Voice agent ready! Start speaking...', 'assistant');
+                
+                // Enable/disable buttons
+                document.getElementById('initBtn').disabled = true;
+                document.getElementById('testBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = false;
+                
+                // Make globally accessible for debugging
+                window.voiceAgent = voiceAgent;
+                
+            } catch (error) {
+                updateStatus('Initialization Failed', 'error');
+                addMessage(`Error: ${error.message}`, 'error');
+                console.error('Initialization error:', error);
+            }
+        }
+        
+        function setupEventListeners() {
+            voiceAgent.on('connectionStateChanged', (state) => {
+                addMessage(`Connection state: ${state}`, 'info');
+                if (state === 'connected') {
+                    updateStatus('Connected - Listening', 'connected');
+                } else if (state === 'disconnected') {
+                    updateStatus('Disconnected', 'error');
+                }
+            });
+            
+            voiceAgent.on('conversationStateChanged', (state) => {
+                addMessage(`Conversation state: ${state}`, 'info');
+                if (state === 'listening') {
+                    updateStatus('Connected - Listening', 'connected');
+                } else if (state === 'processing') {
+                    updateStatus('Processing...', 'info');
+                } else if (state === 'speaking') {
+                    updateStatus('Assistant Speaking', 'info');
+                }
+            });
+            
+            voiceAgent.on('userTranscript', (data) => {
+                addMessage(`You: ${data.text}`, 'user');
+            });
+            
+            voiceAgent.on('assistantTranscript', (data) => {
+                addMessage(`Assistant: ${data.text}`, 'assistant');
+            });
+            
+            voiceAgent.on('speechStarted', () => {
+                addMessage('Speech detected', 'info');
+            });
+            
+            voiceAgent.on('speechEnded', () => {
+                addMessage('Speech ended', 'info');
+            });
+            
+            voiceAgent.on('playbackStarted', () => {
+                addMessage('Assistant speaking...', 'info');
+            });
+            
+            voiceAgent.on('playbackFinished', () => {
+                addMessage('Assistant finished speaking', 'info');
+            });
+            
+            voiceAgent.on('error', (error) => {
+                addMessage(`Error: ${error.message}`, 'error');
+                console.error('Voice agent error:', error);
+            });
+            
+            // Monitor connection events
+            if (voiceAgent.connection) {
+                voiceAgent.connection.on('realtimeEvent', (event) => {
+                    console.log('Realtime event:', event);
+                    
+                    // Log specific important events
+                    if (event.type === 'session.created') {
+                        addMessage('Session created with OpenAI', 'info');
+                    } else if (event.type === 'input_audio_buffer.speech_started') {
+                        addMessage('OpenAI detected speech start', 'info');
+                    } else if (event.type === 'input_audio_buffer.speech_stopped') {
+                        addMessage('OpenAI detected speech stop', 'info');
+                    } else if (event.type === 'response.audio_transcript.done') {
+                        addMessage('Transcript received from OpenAI', 'info');
+                    }
+                });
+                
+                voiceAgent.connection.on('audioTrack', (stream) => {
+                    addMessage('Audio track received from OpenAI!', 'info');
+                    console.log('Audio stream:', stream);
+                });
+            }
+        }
+        
+        window.testResponse = function() {
+            if (voiceAgent && voiceAgent.testResponse) {
+                addMessage('Triggering test response...', 'info');
+                voiceAgent.testResponse();
+            }
+        }
+        
+        window.disconnect = async function() {
+            if (voiceAgent) {
+                addMessage('Disconnecting...', 'info');
+                await voiceAgent.disconnect();
+                updateStatus('Disconnected', 'info');
+                
+                // Reset buttons
+                document.getElementById('initBtn').disabled = false;
+                document.getElementById('testBtn').disabled = true;
+                document.getElementById('disconnectBtn').disabled = true;
+            }
+        }
+    </script>
+</body>
+</html>

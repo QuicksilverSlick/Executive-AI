@@ -1,0 +1,55 @@
+---
+import { Image } from 'astro:assets';
+
+export interface Props {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  loading?: 'lazy' | 'eager';
+  priority?: boolean;
+  class?: string;
+  sizes?: string;
+  densities?: number[];
+}
+
+const {
+  src,
+  alt,
+  width,
+  height,
+  loading = 'lazy',
+  priority = false,
+  class: className,
+  sizes = '100vw',
+  densities = [1, 2],
+} = Astro.props;
+
+// For priority images, use eager loading
+const imageLoading = priority ? 'eager' : loading;
+---
+
+<Image
+  src={src}
+  alt={alt}
+  width={width}
+  height={height}
+  loading={imageLoading}
+  decoding={priority ? 'sync' : 'async'}
+  class={className}
+  sizes={sizes}
+  densities={densities}
+  format="webp"
+  quality={85}
+/>
+
+<noscript>
+  <img
+    src={src}
+    alt={alt}
+    width={width}
+    height={height}
+    loading={imageLoading}
+    class={className}
+  />
+</noscript>

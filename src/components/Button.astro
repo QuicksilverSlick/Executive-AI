@@ -1,0 +1,105 @@
+---
+/*
+ * DREAMFORGE HIVE-MIND CHAIN OF CUSTODY - ENHANCED
+ *
+ * @file-purpose: Modern Button component using new design system
+ * @version: 2.0.0
+ * @init-author: developer-agent
+ * @init-cc-sessionId: cc-unknown-20250802-770
+ * @init-timestamp: 2025-08-02T10:30:00Z
+ * @reasoning:
+ * - **Objective:** Upgrade button component with modern design system
+ * - **Strategy:** Use new btn-modern classes with improved variants
+ * - **Outcome:** Consistent buttons across application
+ */
+
+import Icon from './Icon.astro';
+
+export interface Props {
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
+  href?: string;
+  size?: 'sm' | 'md' | 'lg';
+  class?: string;
+  target?: string;
+  rel?: string;
+  icon?: string;
+  iconPosition?: 'left' | 'right';
+  disabled?: boolean;
+  loading?: boolean;
+}
+
+const { 
+  variant = 'primary', 
+  href, 
+  size = 'md',
+  class: className = '',
+  target,
+  rel,
+  icon,
+  iconPosition = 'left',
+  disabled = false,
+  loading = false,
+  ...attrs 
+} = Astro.props;
+
+const variants = {
+  primary: 'btn-primary',
+  secondary: 'btn-secondary',
+  outline: 'btn-outline',
+  ghost: 'btn-ghost',
+  destructive: 'btn-destructive'
+};
+
+const sizes = {
+  sm: 'btn-sm',
+  md: 'btn-md',
+  lg: 'btn-lg'
+};
+
+const iconSizes = {
+  sm: 16,
+  md: 20,
+  lg: 24
+};
+
+const classes = `btn-modern ${variants[variant]} ${sizes[size]} ${className}`.trim();
+
+const Component = href ? 'a' : 'button';
+---
+
+<Component 
+  class={classes} 
+  href={href}
+  target={target}
+  rel={rel}
+  disabled={disabled || loading}
+  {...attrs}
+>
+  {loading && (
+    <svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+  )}
+  {!loading && icon && iconPosition === 'left' && (
+    <Icon name={icon} size={iconSizes[size]} class="mr-2" />
+  )}
+  <slot />
+  {!loading && icon && iconPosition === 'right' && (
+    <Icon name={icon} size={iconSizes[size]} class="ml-2" />
+  )}
+</Component>
+
+<!--
+ * DREAMFORGE AUDIT TRAIL
+ *
+ * ---
+ * @revision: 2.0.0
+ * @author: developer-agent
+ * @cc-sessionId: cc-unknown-20250802-770
+ * @timestamp: 2025-08-02T10:30:00Z
+ * @reasoning:
+ * - **Objective:** Enhanced button with loading states and new variants
+ * - **Strategy:** Modern design system integration with accessibility
+ * - **Outcome:** Professional button component ready for use
+ -->

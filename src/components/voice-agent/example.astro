@@ -1,0 +1,199 @@
+---
+/*
+ * DREAMFORGE HIVE-MIND CHAIN OF CUSTODY
+ *
+ * @file-purpose: Example integration of voice assistant widget
+ * @version: 1.0.0
+ * @init-author: real-time-ui-agent
+ * @init-cc-sessionId: cc-ui-20250801-001
+ * @init-timestamp: 2025-08-01T04:26:00Z
+ * @reasoning:
+ * - **Objective:** Demonstrate voice assistant integration in Astro
+ * - **Strategy:** Complete example with proper imports and configuration
+ * - **Outcome:** Working example for developers to reference
+ */
+
+import VoiceAssistantWidget from './VoiceAssistantWidget.astro';
+---
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Assistant Example - AI Masterclass</title>
+  
+  <!-- Include Tailwind CSS -->
+  <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+  
+  <!-- Include voice assistant styles -->
+  <link rel="stylesheet" href="/src/components/voice-agent/voice-assistant.css">
+  
+  <!-- Theme script for proper dark/light mode -->
+  <script is:inline>
+    // Simple theme detection
+    if (localStorage.theme === 'dark' || (!localStorage.theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
+</head>
+
+<body class="min-h-screen bg-gray-50 dark:bg-dark-base text-gray-900 dark:text-dark-text">
+  <!-- Header -->
+  <header class="bg-white dark:bg-dark-surface-2 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-6">
+        <div class="flex items-center">
+          <h1 class="text-2xl font-bold text-brand-navy dark:text-dark-text">
+            AI Masterclass
+          </h1>
+        </div>
+        
+        <!-- Theme Toggle -->
+        <button 
+          id="theme-toggle"
+          class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-surface-3 transition-colors"
+          aria-label="Toggle theme"
+        >
+          <svg class="w-5 h-5 hidden dark:block" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
+          </svg>
+          <svg class="w-5 h-5 block dark:hidden" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="text-center mb-12">
+      <h2 class="text-4xl font-bold text-brand-navy dark:text-dark-text mb-4">
+        Voice Assistant Demo
+      </h2>
+      <p class="text-xl text-gray-600 dark:text-dark-text-secondary max-w-2xl mx-auto">
+        Experience our AI-powered voice assistant. Click the floating button in the bottom-right corner to start a conversation.
+      </p>
+    </div>
+
+    <!-- Demo Cards -->
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+      <!-- Feature Card 1 -->
+      <div class="bg-white dark:bg-dark-surface-2 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+        <div class="w-12 h-12 bg-accent-gold rounded-lg flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-brand-navy dark:text-dark-text mb-2">
+          Voice Recognition
+        </h3>
+        <p class="text-gray-600 dark:text-dark-text-secondary">
+          Advanced speech recognition with real-time transcription and high accuracy.
+        </p>
+      </div>
+
+      <!-- Feature Card 2 -->
+      <div class="bg-white dark:bg-dark-surface-2 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+        <div class="w-12 h-12 bg-accent-sky rounded-lg flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-brand-navy dark:text-dark-text mb-2">
+          Audio Visualization
+        </h3>
+        <p class="text-gray-600 dark:text-dark-text-secondary">
+          Real-time waveform visualization with multiple display modes and animations.
+        </p>
+      </div>
+
+      <!-- Feature Card 3 -->
+      <div class="bg-white dark:bg-dark-surface-2 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+        <div class="w-12 h-12 bg-accent-emerald rounded-lg flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-brand-navy dark:text-dark-text mb-2">
+          Conversation History
+        </h3>
+        <p class="text-gray-600 dark:text-dark-text-secondary">
+          Complete transcript of your conversation with timestamps and metadata.
+        </p>
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="bg-gradient-to-r from-accent-gold/10 to-brand-gold-warm/10 border border-accent-gold/20 rounded-xl p-8 text-center">
+      <h3 class="text-2xl font-semibold text-brand-navy dark:text-dark-text mb-4">
+        How to Use the Voice Assistant
+      </h3>
+      <div class="grid md:grid-cols-2 gap-6 text-left">
+        <div>
+          <h4 class="font-semibold text-brand-navy dark:text-dark-text mb-2">Getting Started</h4>
+          <ul class="space-y-2 text-gray-600 dark:text-dark-text-secondary">
+            <li>• Click the floating microphone button</li>
+            <li>• Allow microphone permissions when prompted</li>
+            <li>• Start speaking your question</li>
+            <li>• View the response in the transcript</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-semibold text-brand-navy dark:text-dark-text mb-2">Keyboard Shortcuts</h4>
+          <ul class="space-y-2 text-gray-600 dark:text-dark-text-secondary">
+            <li>• <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-dark-surface-3 rounded text-xs">Space</kbd> - Push to talk</li>
+            <li>• <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-dark-surface-3 rounded text-xs">Escape</kbd> - Close panel</li>
+            <li>• <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-dark-surface-3 rounded text-xs">Ctrl+M</kbd> - Mute/unmute</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Voice Assistant Widget -->
+  <VoiceAssistantWidget 
+    position="bottom-right"
+    theme="auto"
+    apiEndpoint="/api/voice-assistant"
+    showTranscript={true}
+    enableKeyboardShortcut={true}
+    autoMinimize={true}
+  />
+
+  <!-- Theme Toggle Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const themeToggle = document.getElementById('theme-toggle');
+      
+      themeToggle?.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.contains('dark');
+        
+        if (isDark) {
+          document.documentElement.classList.remove('dark');
+          localStorage.theme = 'light';
+        } else {
+          document.documentElement.classList.add('dark');
+          localStorage.theme = 'dark';
+        }
+      });
+    });
+  </script>
+
+  <!-- Analytics Script (optional) -->
+  <script>
+    // Track voice assistant usage
+    window.addEventListener('load', () => {
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'voice_assistant_page_view', {
+          event_category: 'engagement',
+          event_label: 'voice_demo_page'
+        });
+      }
+    });
+  </script>
+</body>
+</html>

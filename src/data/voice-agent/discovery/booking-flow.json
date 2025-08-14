@@ -1,0 +1,271 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-08-01T06:00:00Z",
+    "description": "Complete discovery call booking flow with qualification and scheduling logic",
+    "contextForAI": "Use this flow to guide prospects through qualification and scheduling. Always prioritize high-quality leads and ensure proper preparation for Russell's time."
+  },
+
+  "bookingFlow": {
+    "stages": [
+      {
+        "stage": "interest_identification",
+        "name": "Interest Identification",
+        "objective": "Determine if prospect is genuinely interested in discovery call",
+        "triggers": [
+          "User asks about scheduling",
+          "User shows interest in services",
+          "User requests consultation",
+          "User asks about next steps"
+        ],
+        "script": "I'd be happy to help you schedule a 15-minute discovery call with Russell. This complimentary session is designed specifically for executives who want strategic clarity on AI opportunities.\n\nBefore we schedule, let me make sure this is the right fit. What specifically interests you about the discovery call?",
+        "qualifiers": [
+          "Genuine interest in AI strategy (not just curiosity)",
+          "Executive-level decision making authority",
+          "Specific business challenge or opportunity",
+          "Timeline for AI initiatives within 12 months"
+        ],
+        "nextStage": "qualification"
+      },
+      
+      {
+        "stage": "qualification",
+        "name": "Lead Qualification",
+        "objective": "Ensure prospect meets criteria for Russell's time investment",
+        "questions": [
+          {
+            "id": "role_authority",
+            "question": "What's your role in the company?",
+            "purpose": "Assess decision-making authority",
+            "qualifyingAnswers": ["CEO", "CTO", "COO", "CMO", "President", "VP", "Owner", "Founder"],
+            "disqualifyingAnswers": ["Manager", "Analyst", "Consultant", "Student"],
+            "followUp": "Perfect - as [role], you have the strategic perspective that makes these discussions most valuable."
+          },
+          {
+            "id": "company_size",
+            "question": "What's the size of your company in terms of revenue or employees?",
+            "purpose": "Ensure company size matches program value",
+            "qualifyingThresholds": {
+              "revenue": "$5M+",
+              "employees": "50+"
+            },
+            "followUp": "That's exactly the type of organization where strategic AI planning creates significant competitive advantage."
+          },
+          {
+            "id": "industry_context",
+            "question": "What industry are you in?",
+            "purpose": "Understand industry context and challenges",
+            "followUp": "Excellent - I have several success stories from [industry] that Russell will be able to share with you.",
+            "industrySpecificPrep": true
+          },
+          {
+            "id": "ai_motivation",
+            "question": "What's driving your interest in AI strategy right now?",
+            "purpose": "Understand motivation and urgency",
+            "qualifyingIndicators": [
+              "Competitive pressure",
+              "Board or investor pressure",
+              "Failed pilots or initiatives",
+              "Growth opportunities",
+              "Operational efficiency needs",
+              "Digital transformation"
+            ],
+            "followUp": "That's exactly the type of [challenge/opportunity] where strategic AI planning makes the biggest impact."
+          },
+          {
+            "id": "timeline",
+            "question": "What's your timeline for making decisions about AI strategy?",
+            "purpose": "Assess buying timeline and urgency",
+            "qualifyingAnswers": ["Immediate", "Next 30 days", "Next quarter", "This year"],
+            "disqualifyingAnswers": ["No timeline", "Just exploring", "Maybe next year"],
+            "followUp": "That timeline makes sense for strategic AI planning - it gives us time to develop a comprehensive approach."
+          },
+          {
+            "id": "budget_authority",
+            "question": "Do you typically make decisions about strategic investments like executive training, or are others involved?",
+            "purpose": "Understand decision-making process",
+            "qualifyingAnswers": ["I make the decision", "I recommend and have influence", "I'm part of the decision team"],
+            "followUp": "Great - having decision-making authority or strong influence ensures we can move forward effectively if there's a good fit."
+          }
+        ],
+        "scoringCriteria": {
+          "mustHave": [
+            "Executive-level role",
+            "Company size $5M+ revenue",
+            "Timeline within 12 months",
+            "Decision-making authority or influence"
+          ],
+          "preferred": [
+            "Current AI challenges or failed initiatives",
+            "Competitive pressure or board pressure",
+            "Immediate or near-term timeline",
+            "Direct decision-making authority"
+          ]
+        },
+        "nextStage": "scheduling"
+      },
+      
+      {
+        "stage": "scheduling",
+        "name": "Calendar Scheduling",
+        "objective": "Schedule the discovery call at optimal time for both parties",
+        "script": "Based on what you've shared, I think Russell will be able to provide significant value in your 15-minute discovery call. Let me help you find the perfect time.\n\nThe call will cover:\n✅ Quick assessment of your AI readiness\n✅ 2-3 specific recommendations for your situation\n✅ Clear next steps for implementation\n✅ Understanding of potential ROI and timeline\n\nWhat time preferences work best for your schedule?",
+        
+        "timePreferences": [
+          {
+            "preference": "morning",
+            "slots": "8:00 AM - 11:00 AM Eastern",
+            "benefits": "Great for strategic thinking when your mind is fresh",
+            "script": "Morning calls work excellently for strategic discussions. Russell typically has availability between 8 AM and 11 AM Eastern Time."
+          },
+          {
+            "preference": "afternoon", 
+            "slots": "1:00 PM - 4:00 PM Eastern",
+            "benefits": "Allows time to review materials beforehand",
+            "script": "Afternoon works perfectly. Russell often has availability between 1 PM and 4 PM Eastern Time."
+          },
+          {
+            "preference": "evening",
+            "slots": "5:00 PM - 7:00 PM Eastern",
+            "benefits": "Good for West Coast executives and end-of-day planning",
+            "script": "Evening calls can work well. Russell sometimes has availability between 5 PM and 7 PM Eastern Time."
+          }
+        ],
+        
+        "timezoneHandling": {
+          "question": "What timezone are you in?",
+          "conversions": {
+            "PST/PDT": "I'll convert that to your Pacific time",
+            "CST/CDT": "Perfect - I'll show you Central time options",
+            "MST/MDT": "I'll adjust for Mountain time",
+            "EST/EDT": "Great - same timezone as Russell"
+          }
+        },
+        
+        "calendlyIntegration": {
+          "trigger": "Once time preference and timezone are established",
+          "script": "Perfect! I'm opening Russell's calendar for you now. You'll be able to select the exact time that works best, and the system will automatically send confirmation details.\n\nAfter you book, you'll receive:\n• Calendar invite with dial-in information\n• Brief preparation guide (optional but helpful)\n• Russell's background and relevant case studies for your industry\n\nThe scheduling link should open in a new window. Do you see it?",
+          "fallback": "If you don't see the scheduling window, I can send the link directly to your email. What's your email address?"
+        },
+        
+        "nextStage": "confirmation"
+      },
+      
+      {
+        "stage": "confirmation",
+        "name": "Booking Confirmation",
+        "objective": "Confirm booking details and set expectations",
+        "script": "Excellent! I can see you've selected [day] at [time]. Russell is looking forward to speaking with you.\n\nYou should receive a confirmation email within the next few minutes with all the details. If you don't see it, please check your spam folder.\n\nTo make the most of your 15 minutes, I recommend:\n• Having your main AI challenge or opportunity in mind\n• Being ready to discuss your industry and business context\n• Thinking about your timeline for AI initiatives\n\nIs there anything specific you'd like Russell to focus on during the call?",
+        
+        "preparation": {
+          "optional": "The preparation guide I'm sending is optional but helpful",
+          "specific": "If you have specific questions or challenges you'd like to discuss, feel free to include them in the calendar invite notes",
+          "materials": "I'll also send a brief overview of Russell's background and some relevant case studies from your industry"
+        },
+        
+        "followUpActions": [
+          "Send confirmation email with call details",
+          "Add prospect to CRM with qualification notes",
+          "Send preparation materials if requested",
+          "Alert Russell to prospect's specific situation and interests",
+          "Schedule follow-up reminder 24 hours before call"
+        ],
+        
+        "nextStage": "pre_call_nurture"
+      },
+      
+      {
+        "stage": "pre_call_nurture",
+        "name": "Pre-Call Nurturing",
+        "objective": "Maintain engagement and ensure call attendance",
+        "timeline": {
+          "immediate": "Confirmation email and preparation materials",
+          "24_hours_before": "Reminder email with agenda and dial-in details",
+          "2_hours_before": "Final reminder with any last-minute preparation suggestions"
+        },
+        
+        "content": {
+          "confirmation_email": {
+            "subject": "Your Discovery Call with Russell Deming - [Date] at [Time]",
+            "content": "Thank you for scheduling your 15-minute AI strategy discovery call with Russell Deming.\n\n**Call Details:**\n• Date: [Date]\n• Time: [Time] [Timezone]\n• Duration: 15 minutes\n• Format: [Phone/Video]\n\n**What to Expect:**\n• Quick assessment of your AI readiness\n• 2-3 specific recommendations for your situation\n• Clear next steps for implementation\n• Understanding of potential ROI and timeline\n\n**To Prepare (Optional):**\n• Think about your main AI challenge or opportunity\n• Consider your timeline for AI initiatives\n• Review the attached industry-specific case studies\n\nLooking forward to our conversation!\n\nBest regards,\nRussell's AI Assistant"
+          },
+          
+          "reminder_24h": {
+            "subject": "Tomorrow: Your AI Strategy Call with Russell Deming",
+            "content": "This is a friendly reminder about your 15-minute discovery call with Russell Deming tomorrow.\n\n**Call Details:**\n• Time: [Time] [Timezone] \n• Dial-in: [Phone] or [Video Link]\n\n**Quick Prep (2 minutes):**\n• What's your #1 AI challenge or opportunity?\n• What's driving your interest in AI now?\n• What timeline are you working with?\n\nRussell is looking forward to providing valuable insights for your specific situation.\n\nSee you tomorrow!"
+          }
+        }
+      }
+    ],
+    
+    "disqualificationHandling": {
+      "respectful_decline": "I appreciate your interest in our programs. Based on what you've shared, our Executive AI Masterclass might not be the perfect fit right now.",
+      
+      "alternative_offerings": {
+        "ai_audit": "However, our AI Opportunity Audit might be perfect for your situation. It's a quick 2-minute assessment that identifies your biggest AI opportunities with no commitment required.",
+        "resources": "I can also send you some valuable resources about AI strategy that might be helpful as you explore your options.",
+        "future_contact": "Feel free to reach out again when your situation changes - we're always here to help."
+      },
+      
+      "common_disqualifiers": {
+        "too_small": "For companies under $5M revenue, we typically recommend starting with our free resources and the AI Opportunity Audit",
+        "no_authority": "For individual contributors, our public resources and webinars might be more appropriate than executive-level consulting",
+        "no_timeline": "When you have a clearer timeline for AI initiatives, we'd be happy to discuss how we can help",
+        "just_curious": "For general AI education, I'd recommend our blog and free resources as a great starting point"
+      }
+    }
+  },
+
+  "qualificationScoring": {
+    "methodology": "Weighted scoring system with must-have criteria and preferred attributes",
+    
+    "weights": {
+      "role_authority": 25,
+      "company_size": 20,
+      "timeline": 20,
+      "motivation": 15,
+      "decision_authority": 10,
+      "budget_indication": 10
+    },
+    
+    "thresholds": {
+      "highly_qualified": 80,
+      "qualified": 65,
+      "marginally_qualified": 50,
+      "not_qualified": 49
+    },
+    
+    "actions": {
+      "highly_qualified": "Schedule immediately, alert Russell to high-value prospect",
+      "qualified": "Schedule normally with standard preparation",
+      "marginally_qualified": "Schedule but with lower priority, additional qualification during call",
+      "not_qualified": "Politely decline and offer alternative resources"
+    }
+  },
+
+  "integration": {
+    "calendly": {
+      "url": "https://calendly.com/russell-deming/15min-discovery",
+      "parameters": {
+        "prefill_name": true,
+        "prefill_email": true,
+        "embed_domain": "executiveaitraining.com",
+        "hide_event_type_details": false
+      }
+    },
+    
+    "crm": {
+      "lead_capture": "All qualified prospects automatically added to CRM",
+      "qualification_notes": "Include all qualification responses and scoring",
+      "follow_up_tasks": "Automatic tasks created for pre-call preparation",
+      "pipeline_stage": "Discovery Call Scheduled"
+    },
+    
+    "email_automation": {
+      "confirmation": "Immediate send upon booking",
+      "preparation": "Send within 1 hour of booking", 
+      "reminder_24h": "Automated 24 hours before call",
+      "reminder_2h": "Automated 2 hours before call"
+    }
+  }
+}

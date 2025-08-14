@@ -1,0 +1,150 @@
+---
+export interface Props {
+  class?: string;
+  animate?: 'fade' | 'slide' | 'scale';
+  delay?: number;
+  id?: string;
+}
+
+const { class: className = '', animate = 'fade', delay = 0, id } = Astro.props;
+
+const animationClass = {
+  fade: 'animate-fade',
+  slide: 'animate-slide',
+  scale: 'animate-scale'
+}[animate];
+---
+
+<div 
+  class={`animated-section opacity-0 ${animationClass} ${className}`}
+  data-delay={delay}
+  id={id}
+>
+  <slot />
+</div>
+
+<style>
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  .animate-fade {
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+  
+  .animate-slide {
+    animation: slideIn 0.8s ease-out forwards;
+  }
+  
+  .animate-scale {
+    animation: scaleIn 0.8s ease-out forwards;
+  }
+  
+  .animated-section {
+    animation-play-state: paused;
+  }
+  
+  /* Mobile-first approach: ensure content is visible */
+  @media (max-width: 768px) {
+    .animated-section {
+      opacity: 1 !important;
+      animation: none !important;
+    }
+  }
+  
+  /* Fallback for reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    .animated-section {
+      opacity: 1 !important;
+      animation: none !important;
+    }
+  }
+  
+  /* Ensure content is visible when JS is disabled */
+  .no-js .animated-section {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+</style>
+
+<script>
+  // Only run animations on desktop or high-performance devices
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const animatedSections = document.querySelectorAll('.animated-section');
+  
+  if (!isMobile && window.innerWidth > 768) {
+    // Desktop animation logic
+    const observerOptions = {
+      threshold: 0.01,
+      rootMargin: '50px 0px 50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const delay = entry.target.dataset.delay || 0;
+          setTimeout(() => {
+            entry.target.style.animationPlayState = 'running';
+          }, delay * 1000);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+    
+    if ('IntersectionObserver' in window) {
+      animatedSections.forEach(section => {
+        observer.observe(section);
+      });
+    } else {
+      // Fallback for old browsers
+      animatedSections.forEach(section => {
+        section.style.opacity = '1';
+        section.style.animationPlayState = 'running';
+      });
+    }
+  } else {
+    // Mobile: Show all content immediately without animations
+    animatedSections.forEach(section => {
+      section.style.opacity = '1';
+      section.classList.remove('animate-fade', 'animate-slide', 'animate-scale');
+    });
+  }
+  
+  // Safety net: ensure all content is visible after page load
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      animatedSections.forEach(section => {
+        if (window.getComputedStyle(section).opacity === '0') {
+          section.style.opacity = '1';
+        }
+      });
+    }, 1000);
+  });
+</script>

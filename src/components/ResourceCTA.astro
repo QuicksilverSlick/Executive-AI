@@ -1,0 +1,56 @@
+---
+import Button from './Button.astro';
+import AnimatedSection from './AnimatedSection.astro';
+import Icon from './Icon.astro';
+---
+
+<section class="section-padding bg-gradient-to-br from-brand-charcoal to-gray-900 dark:from-dark-surface-2 dark:to-dark-surface text-white">
+  <div class="container-narrow">
+    <AnimatedSection animate="scale">
+      <div class="max-w-4xl mx-auto text-center">
+        <div class="mb-8">
+          <span class="inline-block bg-brand-gold dark:bg-accent-gold text-brand-charcoal dark:text-dark-base px-4 py-1 rounded-full text-sm font-semibold mb-4">
+            FREE RESOURCES
+          </span>
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">
+            Get $4,700 Worth of AI Resources—Free
+          </h2>
+          <p class="text-xl text-gray-300 dark:text-dark-text-secondary mb-8 px-4 sm:px-0">
+            The same tools and templates we use in our $15,000 masterclass. 
+            Instant access to assessments, playbooks, and ROI calculators.
+          </p>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-6 mb-8">
+          <div class="bg-white/10 dark:bg-dark-surface-3/70 rounded-lg p-4 border border-white/20 dark:border-dark-border">
+            <Icon name="lucide:bar-chart-3" class="w-8 h-8 text-brand-gold dark:text-accent-gold mb-2" />
+            <h3 class="font-semibold mb-1 text-white">AI Readiness Assessment</h3>
+            <p class="text-sm text-gray-300 dark:text-dark-text-tertiary">50-point evaluation tool</p>
+          </div>
+          <div class="bg-white/10 dark:bg-dark-surface-3/70 rounded-lg p-4 border border-white/20 dark:border-dark-border">
+            <Icon name="lucide:book-open" class="w-8 h-8 text-brand-gold dark:text-accent-gold mb-2" />
+            <h3 class="font-semibold mb-1 text-white">Executive AI Playbook</h3>
+            <p class="text-sm text-gray-300 dark:text-dark-text-tertiary">47-page implementation guide</p>
+          </div>
+          <div class="bg-white/10 dark:bg-dark-surface-3/70 rounded-lg p-4 border border-white/20 dark:border-dark-border">
+            <Icon name="lucide:calculator" class="w-8 h-8 text-brand-gold dark:text-accent-gold mb-2" />
+            <h3 class="font-semibold mb-1 text-white">ROI Calculator</h3>
+            <p class="text-sm text-gray-300 dark:text-dark-text-tertiary">Calculate your AI savings</p>
+          </div>
+        </div>
+        
+        <Button 
+          href="/resources" 
+          size="lg" 
+          class="!bg-brand-gold !text-brand-charcoal hover:!bg-brand-gold-warm w-full sm:w-auto"
+        >
+          Get Free Resources Now
+        </Button>
+        
+        <p class="text-sm text-gray-400 dark:text-dark-text-muted mt-4">
+          No credit card required • Instant access • 2,847 executives already downloaded
+        </p>
+      </div>
+    </AnimatedSection>
+  </div>
+</section>

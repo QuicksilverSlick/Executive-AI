@@ -1,0 +1,625 @@
+/*
+ * DREAMFORGE HIVE-MIND CHAIN OF CUSTODY
+ *
+ * @file-purpose: Additional CSS utilities and animations for voice assistant
+ * @version: 1.1.0
+ * @init-author: real-time-ui-agent
+ * @init-cc-sessionId: cc-ui-20250801-001
+ * @init-timestamp: 2025-08-01T04:26:00Z
+ * @reasoning:
+ * - **Objective:** Supplementary CSS for enhanced voice assistant styling
+ * - **Strategy:** Custom animations and utility classes for smooth UX
+ * - **Outcome:** Professional polish with consistent animations and effects
+ */
+
+/*
+ * DREAMFORGE AUDIT TRAIL
+ *
+ * ---
+ * @revision: 1.1.0
+ * @author: developer-agent
+ * @cc-sessionId: cc-unknown-20250803-812
+ * @timestamp: 2025-08-03T22:06:00Z
+ * @reasoning:
+ * - **Objective:** Add comprehensive accessibility CSS classes and viewport bounds handling
+ * - **Strategy:** Implement WCAG 2.1 AA compliant styles and responsive positioning
+ * - **Outcome:** Full accessibility support with high contrast, large targets, and viewport containment
+ * 
+ * CRITICAL ENHANCEMENTS APPLIED:
+ * - ADDED: High contrast mode classes with proper color contrast ratios (7:1)
+ * - ADDED: Large click target sizing for improved accessibility 
+ * - ADDED: Reduced motion classes to disable animations when requested
+ * - ADDED: Screen reader optimization classes and focus indicators
+ * - ADDED: Viewport bounds handling classes for settings expansion
+ * - ADDED: Font size override capabilities for accessibility scaling
+ * - ENHANCED: Focus visible styles with 3px outline for WCAG compliance
+ */
+
+/* Voice Assistant Widget Base Styles */
+.voice-assistant-widget {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --voice-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --voice-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --voice-shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Smooth Transitions */
+.voice-transition {
+  transition: var(--voice-transition);
+}
+
+.voice-transition-fast {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.voice-transition-slow {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enhanced Shadows */
+.voice-shadow {
+  box-shadow: var(--voice-shadow);
+}
+
+.voice-shadow-lg {
+  box-shadow: var(--voice-shadow-lg);
+}
+
+.voice-shadow-glow {
+  box-shadow: 0 0 0 1px rgba(212, 160, 52, 0.05), 0 4px 16px rgba(212, 160, 52, 0.12), 0 8px 32px rgba(212, 160, 52, 0.08);
+}
+
+/* Pulse Animations - Slower, calmer breathing effect
+ * Updated timing for more meditative, calming experience:
+ * - Main pulse: 4s (was 2s)
+ * - Fast pulse: 3s (was 1s) 
+ * - Listening: 5s (was 3s)
+ * - Speaking: 4s (was 2s)
+ * - Thinking: 4.5s (was 2.5s)
+ * - Reduced scale changes for subtler effect
+ */
+@keyframes voice-pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes voice-pulse-ring {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+@keyframes voice-bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes voice-slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes voice-fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Animation Classes - Slower, more meditative timing */
+.voice-pulse {
+  animation: voice-pulse 4s ease-in-out infinite;
+}
+
+.voice-pulse-fast {
+  animation: voice-pulse 3s ease-in-out infinite;
+}
+
+.voice-pulse-ring {
+  animation: voice-pulse-ring 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.voice-bounce-in {
+  animation: voice-bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.voice-slide-up {
+  animation: voice-slide-up 0.3s ease-out;
+}
+
+.voice-fade-in {
+  animation: voice-fade-in 0.3s ease-in-out;
+}
+
+/* Status Indicator Animations - Calmer timing */
+.voice-status-listening {
+  background-color: #10B981;
+  animation: voice-pulse 4s ease-in-out infinite;
+}
+
+.voice-status-thinking {
+  background-color: #F59E0B;
+  animation: voice-pulse 4.5s ease-in-out infinite;
+}
+
+.voice-status-speaking {
+  background-color: #3B82F6;
+  animation: voice-pulse 3.5s ease-in-out infinite;
+}
+
+.voice-status-error {
+  background-color: #F43F5E;
+  animation: voice-pulse 2s ease-in-out infinite;
+}
+
+/* Waveform Animations */
+@keyframes voice-waveform-bar {
+  0%, 100% {
+    height: 4px;
+    opacity: 0.4;
+  }
+  50% {
+    height: 20px;
+    opacity: 1;
+  }
+}
+
+.voice-waveform-bar {
+  animation: voice-waveform-bar 3s ease-in-out infinite;
+}
+
+/* Staggered delays for waveform bars - Adjusted for slower animation */
+.voice-waveform-bar:nth-child(1) { animation-delay: 0s; }
+.voice-waveform-bar:nth-child(2) { animation-delay: 0.2s; }
+.voice-waveform-bar:nth-child(3) { animation-delay: 0.4s; }
+.voice-waveform-bar:nth-child(4) { animation-delay: 0.6s; }
+.voice-waveform-bar:nth-child(5) { animation-delay: 0.8s; }
+
+/* Hover Effects */
+.voice-hover-lift {
+  transition: var(--voice-transition);
+}
+
+.voice-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--voice-shadow-lg);
+}
+
+.voice-hover-scale {
+  transition: var(--voice-transition);
+}
+
+.voice-hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.voice-hover-glow {
+  transition: var(--voice-transition);
+}
+
+.voice-hover-glow:hover {
+  box-shadow: 0 0 0 1px rgba(212, 160, 52, 0.1), 0 4px 16px rgba(212, 160, 52, 0.2), 0 8px 32px rgba(212, 160, 52, 0.15);
+}
+
+/* Focus States */
+.voice-focus {
+  outline: 2px solid #D4A034;
+  outline-offset: 2px;
+}
+
+.voice-focus-ring {
+  box-shadow: 0 0 0 3px rgba(212, 160, 52, 0.3);
+}
+
+/* Message Animations */
+.voice-message-enter {
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+}
+
+.voice-message-enter-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: all 0.3s ease-out;
+}
+
+.voice-message-exit {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.voice-message-exit-active {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+  transition: all 0.2s ease-in;
+}
+
+/* Panel States */
+.voice-panel-minimized {
+  opacity: 0;
+  transform: scale(0.8) translateY(20px);
+  pointer-events: none;
+}
+
+.voice-panel-visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+
+/* Loading States */
+@keyframes voice-loading-dots {
+  0%, 20% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+.voice-loading-dot {
+  animation: voice-loading-dots 1.4s ease-in-out infinite;
+}
+
+.voice-loading-dot:nth-child(1) { animation-delay: 0s; }
+.voice-loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.voice-loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  .voice-transition,
+  .voice-transition-fast,
+  .voice-transition-slow,
+  .voice-pulse,
+  .voice-pulse-fast,
+  .voice-pulse-ring,
+  .voice-bounce-in,
+  .voice-slide-up,
+  .voice-fade-in,
+  .voice-waveform-bar,
+  .voice-hover-lift,
+  .voice-hover-scale,
+  .voice-message-enter-active,
+  .voice-message-exit-active {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .voice-panel-minimized,
+  .voice-panel-visible {
+    transition: opacity 0.2s ease !important;
+    transform: none !important;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .voice-assistant-widget {
+    --voice-shadow: 0 0 0 2px currentColor;
+    --voice-shadow-lg: 0 0 0 3px currentColor;
+  }
+  
+  .voice-shadow,
+  .voice-shadow-lg {
+    border: 2px solid currentColor;
+  }
+  
+  .voice-focus,
+  .voice-focus-ring {
+    outline: 3px solid currentColor;
+    outline-offset: 2px;
+  }
+}
+
+/* Dark Theme Adjustments */
+@media (prefers-color-scheme: dark) {
+  .voice-assistant-widget {
+    --voice-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    --voice-shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Print Styles */
+@media print {
+  .voice-assistant-widget {
+    display: none !important;
+  }
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 768px) {
+  .voice-assistant-widget {
+    --voice-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+}
+
+/* Screen Reader Only Content */
+.voice-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Skip to Main Content Link */
+.voice-skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 9999;
+  transition: top 0.2s;
+}
+
+.voice-skip-link:focus {
+  top: 6px;
+}
+
+/* Utility Classes */
+.voice-glass {
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.voice-glass-dark {
+  backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.voice-gradient-gold {
+  background: linear-gradient(135deg, #D4A034 0%, #B48628 100%);
+}
+
+.voice-gradient-gold-subtle {
+  background: linear-gradient(135deg, rgba(212, 160, 52, 0.1) 0%, rgba(180, 134, 40, 0.05) 100%);
+}
+
+/* Voice State Animations - Slower, calmer breathing effect for chat container */
+@keyframes voice-listening-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.2);
+  }
+  50% {
+    transform: scale(1.015);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes voice-thinking-bounce {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(1.01) translateY(-0.5px);
+  }
+}
+
+@keyframes voice-speaking-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    transform: scale(1.015);
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
+  }
+}
+
+/* Voice state classes for stable animations - Slower, meditative timing */
+.voice-listening-pulse {
+  animation: voice-listening-pulse 5s ease-in-out infinite;
+}
+
+.voice-thinking-bounce {
+  animation: voice-thinking-bounce 4.5s ease-in-out infinite;
+}
+
+.voice-speaking-pulse {
+  animation: voice-speaking-pulse 4s ease-in-out infinite;
+}
+
+/* Performance Optimizations */
+.voice-will-change {
+  will-change: transform, opacity;
+}
+
+.voice-gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Accessibility Enhancement Classes */
+.voice-widget-high-contrast {
+  --voice-bg-primary: var(--voice-widget-bg-contrast, #000000) !important;
+  --voice-text-primary: var(--voice-widget-text-contrast, #FFFFFF) !important;
+  --voice-border-primary: var(--voice-widget-border-contrast, #FFFF00) !important;
+}
+
+.voice-widget-high-contrast * {
+  border-color: var(--voice-border-primary) !important;
+  color: var(--voice-text-primary) !important;
+  background-color: var(--voice-bg-primary) !important;
+}
+
+.voice-widget-high-contrast button {
+  border: 2px solid var(--voice-border-primary) !important;
+  background-color: var(--voice-bg-primary) !important;
+  color: var(--voice-text-primary) !important;
+}
+
+.voice-widget-high-contrast button:hover {
+  background-color: var(--voice-text-primary) !important;
+  color: var(--voice-bg-primary) !important;
+}
+
+.voice-reduced-motion * {
+  animation: none !important;
+  transition: none !important;
+}
+
+.voice-sr-optimized {
+  /* Enhanced screen reader support */
+}
+
+.voice-sr-optimized [role="button"]:not([aria-label]) {
+  /* Add aria-label requirement visual indicator for development */
+  outline: 2px dashed orange;
+}
+
+/* Large click targets for accessibility */
+:root[style*="--voice-widget-click-target-size"] #webrtc-voice-assistant button {
+  min-width: var(--voice-widget-click-target-size, 48px);
+  min-height: var(--voice-widget-click-target-size, 48px);
+  padding: 8px;
+}
+
+:root[style*="--voice-widget-min-touch-target"] #webrtc-voice-assistant a,
+:root[style*="--voice-widget-min-touch-target"] #webrtc-voice-assistant button {
+  min-width: var(--voice-widget-min-touch-target, 44px);
+  min-height: var(--voice-widget-min-touch-target, 44px);
+}
+
+/* Font size overrides */
+:root[style*="--voice-widget-font-size"] #webrtc-voice-assistant {
+  font-size: var(--voice-widget-font-size, 1rem) !important;
+}
+
+/* Settings expanded viewport bounds handling */
+.voice-settings-expanded {
+  position: fixed !important;
+  z-index: 1001 !important;
+  max-width: calc(100vw - 40px) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;
+}
+
+.voice-settings-expanded:not([class*="bottom-"]) {
+  top: 20px !important;
+  bottom: auto !important;
+}
+
+.voice-settings-expanded[class*="bottom-"] {
+  bottom: 20px !important;
+  top: auto !important;
+}
+
+.voice-settings-expanded[class*="right-"] {
+  right: 20px !important;
+  left: auto !important;
+}
+
+.voice-settings-expanded[class*="left-"] {
+  left: 20px !important;
+  right: auto !important;
+}
+
+/* Ensure scrollable content within viewport */
+.voice-settings-expanded .space-y-4 {
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+/* Focus visible improvements for accessibility */
+#webrtc-voice-assistant button:focus-visible,
+#webrtc-voice-assistant [role="button"]:focus-visible {
+  outline: 3px solid #D4A034;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Ensure sufficient color contrast in high contrast mode */
+.voice-widget-high-contrast .text-gray-400,
+.voice-widget-high-contrast .text-gray-500,
+.voice-widget-high-contrast .text-gray-600 {
+  color: var(--voice-widget-text-contrast, #FFFFFF) !important;
+}
+
+.voice-widget-high-contrast .bg-gray-50,
+.voice-widget-high-contrast .bg-gray-100,
+.voice-widget-high-contrast .bg-gray-200 {
+  background-color: var(--voice-widget-bg-contrast, #000000) !important;
+}
+
+/* Skip link improvements */
+.voice-skip-link:focus {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 9999;
+  background: #000;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+/* Screen reader only improvements */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
