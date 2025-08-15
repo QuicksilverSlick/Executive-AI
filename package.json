@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "astro dev --config astro.config.dev.mjs",
     "build": "astro build && npm run optimize && npm run postbuild",
-    "postbuild": "node scripts/inject-polyfill-complete.js",
+    "postbuild": "node scripts/inject-polyfill-complete.js && node scripts/fix-worker-imports.cjs",
     "build:prod": "npm run build && npm run analyze",
     "preview": "astro preview",
     "astro": "astro",
