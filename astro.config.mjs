@@ -7,6 +7,9 @@ import icon from 'astro-icon';
 import react from '@astrojs/react';
 import cloudflare from '@astrojs/cloudflare';
 
+// Import polyfills for Cloudflare Workers compatibility
+import './src/polyfills.js';
+
 // https://astro.build/config
 export default defineConfig({
   integrations: [
@@ -58,18 +61,23 @@ export default defineConfig({
       },
     },
     ssr: {
-      noExternal: ['@fontsource/*', 'react', 'react-dom'],
-      external: ['node:crypto', 'crypto']
+      noExternal: ['@fontsource/*', 'react', 'react-dom', 'react-dom/server', 'react-dom/server.browser'],
+      external: ['node:crypto', 'crypto', 'node:buffer', 'node:stream', 'node:util']
     },
     resolve: {
       alias: {
-        'react-dom/server': 'react-dom/server.browser'
+        'react-dom/server': 'react-dom/server.browser',
+        'react-dom/server.node': 'react-dom/server.browser'
       }
+    },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'react-dom/server.browser']
     }
   },
   output: 'server',
   adapter: cloudflare({
-    mode: 'advanced',
+    mode: 'directory',
+    functionPerRoute: false,
     runtime: {
       mode: 'local',
       type: 'pages'
