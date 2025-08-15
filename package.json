@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "astro dev --config astro.config.dev.mjs",
     "build": "astro build && npm run optimize && npm run postbuild",
     "postbuild": "node scripts/inject-polyfill-complete.js",
     "build:prod": "npm run build && npm run analyze",

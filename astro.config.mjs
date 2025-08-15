@@ -7,8 +7,9 @@ import icon from 'astro-icon';
 import react from '@astrojs/react';
 import cloudflare from '@astrojs/cloudflare';
 
-// Import polyfills for Cloudflare Workers compatibility
-import './src/polyfills.js';
+// Import polyfills for Cloudflare Workers compatibility (production only)
+// Commented out for dev - polyfills are injected at build time
+// import './src/polyfills.js';
 
 // https://astro.build/config
 export default defineConfig({
@@ -61,22 +62,26 @@ export default defineConfig({
       },
     },
     ssr: {
-      noExternal: ['@fontsource/*', 'react', 'react-dom', 'react-dom/server', 'react-dom/server.browser'],
+      noExternal: process.env.NODE_ENV === 'production' 
+        ? ['@fontsource/*', 'react', 'react-dom', 'react-dom/server', 'react-dom/server.browser']
+        : ['@fontsource/*'],
       external: ['node:crypto', 'crypto', 'node:buffer', 'node:stream', 'node:util']
     },
     resolve: {
-      alias: {
-        'react-dom/server': 'react-dom/server.browser',
-        'react-dom/server.node': 'react-dom/server.browser'
-      }
+      alias: process.env.NODE_ENV === 'production' 
+        ? {
+            'react-dom/server': 'react-dom/server.browser',
+            'react-dom/server.node': 'react-dom/server.browser'
+          }
+        : {}
     },
     optimizeDeps: {
-      include: ['react', 'react-dom', 'react-dom/server.browser']
+      include: ['react', 'react-dom']
     }
   },
   output: 'server',
   adapter: cloudflare({
-    mode: 'directory',
+    mode: process.env.NODE_ENV === 'production' ? 'directory' : 'advanced',
     functionPerRoute: false,
     runtime: {
       mode: 'local',
