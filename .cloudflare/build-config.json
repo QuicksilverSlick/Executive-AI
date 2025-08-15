@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "build": {
+    "command": "npm run build",
+    "directory": "dist",
+    "watch_paths": [
+      "src/**/*",
+      "public/**/*",
+      "astro.config.mjs",
+      "package.json"
+    ],
+    "environment": {
+      "NODE_VERSION": "18"
+    }
+  }
+}
