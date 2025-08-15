@@ -1,0 +1,15 @@
+# Cloudflare Pages Deployment Status
+
+If you see an "internal error" during deployment, this is typically a transient issue on Cloudflare's side.
+
+## What to do:
+
+1. Wait 2-3 minutes for Cloudflare's systems to reset
+2. The deployment will automatically retry
+3. If it continues to fail, check the Cloudflare Pages dashboard for any service incidents
+
+## Last error reference:
+- Reference ID: tq47jatq3v0d68jf8rb2ukll
+- This is a Cloudflare internal error, not a code issue
+
+The build succeeded and all files were uploaded correctly. The error occurred during the final publishing step.
