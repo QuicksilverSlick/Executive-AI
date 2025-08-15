@@ -13,6 +13,7 @@ import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
+  base: '/',
   integrations: [
     react(),
     tailwind({
@@ -49,8 +50,9 @@ export default defineConfig({
   site: 'https://executiveaitraining.com',
   compressHTML: true,
   build: {
-    inlineStylesheets: 'auto',
+    inlineStylesheets: 'never', // Don't inline CSS, keep as separate files
     assets: '_assets',
+    assetsPrefix: '/_assets',
   },
   vite: {
     build: {
