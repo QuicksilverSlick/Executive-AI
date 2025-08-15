@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && npm run optimize",
+    "build": "astro build && npm run optimize && npm run postbuild",
+    "postbuild": "node scripts/inject-polyfill.js",
     "build:prod": "npm run build && npm run analyze",
     "preview": "astro preview",
     "astro": "astro",
