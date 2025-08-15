@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build && npm run optimize && npm run postbuild",
-    "postbuild": "node scripts/inject-polyfill.js",
+    "postbuild": "node scripts/inject-polyfill-complete.js",
     "build:prod": "npm run build && npm run analyze",
     "preview": "astro preview",
     "astro": "astro",
