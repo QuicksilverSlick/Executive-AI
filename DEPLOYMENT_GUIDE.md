@@ -1,200 +1,173 @@
-# Voice Agent Deployment Guide
+# Executive AI Training - Cloudflare Pages Deployment Guide
 
-## Current Working Setup
+## Current Status ✅
+- **Repository**: https://github.com/QuicksilverSlick/Executive-AI
+- **Latest Commit**: a1cb8ed - CSS fixes for Cloudflare Pages
+- **Build Status**: Polyfills and configurations applied
+- **Domain**: executiveaitraining.com (configured in Cloudflare)
+- **Adapter**: Cloudflare Pages with Worker Functions
+- **Status**: ✅ MessageChannel polyfill applied, CSS configuration fixed
 
-### Development Mode
-- **Main App**: Astro dev server on port 4323
-- **Search Server**: Express on port 3001
-- **Status**: ✅ Working - search functionality confirmed by user
+## Cloudflare Pages Configuration
 
-### Production Build
-- **Build Command**: `npm run build`
-- **Preview Command**: `npm run preview` (runs on port 4321)
-- **Adapter**: Node.js standalone server
-- **Status**: ✅ Successfully configured and built
+### Build Settings
+Configure these in your Cloudflare Pages dashboard:
+- **Framework preset**: None
+- **Build command**: `npm run build`
+- **Build output directory**: `dist`
+- **Root directory**: `/` (leave empty)
+- **Node version**: 18
 
-## Production Deployment Options
+### Environment Variables Configuration
 
-### Option 1: Node.js Server (Current Configuration)
-The project is configured with the Astro Node adapter for server-side rendering.
+#### Required Variables
+You must set these in your Cloudflare Pages dashboard:
 
-```bash
-# Build the project
-npm run build
+1. **Navigate to Environment Variables**
+   - Go to your Cloudflare Pages project
+   - Click Settings → Environment Variables
+   - Add variables for both Production and Preview environments
 
-# Start production server
-node ./dist/server/entry.mjs
-```
-
-#### Deployment Platforms:
-- **Railway/Render**: Direct Node.js deployment
-- **DigitalOcean App Platform**: Node.js app
-- **AWS EC2/ECS**: Containerized deployment
-- **Google Cloud Run**: Serverless containers
-
-### Option 2: Vercel Deployment
-Replace Node adapter with Vercel adapter:
+2. **Add These Variables**:
 
 ```bash
-npm install @astrojs/vercel
-```
+# REQUIRED - Your OpenAI API key for voice agent
+OPENAI_API_KEY=sk-...your-actual-key-here...
 
-Update `astro.config.mjs`:
-```javascript
-import vercel from '@astrojs/vercel/serverless';
-
-export default defineConfig({
-  output: 'server',
-  adapter: vercel(),
-  // ...
-});
-```
-
-### Option 3: Netlify Deployment
-Replace Node adapter with Netlify adapter:
-
-```bash
-npm install @astrojs/netlify
-```
-
-Update `astro.config.mjs`:
-```javascript
-import netlify from '@astrojs/netlify';
-
-export default defineConfig({
-  output: 'server',
-  adapter: netlify(),
-  // ...
-});
-```
-
-## Search Server Deployment
-
-### Development vs Production
-The app uses environment-aware endpoint selection:
-
-```typescript
-// Automatically switches between dev and prod
-if (import.meta.env.DEV || window.location.hostname === 'localhost') {
-  // Use standalone server in development
-  searchUrl = 'http://localhost:3001/search';
-} else {
-  // Use configured API URL or Astro route in production
-  searchUrl = import.meta.env.PUBLIC_SEARCH_API_URL || '/api/voice-agent/responses-search';
-}
-```
-
-### Production Search Options
-
-#### Option A: Test Astro API Route
-The query parameter issue might be specific to dev server. Try the built-in route first:
-1. Deploy without the standalone search server
-2. The app will automatically use `/api/voice-agent/responses-search`
-3. Test if it works in production
-
-#### Option B: Deploy Search as Serverless Function
-Convert `search-server.js` to a serverless function:
-
-**Vercel Function** (`api/search.js`):
-```javascript
-export default async function handler(req, res) {
-  const { query } = req.query;
-  // Copy search logic from search-server.js
-  // ...
-  res.json(results);
-}
-```
-
-**Environment Variable**:
-```env
-PUBLIC_SEARCH_API_URL=https://your-app.vercel.app/api
-```
-
-#### Option C: Deploy Search as Microservice
-Keep search server separate for better scalability:
-1. Deploy `search-server.js` to a separate service
-2. Set `PUBLIC_SEARCH_API_URL` to the service URL
-3. Configure CORS for your domain
-
-## Environment Variables
-
-### Required for All Deployments
-```env
-OPENAI_API_KEY=sk-...
-```
-
-### Optional for Custom Search Endpoint
-```env
-PUBLIC_SEARCH_API_URL=https://your-search-api.com
+# OPTIONAL - Defaults will be used if not set
+ALLOWED_ORIGINS=https://executiveaitraining.com,https://www.executiveaitraining.com
+VOICE_AGENT_TOKEN_DURATION=1800
+VOICE_AGENT_RATE_LIMIT=10
+VOICE_AGENT_DEMO_MODE=false
+NODE_VERSION=18
 ```
 
 ## Deployment Checklist
 
-- [ ] Set `OPENAI_API_KEY` in production environment
-- [ ] Test voice agent with HTTPS (required for WebRTC)
-- [ ] Configure CORS if using separate search service
-- [ ] Add rate limiting to prevent abuse
-- [ ] Set up monitoring (e.g., Sentry, LogRocket)
-- [ ] Configure SSL certificates
-- [ ] Test with production OpenAI API limits
+### ✅ Completed Tasks
+- [x] GitHub repository connected
+- [x] API keys removed from git history  
+- [x] MessageChannel polyfill implemented
+- [x] React SSR configuration fixed
+- [x] CSS loading configuration fixed
+- [x] Dev/Prod configurations separated
+- [x] CSP headers updated for assets
+- [x] Build configuration optimized for Cloudflare
 
-## Quick Deploy Commands
+### 🔄 Pending Tasks
+- [ ] Set OPENAI_API_KEY in Cloudflare Pages dashboard
+- [ ] Verify CSS loads correctly after deployment
+- [ ] Test voice agent functionality on production
+- [ ] Monitor browser console for any runtime errors
 
-### Local Production Test
-```bash
-# Terminal 1: Start search server (if needed for testing)
-./start-search-server.sh
+## Testing the Deployment
 
-# Terminal 2: Build and preview
-npm run build
-npm run preview
+### 1. Verify Static Assets
+After deployment completes, check:
+- CSS styles are applied correctly
+- Fonts load properly (Geist Sans and Geist Mono)
+- Images display correctly
+- JavaScript bundles load without errors
 
-# Access at http://localhost:4321
-```
+### 2. Test Voice Agent
+1. Navigate to your deployed site at https://executiveaitraining.com
+2. Look for the voice agent button (microphone icon in bottom right)
+3. Click to start a conversation
+4. Verify:
+   - Connection establishes successfully
+   - Audio input/output works
+   - Session management functions properly
+   - Timeout warnings appear after ~25 minutes (28 min warning, 30 min end)
 
-### Deploy to Railway
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
+### 3. Check Browser Console
+Open DevTools (F12) and check for:
+- No "MessageChannel is not defined" errors
+- No CSP violations
+- Successful WebSocket connections
+- Proper asset loading from /_assets/ path
 
-# Login and deploy
-railway login
-railway up
-```
-
-### Deploy to Vercel
-```bash
-# Install Vercel CLI
-npm install -g vercel
-
-# Deploy
-vercel
-```
-
-## Post-Deployment Testing
-
-1. **Test Voice Connection**: Click microphone, verify WebRTC connects
-2. **Test Search**: Say "Search for latest AI news"
-3. **Check Console**: No CORS errors or connection issues
-4. **Verify HTTPS**: WebRTC requires secure connection
+### 4. Test Search Functionality
+The search API is integrated into the voice agent:
+1. Start a voice conversation
+2. Say "Search for latest AI news" or similar
+3. Verify search results are returned in the voice response
 
 ## Troubleshooting
 
-### Voice Agent Not Connecting
-- Ensure HTTPS is enabled (WebRTC requirement)
-- Check browser console for errors
-- Verify OpenAI API key is set
+### CSS Not Loading
+If CSS still doesn't load after deployment:
+1. Check Network tab in DevTools for 404s on CSS files
+2. Verify _headers file is being deployed
+3. Check if CSS files exist in dist/_assets/ folder
+4. Ensure _routes.json excludes /_assets/* from function processing
+
+### Voice Agent Not Working
+If voice agent fails:
+1. Verify OPENAI_API_KEY is set in Cloudflare dashboard
+2. Check browser console for WebSocket errors  
+3. Ensure microphone permissions are granted
+4. Check if token generation endpoint returns valid response
+5. Verify HTTPS is enabled (WebRTC requirement)
+
+### MessageChannel Errors
+If MessageChannel errors return:
+1. Verify postbuild script ran: `npm run postbuild`
+2. Check if polyfill exists in dist/_worker.js/
+3. Manually run: `node scripts/inject-polyfill-complete.js`
+4. Check build logs for polyfill injection confirmation
 
 ### Search Not Working
-- Check if using correct endpoint (dev vs prod)
-- Verify CORS headers if using external search
-- Check OpenAI API rate limits
+If search functionality fails:
+1. Check browser console for API errors
+2. Verify OpenAI API key has access to required models
+3. Check rate limits on OpenAI dashboard
+4. Monitor Cloudflare Pages Functions logs
 
-### Performance Issues
-- Enable caching for search results
-- Use CDN for static assets
-- Consider edge functions for search
+## Monitoring
 
-## Support
+### Build Logs
+Monitor build logs in Cloudflare Pages dashboard for:
+- Successful polyfill injection messages
+- No build errors  
+- Assets generated in correct directories
 
-The solution has been tested and confirmed working in development. The production configuration uses the same logic with environment-aware endpoint selection, so it should work seamlessly when deployed.
+### Runtime Logs
+Use Cloudflare Pages Functions logs to monitor:
+- API token generation requests
+- WebSocket connection attempts
+- Any server-side errors
+
+### Performance Monitoring
+- Check Core Web Vitals in Cloudflare Analytics
+- Monitor function execution times
+- Track error rates and types
+
+## Local Development
+
+To run locally after deployment configuration:
+```bash
+# Use dev configuration (avoids production-specific settings)
+npm run dev
+
+# Build for production testing
+npm run build
+npm run preview
+```
+
+## Support Resources
+
+- [Cloudflare Pages Docs](https://developers.cloudflare.com/pages)
+- [Astro + Cloudflare Guide](https://docs.astro.build/en/guides/deploy/cloudflare/)
+- [OpenAI Realtime API](https://platform.openai.com/docs/guides/realtime)
+- [GitHub Repository](https://github.com/QuicksilverSlick/Executive-AI)
+
+## Next Steps
+
+1. **Immediate**: Set OPENAI_API_KEY in Cloudflare dashboard
+2. **After Deployment**: Verify CSS and functionality
+3. **Ongoing**: Monitor for any issues and optimize performance
+
+---
+
+*Last Updated: December 2024*
+*Deployment Guide Version: 2.0 - Cloudflare Pages Edition*
