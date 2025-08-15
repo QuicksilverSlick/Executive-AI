@@ -47,5 +47,4 @@ search-server.log
 docs/openai-security-setup.md
 **/security-audit-report.md
 
-# Deployment triggers
-.cloudflare-deploy-trigger
+# Deployment triggers (temporarily removed to allow trigger file)
