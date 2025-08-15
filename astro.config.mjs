@@ -51,15 +51,16 @@ export default defineConfig({
   compressHTML: true,
   build: {
     inlineStylesheets: 'never', // Don't inline CSS, keep as separate files
-    assets: '_assets',
-    assetsPrefix: '/_assets',
+    assets: '_assets', // Directory name for assets
   },
   vite: {
     build: {
       cssMinify: 'lightningcss',
       rollupOptions: {
         output: {
-          assetFileNames: '_assets/[hash][extname]',
+          assetFileNames: '_assets/[hash][extname]', // Include _assets in the filename
+          chunkFileNames: '_assets/[hash].js',
+          entryFileNames: '_assets/[name].[hash].js',
         },
       },
     },
