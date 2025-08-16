@@ -89,7 +89,7 @@
     "PUBLIC_SITE_URL": "@public_site_url",
     "PUBLIC_SITE_NAME": "@public_site_name"
   },
-  "regions": ["iad1", "sfo1", "lhr1", "fra1"],
+  "regions": ["iad1"],
   "cleanUrls": true,
   "trailingSlash": false,
   "installCommand": "npm ci",
