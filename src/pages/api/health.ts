@@ -36,7 +36,7 @@ const startTime = Date.now();
 // Simple OpenAI API connectivity check
 async function checkOpenAIConnection(): Promise<'healthy' | 'degraded' | 'unhealthy'> {
   try {
-    const apiKey = import.meta.env.OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return 'unhealthy';
     }
@@ -65,7 +65,7 @@ function checkVoiceServices(): 'healthy' | 'degraded' | 'unhealthy' {
     ];
 
     const missingVars = requiredEnvVars.filter(
-      varName => !import.meta.env[varName]
+      varName => !process.env[varName]
     );
 
     if (missingVars.length === 0) {
@@ -120,7 +120,7 @@ export const GET: APIRoute = async ({ request }) => {
     const healthStatus: HealthStatus = {
       status: overallStatus,
       timestamp: new Date().toISOString(),
-      environment: import.meta.env.VERCEL_ENV || import.meta.env.NODE_ENV || 'unknown',
+      environment: process.env.VERCEL_ENV || process.env.NODE_ENV || 'unknown',
       version: '1.0.0',
       services: {
         api: apiStatus,
@@ -151,7 +151,7 @@ export const GET: APIRoute = async ({ request }) => {
     const errorStatus: HealthStatus = {
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
-      environment: import.meta.env.VERCEL_ENV || 'unknown',
+      environment: process.env.VERCEL_ENV || 'unknown',
       version: '1.0.0',
       services: {
         api: 'unhealthy',

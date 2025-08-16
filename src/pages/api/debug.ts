@@ -1,6 +1,4 @@
-import type { APIRoute } from 'astro';
-
-export const GET: APIRoute = async ({ request }) => {
+export async function GET(request: Request) {
   try {
     // Return debug information
     const debugInfo = {
@@ -18,8 +16,8 @@ export const GET: APIRoute = async ({ request }) => {
         PUBLIC_SITE_URL: !!process.env.PUBLIC_SITE_URL,
       },
       headers: {
-        'user-agent': request.headers.get('user-agent'),
-        'host': request.headers.get('host'),
+        'user-agent': request?.headers?.get('user-agent') || 'unknown',
+        'host': request?.headers?.get('host') || 'unknown',
       }
     };
 
@@ -41,4 +39,4 @@ export const GET: APIRoute = async ({ request }) => {
       },
     });
   }
-};
+}
