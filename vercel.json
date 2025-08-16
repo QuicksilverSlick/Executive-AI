@@ -60,14 +60,6 @@
       ]
     }
   ],
-  "functions": {
-    "src/pages/api/voice-agent/**/*.ts": {
-      "maxDuration": 30
-    },
-    "src/pages/api/**/*.ts": {
-      "maxDuration": 15
-    }
-  },
   "regions": ["iad1"],
   "cleanUrls": true,
   "trailingSlash": false,
