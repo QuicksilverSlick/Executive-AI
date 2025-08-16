@@ -74,13 +74,11 @@
     "src/pages/api/voice-agent/**/*.ts": {
       "runtime": "nodejs20.x",
       "maxDuration": 30,
-      "regions": ["iad1", "sfo1", "lhr1", "fra1"],
       "memory": 512
     },
     "src/pages/api/**/*.ts": {
       "runtime": "nodejs20.x", 
       "maxDuration": 15,
-      "regions": ["iad1", "sfo1", "lhr1", "fra1"],
       "memory": 256
     }
   },
