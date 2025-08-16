@@ -1,0 +1,3 @@
+FORCE REBUILD: 2025-08-16 18:40:00
+This file forces Vercel to invalidate cache and rebuild from scratch.
+Random value: ${Math.random()}

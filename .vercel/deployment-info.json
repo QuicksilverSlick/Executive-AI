@@ -1,8 +1,0 @@
-{
-  "timestamp": "2025-08-16 10:24:20",
-  "git_branch": "main",
-  "git_commit": "08ab51d",
-  "build_type": "vercel",
-  "node_version": "v22.17.0",
-  "npm_version": "10.9.2"
-}
