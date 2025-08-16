@@ -1,0 +1,183 @@
+{
+	"version": 3,
+	"routes": [
+		{
+			"handle": "filesystem"
+		},
+		{
+			"src": "^/_astro/(.*)$",
+			"headers": {
+				"cache-control": "public, max-age=31536000, immutable"
+			},
+			"continue": true
+		},
+		{
+			"src": "^/api/voice-agent/\\*\\*/\\*$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/api/openai/\\*\\*/\\*$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/_server-islands/([^/]+?)/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/_image/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/about/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/ai-audit/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/dev/clear-rate-limits/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/download-resource/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/health/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/test-search/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/test-voice/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/voice-agent/chat-fallback/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/voice-agent/compatibility/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/voice-agent/debug-env/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/voice-agent/demo/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/voice-agent/health/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/voice-agent/proxy/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/voice-agent/refresh-token/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/voice-agent/responses-search/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/voice-agent/secure-token/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/voice-agent/simple-search/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/voice-agent/test-connection/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/api/voice-agent/token/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/case-studies/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/contact/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/design-showcase/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/privacy/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/resources/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/services/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/terms/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/test-audio/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/test-direct-token/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/test-production/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/test-search-acknowledgment/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/test-voice-chat/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/test-voice-search/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/thank-you/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/voice-agent-compatibility-test/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/voice-agent-test/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/voice-diagnostic/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/voice-test-webrtc/?$",
+			"dest": "/_isr?x_astro_path=$0"
+		},
+		{
+			"src": "^/$",
+			"dest": "/_isr?x_astro_path=$0"
+		}
+	]
+}

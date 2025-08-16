@@ -1,0 +1,100 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "astro",
+  "rewrites": [
+    {
+      "source": "/api/voice-agent/:path*",
+      "destination": "/api/voice-agent/:path*"
+    },
+    {
+      "source": "/api/openai/:path*", 
+      "destination": "/api/openai/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, X-Requested-With"
+        },
+        {
+          "key": "Access-Control-Max-Age",
+          "value": "86400"
+        }
+      ]
+    },
+    {
+      "source": "/api/voice-agent/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Connection",
+          "value": "keep-alive"
+        },
+        {
+          "key": "X-Voice-API-Version",
+          "value": "1.0"
+        }
+      ]
+    },
+    {
+      "source": "/_astro/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*\\.(js|css|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|eot))",
+      "headers": [
+        {
+          "key": "Cache-Control", 
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "src/pages/api/voice-agent/**/*.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 30,
+      "regions": ["iad1", "sfo1", "lhr1", "fra1"],
+      "memory": 512
+    },
+    "src/pages/api/**/*.ts": {
+      "runtime": "nodejs20.x", 
+      "maxDuration": 15,
+      "regions": ["iad1", "sfo1", "lhr1", "fra1"],
+      "memory": 256
+    }
+  },
+  "env": {
+    "OPENAI_API_KEY": "@openai_api_key",
+    "ALLOWED_ORIGINS": "@allowed_origins",
+    "VOICE_AGENT_RATE_LIMIT": "@voice_agent_rate_limit",
+    "VOICE_AGENT_TOKEN_DURATION": "@voice_agent_token_duration",
+    "PUBLIC_SITE_URL": "@public_site_url",
+    "PUBLIC_SITE_NAME": "@public_site_name"
+  },
+  "regions": ["iad1", "sfo1", "lhr1", "fra1"],
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "installCommand": "npm ci",
+  "devCommand": "npm run dev"
+}

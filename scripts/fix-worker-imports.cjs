@@ -5,26 +5,37 @@ const path = require('path');
 
 console.log('🔧 Fixing Worker import paths...');
 
-const workerDir = path.join(__dirname, '..', 'dist', '_worker.js');
+const distDir = path.join(__dirname, '..', 'dist');
 
-// Get ALL files in the worker directory
-let filesToFix = [];
+// Find the worker file (either _worker.js or worker.js)
+let workerFile = null;
+if (fs.existsSync(path.join(distDir, '_worker.js'))) {
+  workerFile = '_worker.js';
+} else if (fs.existsSync(path.join(distDir, 'worker.js'))) {
+  workerFile = 'worker.js';
+} else {
+  console.log('❌ No worker file found!');
+  process.exit(1);
+}
+
+// Get ALL .js and .mjs files in the dist directory
+let filesToFix = [workerFile];
 try {
-  const files = fs.readdirSync(workerDir);
+  const files = fs.readdirSync(distDir);
   files.forEach(file => {
-    // Process all .js and .mjs files
-    if (file.endsWith('.js') || file.endsWith('.mjs')) {
+    // Process all .js and .mjs files except the worker file we already added
+    if ((file.endsWith('.js') || file.endsWith('.mjs')) && file !== workerFile) {
       filesToFix.push(file);
     }
   });
 } catch (err) {
-  console.log('Could not read worker directory:', err.message);
+  console.log('Could not read dist directory:', err.message);
 }
 
 let fixedCount = 0;
 
 filesToFix.forEach(fileName => {
-  const filePath = path.join(workerDir, fileName);
+  const filePath = path.join(distDir, fileName);
   
   try {
     if (fs.existsSync(filePath)) {

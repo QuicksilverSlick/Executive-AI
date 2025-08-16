@@ -1,17 +1,3 @@
-/*
- * DREAMFORGE HIVE-MIND CHAIN OF CUSTODY
- *
- * @file-purpose: Astro configuration optimized for Cloudflare Pages deployment with voice agent support
- * @version: 1.0.0
- * @init-author: developer-agent
- * @init-cc-sessionId: cc-unknown-20250813-657
- * @init-timestamp: 2025-08-14T00:00:00Z
- * @reasoning:
- * - **Objective:** Configure Astro for Cloudflare Pages with WebRTC and voice agent compatibility
- * - **Strategy:** Use Cloudflare adapter with proper runtime configuration and optimizations
- * - **Outcome:** Production-ready Astro config for Cloudflare Pages deployment
- */
-
 // @ts-check
 import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
@@ -21,8 +7,13 @@ import icon from 'astro-icon';
 import react from '@astrojs/react';
 import cloudflare from '@astrojs/cloudflare';
 
+// Import polyfills for Cloudflare Workers compatibility (production only)
+// Commented out for dev - polyfills are injected at build time
+// import './src/polyfills.js';
+
 // https://astro.build/config
 export default defineConfig({
+  base: '/',
   integrations: [
     react(),
     tailwind({
@@ -51,50 +42,63 @@ export default defineConfig({
       HTML: {
         removeAttributeQuotes: false,
       },
-      Image: false, // Let Cloudflare handle image optimization
+      Image: false, // We'll handle images separately
       JavaScript: true,
       SVG: true,
     }),
   ],
   site: 'https://executiveaitraining.com',
   compressHTML: true,
+  // Pages-optimized build settings
   build: {
     inlineStylesheets: 'auto',
-    assets: '_assets',
+    assets: '_astro',
+    splitting: false,
+    format: 'directory'
   },
   vite: {
     build: {
       cssMinify: 'lightningcss',
       rollupOptions: {
         output: {
-          assetFileNames: '_assets/[hash][extname]',
+          format: 'esm',
+          assetFileNames: '_astro/[name].[hash][extname]',
+          chunkFileNames: '_astro/[name].[hash].js',
+          manualChunks: undefined
         },
+        external: []
       },
+      target: 'esnext',
+      minify: 'terser',
+      sourcemap: false
     },
     ssr: {
-      noExternal: ['@fontsource/*'],
+      // Bundle everything for Pages compatibility
+      noExternal: true,
+      external: []
     },
-    define: {
-      // Ensure environment variables are available in the build
-      'process.env.OPENAI_API_KEY': JSON.stringify(process.env.OPENAI_API_KEY),
-      'process.env.ALLOWED_ORIGINS': JSON.stringify(process.env.ALLOWED_ORIGINS),
-      'process.env.VOICE_AGENT_RATE_LIMIT': JSON.stringify(process.env.VOICE_AGENT_RATE_LIMIT),
-      'process.env.VOICE_AGENT_TOKEN_DURATION': JSON.stringify(process.env.VOICE_AGENT_TOKEN_DURATION),
+    resolve: {
+      alias: process.env.NODE_ENV === 'production' 
+        ? {
+            'react-dom/server': 'react-dom/server.browser',
+            'react-dom/server.node': 'react-dom/server.browser'
+          }
+        : {}
     },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'framer-motion'],
+      exclude: ['@astrojs/cloudflare']
+    }
   },
   output: 'server',
   adapter: cloudflare({
-    // Cloudflare Pages configuration
     mode: 'directory',
-    functionPerRoute: false, // Bundle all routes into a single function for better performance
-    runtime: {
-      mode: 'local',
-      type: 'pages',
-      // Enable Node.js compatibility for OpenAI SDK and other Node.js modules
-      bindings: {
-        // Environment variables will be automatically bound from Cloudflare dashboard
-      },
-    },
+    functionPerRoute: false,
+    // Bundle all dependencies for Pages compatibility
+    bundling: {
+      external: [],
+      noExternal: true
+    }
   }),
   prefetch: {
     prefetchAll: true,
@@ -103,48 +107,5 @@ export default defineConfig({
   image: {
     domains: ['executiveaitraining.com'],
     remotePatterns: [{ protocol: 'https' }],
-    // Use Cloudflare's image optimization
-    service: {
-      entrypoint: 'astro/assets/services/noop'
-    }
-  },
-  // Security configuration for Cloudflare Pages
-  security: {
-    checkOrigin: true,
-  },
-  // Experimental features for better Cloudflare compatibility
-  experimental: {
-    optimizeHoistedScript: true,
-  },
-  // Server configuration for API routes
-  server: {
-    headers: {
-      // Add security headers for development
-      'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY',
-      'X-XSS-Protection': '1; mode=block',
-      'Referrer-Policy': 'strict-origin-when-cross-origin',
-    },
-  },
-  // Route configuration for proper API handling
-  redirects: {
-    // Ensure proper routing for voice agent endpoints
-    '/api/voice-agent/token': '/api/voice-agent/token',
-    '/api/voice-agent/refresh-token': '/api/voice-agent/refresh-token',
-    '/api/voice-agent/proxy': '/api/voice-agent/proxy',
   },
 });
-
-/*
- * DREAMFORGE AUDIT TRAIL
- *
- * ---
- * @revision: 1.0.0
- * @author: developer-agent
- * @cc-sessionId: cc-unknown-20250813-657
- * @timestamp: 2025-08-14T00:00:00Z
- * @reasoning:
- * - **Objective:** Astro configuration specifically optimized for Cloudflare Pages deployment
- * - **Strategy:** Cloudflare adapter with Node.js compatibility, security headers, and performance optimizations
- * - **Outcome:** Production-ready configuration that maintains voice agent functionality on Cloudflare Pages
- */

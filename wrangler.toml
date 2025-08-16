@@ -1,52 +1,25 @@
 # DREAMFORGE
 #  DREAMFORGE HIVE-MIND CHAIN OF CUSTODY
 # 
-#  @file-purpose: Cloudflare Workers configuration with 2025 static assets for Executive AI Training voice agent
-#  @version: 2.0.0
+#  @file-purpose: Cloudflare Pages configuration for Executive AI Training voice agent
+#  @version: 4.0.0
 #  @init-author: developer-agent
-#  @init-cc-sessionId: cc-unknown-20250815-296
-#  @init-timestamp: 2025-08-15T17:30:00Z
+#  @init-cc-sessionId: cc-unknown-20250816-590
+#  @init-timestamp: 2025-08-16T12:00:00Z
 #  @reasoning:
-#  - **Objective:** Configure Workers deployment with new 2025 static assets approach instead of Pages
-#  - **Strategy:** Use assets binding with run_worker_first for proper API routing and static file serving
-#  - **Outcome:** Proper Workers deployment resolving SSL issues from Pages approach
+#  - **Objective:** Fix Pages deployment with proper bundling and directory mode
+#  - **Strategy:** Configure for Pages deployment with pages_build_output_dir and proper function bundling
+#  - **Outcome:** Working Pages deployment that bundles dependencies correctly
 # /
 
 name = "executive-ai-training"
 compatibility_date = "2025-08-15"
 compatibility_flags = ["nodejs_compat"]
 
-# Main Worker entry point
-main = "src/worker.js"
+# Pages configuration - output directory for Pages Functions
+pages_build_output_dir = "dist"
 
-# Static assets configuration (new 2025 approach)
-[assets]
-directory = "./dist"
-binding = "ASSETS"
-# API routes handled by Worker first, then fallback to static assets
-html_handling = "auto-trailing-slash"
-not_found_handling = "single-page-application"
-
-# Routes configuration - handle API routes with Worker, static files with assets
-[[routes]]
-pattern = "executiveaitraining.com/api/*"
-zone_id = "your-zone-id" # Replace with actual zone ID
-
-[[routes]]
-pattern = "www.executiveaitraining.com/api/*"
-zone_id = "your-zone-id" # Replace with actual zone ID
-
-[[routes]]
-pattern = "executiveaitraining.com/*"
-zone_id = "your-zone-id" # Replace with actual zone ID
-
-[[routes]]
-pattern = "www.executiveaitraining.com/*"
-zone_id = "your-zone-id" # Replace with actual zone ID
-
-# Ensure Worker runs first for API routes
-[placement]
-mode = "smart"
+# Pages deployment does not use routes - managed by Pages project
 
 # Environment variables (non-sensitive)
 [vars]
@@ -89,96 +62,78 @@ preview_id = "your-performance-preview-kv-id" # Replace with preview namespace I
 [limits]
 cpu_ms = 50000 # 50 seconds for complex voice operations
 
-# Development environment configuration
-[env.development]
-name = "executive-ai-training-dev"
-main = "src/worker.js"
+# Preview environment configuration (for branch deployments)
+[env.preview]
+name = "executive-ai-training-preview"
 compatibility_date = "2025-08-15"
+pages_build_output_dir = "dist"
 
-[env.development.assets]
-directory = "./dist"
-binding = "ASSETS"
-html_handling = "auto-trailing-slash"
-not_found_handling = "single-page-application"
-
-# More lenient rate limits for development
-[env.development.vars]
-ENVIRONMENT = "development"
+# More lenient rate limits for preview
+[env.preview.vars]
+ENVIRONMENT = "preview"
 MAX_CONCURRENT_SESSIONS = "10"
 RATE_LIMIT_MAX_REQUESTS = "50"
 WORKERS_ASSETS_MODE = "true"
 
-[[env.development.kv_namespaces]]
+[[env.preview.kv_namespaces]]
 binding = "SESSIONS"
 id = "5d893875ea784fb9aa63d2fd6cd88128"
 preview_id = "your-dev-sessions-preview-kv-id"
 
-[[env.development.kv_namespaces]]
+[[env.preview.kv_namespaces]]
 binding = "RATE_LIMITS"
 id = "0432cff93f904b17bee4f5fe36181a84"
 preview_id = "your-dev-rate-limits-preview-kv-id"
 
-[[env.development.kv_namespaces]]
+[[env.preview.kv_namespaces]]
 binding = "VOICE_TOKENS"
 id = "6628386925064903b42cd0d425cecfc9"
 preview_id = "your-dev-voice-tokens-preview-kv-id"
 
-[[env.development.kv_namespaces]]
+[[env.preview.kv_namespaces]]
 binding = "PERFORMANCE_LOGS"
 id = "44dae235584e4324bb89b5872f9d21ff"
 preview_id = "your-dev-performance-preview-kv-id"
 
-# Staging environment configuration
-[env.staging]
-name = "executive-ai-training-staging"
-main = "src/worker.js"
+# Production environment configuration
+[env.production]
+name = "executive-ai-training-production"
 compatibility_date = "2025-08-15"
+pages_build_output_dir = "dist"
 
-[env.staging.assets]
-directory = "./dist"
-binding = "ASSETS"
-html_handling = "auto-trailing-slash"
-not_found_handling = "single-page-application"
-
-[env.staging.vars]
-ENVIRONMENT = "staging"
-MAX_CONCURRENT_SESSIONS = "50"
+[env.production.vars]
+ENVIRONMENT = "production"
+MAX_CONCURRENT_SESSIONS = "100"
 WORKERS_ASSETS_MODE = "true"
 
-[[env.staging.kv_namespaces]]
+[[env.production.kv_namespaces]]
 binding = "SESSIONS"
-id = "35b87435e9234e1995a4fac4b1e04fab"
-preview_id = "your-staging-sessions-preview-kv-id"
+id = "e2ff2f3f2a9d4bc0bcaaad7758d28417"
 
-[[env.staging.kv_namespaces]]
+[[env.production.kv_namespaces]]
 binding = "RATE_LIMITS"
-id = "77ff70e6663b407d848c4aa8fb98576b"
-preview_id = "your-staging-rate-limits-preview-kv-id"
+id = "4008f45ba4894fb29109f6dfcd006e97"
 
-[[env.staging.kv_namespaces]]
+[[env.production.kv_namespaces]]
 binding = "VOICE_TOKENS"
-id = "512154ff8bfc4198b907257af2c87b62"
-preview_id = "your-staging-voice-tokens-preview-kv-id"
+id = "bb09da2325bf4b4aaff80cc0a2e47878"
 
-[[env.staging.kv_namespaces]]
+[[env.production.kv_namespaces]]
 binding = "PERFORMANCE_LOGS"
-id = "e8b3712a29594b188776280d6599be83"
-preview_id = "your-staging-performance-preview-kv-id"
+id = "0a078b9d691744a5ab0fa06a2668f880"
 
-[[env.staging.routes]]
-pattern = "staging.executiveaitraining.com/*"
-zone_id = "your-zone-id"
+# Routes handled by Pages project configuration
 
 # DREAMFORGE
 #  DREAMFORGE AUDIT TRAIL
 # 
 #  ---
-#  @revision: 2.0.0
+#  @revision: 4.0.0
 #  @author: developer-agent
-#  @cc-sessionId: cc-unknown-20250815-296
-#  @timestamp: 2025-08-15T17:30:00Z
+#  @cc-sessionId: cc-unknown-20250816-590
+#  @timestamp: 2025-08-16T12:00:00Z
 #  @reasoning:
-#  - **Objective:** Updated Workers configuration to use 2025 static assets approach for proper deployment
-#  - **Strategy:** Configured assets binding with proper routing to handle API routes through Worker and static files through assets
-#  - **Outcome:** Complete Workers configuration that avoids Pages SSL issues and provides proper asset serving
+#  - **Objective:** Convert from Workers to Pages deployment configuration
+#  - **Strategy:** Use pages_build_output_dir and remove Workers-specific routing and assets
+#  - **Outcome:** Clean Pages configuration that will properly bundle dependencies
 # /

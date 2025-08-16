@@ -1,0 +1,122 @@
+{
+  "_dreamforge_metadata": {
+    "file_purpose": "Deployment status tracking for Cloudflare Workers",
+    "version": "1.0.0",
+    "init_author": "deploy-agent",
+    "init_cc_sessionId": "cc-deploy-20250815-001",
+    "init_timestamp": "2025-08-15T20:00:00Z",
+    "reasoning": {
+      "objective": "Track deployment status and configuration",
+      "strategy": "JSON format for programmatic access",
+      "outcome": "Machine-readable deployment state"
+    }
+  },
+  "deployment": {
+    "status": "PREPARED",
+    "environment": "cloudflare-workers",
+    "application": "executive-ai-training-voice-agent",
+    "version": "2.0.0",
+    "build_status": "SUCCESS",
+    "build_timestamp": "2025-08-15T20:00:53Z",
+    "deployment_timestamp": null,
+    "deployment_url": null
+  },
+  "build": {
+    "command": "npm run build:workers",
+    "duration_seconds": 7,
+    "bundle_size_mb": 0.4,
+    "assets_optimized": {
+      "css_files": 3,
+      "html_files": 15,
+      "js_files": 17,
+      "total_savings_kb": 130.39
+    },
+    "warnings": [
+      "Dynamic imports detected - may cause runtime issues",
+      "Asset bundling script encountered EISDIR error (non-blocking)"
+    ]
+  },
+  "kv_namespaces": {
+    "status": "PENDING_CREATION",
+    "required_namespaces": [
+      "sessions",
+      "rate_limits",
+      "voice_tokens",
+      "performance_logs"
+    ],
+    "environments": [
+      "production",
+      "staging", 
+      "development"
+    ],
+    "creation_script": "scripts/create-kv-namespaces.js",
+    "namespace_ids": {
+      "production": {
+        "sessions": "PLACEHOLDER_ID",
+        "rate_limits": "PLACEHOLDER_ID",
+        "voice_tokens": "PLACEHOLDER_ID",
+        "performance_logs": "PLACEHOLDER_ID"
+      }
+    }
+  },
+  "secrets": {
+    "status": "PENDING_CONFIGURATION",
+    "required_secrets": [
+      {
+        "name": "OPENAI_API_KEY",
+        "description": "OpenAI API key for voice agent",
+        "required": true,
+        "configured": false
+      },
+      {
+        "name": "JWT_SECRET",
+        "description": "Secret for signing JWT tokens",
+        "required": true,
+        "configured": false
+      },
+      {
+        "name": "ADMIN_PASSWORD",
+        "description": "Administrative access password",
+        "required": true,
+        "configured": false
+      },
+      {
+        "name": "ALLOWED_ORIGINS",
+        "description": "CORS allowed origins",
+        "required": false,
+        "configured": false
+      }
+    ]
+  },
+  "configuration": {
+    "wrangler_config": "wrangler.toml",
+    "worker_bundle": "dist/_worker.js/index.js",
+    "routes_config": "dist/_routes.json",
+    "custom_domain": "executiveaitraining.com",
+    "resource_limits": {
+      "cpu_ms": 50000,
+      "max_concurrent_sessions": 100
+    }
+  },
+  "next_steps": [
+    "Set up Cloudflare account authentication",
+    "Create KV namespaces using automation script",
+    "Configure required secrets",
+    "Update zone_id in wrangler.toml",
+    "Deploy to development environment first",
+    "Run functionality tests",
+    "Deploy to staging for full testing",
+    "Deploy to production"
+  ],
+  "files_created": [
+    ".cloudflare/workers-deployment.md",
+    ".cloudflare/deployment-checklist.md",
+    ".cloudflare/deployment-status.json"
+  ],
+  "automation_scripts": [
+    "scripts/create-kv-namespaces.js",
+    "scripts/bundle-workers-assets.js", 
+    "scripts/prepare-workers.js",
+    "scripts/test-workers-compatibility.js"
+  ]
+}

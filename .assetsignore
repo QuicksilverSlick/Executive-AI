@@ -1,0 +1,45 @@
+# DREAMFORGE
+#  DREAMFORGE HIVE-MIND CHAIN OF CUSTODY
+# 
+#  @file-purpose: Assets ignore configuration for Cloudflare Workers static assets binding
+#  @version: 1.0.0
+#  @init-author: developer-agent
+#  @init-cc-sessionId: cc-unknown-20250816-384
+#  @init-timestamp: 2025-08-16T11:10:00Z
+#  @reasoning:
+#  - **Objective:** Prevent Worker files from being served as static assets
+#  - **Strategy:** Exclude worker-specific files and dynamic imports from assets binding
+#  - **Outcome:** Clean separation between Worker runtime and static assets
+# /
+
+# Worker runtime files - these should not be served as static assets
+_worker.js/
+_worker.js/**
+
+# Source maps - not needed in production
+**/*.map
+
+# Manifest files that are dynamically imported
+**/manifest*.mjs
+**/manifest*.js
+
+# Astro internal files
+_astro-internal_*
+
+# Build artifacts that shouldn't be publicly accessible
+**/*.config.js
+**/*.config.mjs
+
+# DREAMFORGE
+#  DREAMFORGE AUDIT TRAIL
+# 
+#  ---
+#  @revision: 1.0.0
+#  @author: developer-agent
+#  @cc-sessionId: cc-unknown-20250816-384
+#  @timestamp: 2025-08-16T11:10:00Z
+#  @reasoning:
+#  - **Objective:** Created assets ignore file to properly separate Worker and static files
+#  - **Strategy:** Exclude Worker files, maps, and manifests from static asset serving
+#  - **Outcome:** Proper asset separation for Cloudflare Workers deployment
+# /

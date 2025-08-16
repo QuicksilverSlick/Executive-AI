@@ -1,0 +1,876 @@
+---
+/*
+ * DREAMFORGE HIVE-MIND CHAIN OF CUSTODY
+ *
+ * @file-purpose: Manual test harness for audio feedback system
+ * @version: 1.0.0
+ * @init-author: test-agent
+ * @init-cc-sessionId: cc-test-20250808-045
+ * @init-timestamp: 2025-08-08T17:15:00Z
+ * @reasoning:
+ * - **Objective:** Provide manual testing interface for audio feedback system
+ * - **Strategy:** Interactive test page with controls for all audio features
+ * - **Outcome:** Comprehensive manual testing tool for audio feedback validation
+ */
+
+title: 'Audio Feedback System Test Harness'
+description: 'Manual testing interface for voice agent audio feedback system'
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Feedback Test Harness</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #2563eb;
+      margin-bottom: 30px;
+    }
+    .test-section {
+      margin-bottom: 40px;
+      padding: 20px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+    }
+    .test-section h2 {
+      color: #1f2937;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    label {
+      font-weight: 500;
+      color: #374151;
+    }
+    input, select, button {
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+      font-weight: 500;
+    }
+    .status.idle { background: #f3f4f6; color: #374151; }
+    .status.playing { background: #dbeafe; color: #1e40af; }
+    .status.error { background: #fee2e2; color: #dc2626; }
+    .status.success { background: #d1fae5; color: #065f46; }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .metric {
+      padding: 10px;
+      background: #f9fafb;
+      border-radius: 6px;
+      text-align: center;
+    }
+    .metric-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #2563eb;
+    }
+    .metric-label {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 5px;
+    }
+    .log {
+      background: #1f2937;
+      color: #f9fafb;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+    .queue-visualizer {
+      display: flex;
+      gap: 5px;
+      margin: 10px 0;
+      min-height: 30px;
+      align-items: center;
+    }
+    .queue-item {
+      width: 20px;
+      height: 20px;
+      background: #2563eb;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+    }
+    .waveform-canvas {
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    .test-controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎵 Audio Feedback System Test Harness</h1>
+    
+    <!-- System Status Section -->
+    <div class="test-section">
+      <h2>System Status</h2>
+      <div class="status idle" id="system-status">System Ready</div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-value" id="latency-metric">0</div>
+          <div class="metric-label">Latency (ms)</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value" id="memory-metric">0</div>
+          <div class="metric-label">Memory (MB)</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value" id="queue-metric">0</div>
+          <div class="metric-label">Queue Size</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value" id="throughput-metric">0</div>
+          <div class="metric-label">Throughput (ops/s)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Audio Controls Section -->
+    <div class="test-section">
+      <h2>Audio Controls</h2>
+      <div class="controls">
+        <div class="control-group">
+          <label for="volume-control">Volume</label>
+          <input type="range" id="volume-control" min="0" max="1" step="0.1" value="0.8">
+          <span id="volume-value">0.8</span>
+        </div>
+        <div class="control-group">
+          <label for="sample-rate">Sample Rate</label>
+          <select id="sample-rate">
+            <option value="8000">8 kHz</option>
+            <option value="16000">16 kHz</option>
+            <option value="24000" selected>24 kHz</option>
+            <option value="44100">44.1 kHz</option>
+            <option value="48000">48 kHz</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="chunk-size">Chunk Size</label>
+          <select id="chunk-size">
+            <option value="128">128 samples</option>
+            <option value="256">256 samples</option>
+            <option value="512">512 samples</option>
+            <option value="1024" selected>1024 samples</option>
+            <option value="2048">2048 samples</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="test-frequency">Test Frequency</label>
+          <input type="number" id="test-frequency" value="440" min="100" max="2000">
+        </div>
+      </div>
+      <div class="test-controls">
+        <button id="play-tone-btn">Play Test Tone</button>
+        <button id="play-sequence-btn">Play Sequence</button>
+        <button id="stop-playback-btn">Stop Playback</button>
+        <button id="mute-btn">Toggle Mute</button>
+        <button id="clear-queue-btn">Clear Queue</button>
+      </div>
+    </div>
+
+    <!-- Queue Visualization Section -->
+    <div class="test-section">
+      <h2>Audio Queue Visualization</h2>
+      <div class="queue-visualizer" id="queue-visualizer">
+        <span style="color: #6b7280; font-size: 14px;">Queue is empty</span>
+      </div>
+      <div class="test-controls">
+        <button id="add-chunk-btn">Add Audio Chunk</button>
+        <button id="add-burst-btn">Add Burst (10 chunks)</button>
+        <button id="test-overflow-btn">Test Queue Overflow</button>
+      </div>
+    </div>
+
+    <!-- Waveform Visualization Section -->
+    <div class="test-section">
+      <h2>Audio Waveform</h2>
+      <canvas id="waveform-canvas" class="waveform-canvas" width="800" height="200"></canvas>
+      <div class="test-controls">
+        <button id="start-visualization-btn">Start Visualization</button>
+        <button id="stop-visualization-btn">Stop Visualization</button>
+        <button id="generate-noise-btn">Generate Noise</button>
+        <button id="generate-silence-btn">Generate Silence</button>
+      </div>
+    </div>
+
+    <!-- Performance Testing Section -->
+    <div class="test-section">
+      <h2>Performance Testing</h2>
+      <div class="controls">
+        <div class="control-group">
+          <label for="load-test-chunks">Number of Chunks</label>
+          <input type="number" id="load-test-chunks" value="100" min="10" max="1000">
+        </div>
+        <div class="control-group">
+          <label for="concurrency-level">Concurrency Level</label>
+          <select id="concurrency-level">
+            <option value="1">Sequential</option>
+            <option value="2">2 concurrent</option>
+            <option value="4" selected>4 concurrent</option>
+            <option value="8">8 concurrent</option>
+          </select>
+        </div>
+      </div>
+      <div class="test-controls">
+        <button id="latency-test-btn">Latency Test</button>
+        <button id="throughput-test-btn">Throughput Test</button>
+        <button id="memory-stress-btn">Memory Stress Test</button>
+        <button id="burst-test-btn">Burst Load Test</button>
+      </div>
+    </div>
+
+    <!-- Error Testing Section -->
+    <div class="test-section">
+      <h2>Error Testing</h2>
+      <div class="test-controls">
+        <button id="corrupt-data-btn">Test Corrupted Data</button>
+        <button id="context-error-btn">Simulate Context Error</button>
+        <button id="memory-pressure-btn">Memory Pressure Test</button>
+        <button id="recovery-test-btn">Error Recovery Test</button>
+      </div>
+    </div>
+
+    <!-- Event Log Section -->
+    <div class="test-section">
+      <h2>Event Log</h2>
+      <button id="clear-log-btn" style="margin-bottom: 10px;">Clear Log</button>
+      <div id="event-log" class="log">
+        <div>Audio feedback test harness initialized</div>
+        <div>Ready for testing...</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Audio Feedback Manager Mock for Testing
+    class AudioFeedbackManagerTest {
+      constructor() {
+        this.audioContext = null;
+        this.audioQueue = [];
+        this.isPlaying = false;
+        this.volume = 0.8;
+        this.isMuted = false;
+        this.currentState = 'idle';
+        this.eventListeners = new Map();
+        this.metrics = {
+          latency: [],
+          memory: [],
+          throughput: [],
+          processingTimes: []
+        };
+        this.lastThroughputTime = Date.now();
+        this.operationCount = 0;
+        
+        this.initializeAudioContext();
+        this.setupEventHandlers();
+        this.startMetricsCollection();
+      }
+
+      async initializeAudioContext() {
+        try {
+          this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          this.logEvent('Audio context initialized successfully');
+          this.updateStatus('System initialized', 'success');
+        } catch (error) {
+          this.logEvent('Failed to initialize audio context: ' + error.message, 'error');
+          this.updateStatus('Audio context failed', 'error');
+        }
+      }
+
+      setupEventHandlers() {
+        // Volume control
+        document.getElementById('volume-control').addEventListener('input', (e) => {
+          this.setVolume(parseFloat(e.target.value));
+        });
+
+        // Playback controls
+        document.getElementById('play-tone-btn').addEventListener('click', () => {
+          this.playTestTone();
+        });
+
+        document.getElementById('play-sequence-btn').addEventListener('click', () => {
+          this.playSequence();
+        });
+
+        document.getElementById('stop-playback-btn').addEventListener('click', () => {
+          this.stopPlayback();
+        });
+
+        document.getElementById('mute-btn').addEventListener('click', () => {
+          this.toggleMute();
+        });
+
+        document.getElementById('clear-queue-btn').addEventListener('click', () => {
+          this.clearQueue();
+        });
+
+        // Queue testing
+        document.getElementById('add-chunk-btn').addEventListener('click', () => {
+          this.addTestChunk();
+        });
+
+        document.getElementById('add-burst-btn').addEventListener('click', () => {
+          this.addBurstChunks();
+        });
+
+        document.getElementById('test-overflow-btn').addEventListener('click', () => {
+          this.testQueueOverflow();
+        });
+
+        // Performance testing
+        document.getElementById('latency-test-btn').addEventListener('click', () => {
+          this.runLatencyTest();
+        });
+
+        document.getElementById('throughput-test-btn').addEventListener('click', () => {
+          this.runThroughputTest();
+        });
+
+        document.getElementById('memory-stress-btn').addEventListener('click', () => {
+          this.runMemoryStressTest();
+        });
+
+        document.getElementById('burst-test-btn').addEventListener('click', () => {
+          this.runBurstTest();
+        });
+
+        // Error testing
+        document.getElementById('corrupt-data-btn').addEventListener('click', () => {
+          this.testCorruptedData();
+        });
+
+        document.getElementById('context-error-btn').addEventListener('click', () => {
+          this.simulateContextError();
+        });
+
+        document.getElementById('recovery-test-btn').addEventListener('click', () => {
+          this.testErrorRecovery();
+        });
+
+        // Visualization
+        document.getElementById('start-visualization-btn').addEventListener('click', () => {
+          this.startWaveformVisualization();
+        });
+
+        document.getElementById('stop-visualization-btn').addEventListener('click', () => {
+          this.stopWaveformVisualization();
+        });
+
+        // Utility
+        document.getElementById('clear-log-btn').addEventListener('click', () => {
+          this.clearLog();
+        });
+
+        // Update volume display
+        document.getElementById('volume-control').addEventListener('input', (e) => {
+          document.getElementById('volume-value').textContent = e.target.value;
+        });
+      }
+
+      // Core Audio Methods
+      async playTestTone() {
+        const startTime = performance.now();
+        
+        try {
+          const frequency = parseInt(document.getElementById('test-frequency').value);
+          const chunkSize = parseInt(document.getElementById('chunk-size').value);
+          
+          const audioChunk = this.generateAudioChunk(chunkSize, frequency);
+          await this.playAudioChunk(audioChunk);
+          
+          const latency = performance.now() - startTime;
+          this.metrics.latency.push(latency);
+          this.logEvent(`Played test tone (${frequency}Hz) - Latency: ${latency.toFixed(2)}ms`);
+        } catch (error) {
+          this.logEvent('Failed to play test tone: ' + error.message, 'error');
+        }
+      }
+
+      async playSequence() {
+        const frequencies = [261, 293, 329, 349, 392, 440, 493, 523]; // C major scale
+        this.logEvent('Playing musical sequence...');
+        
+        for (let i = 0; i < frequencies.length; i++) {
+          const chunk = this.generateAudioChunk(1024, frequencies[i]);
+          await this.playAudioChunk(chunk);
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        this.logEvent('Musical sequence completed');
+      }
+
+      generateAudioChunk(size, frequency) {
+        const sampleRate = parseInt(document.getElementById('sample-rate').value);
+        const data = new Int16Array(size);
+        
+        for (let i = 0; i < size; i++) {
+          const sample = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.8;
+          data[i] = Math.max(-32768, Math.min(32767, sample * 32767));
+        }
+        
+        return {
+          data,
+          timestamp: Date.now(),
+          sequenceId: this.audioQueue.length
+        };
+      }
+
+      async playAudioChunk(chunk) {
+        if (!this.audioContext || this.isMuted) return;
+        
+        try {
+          if (this.audioContext.state === 'suspended') {
+            await this.audioContext.resume();
+          }
+
+          // Convert PCM16 to Float32
+          const floatData = new Float32Array(chunk.data.length);
+          for (let i = 0; i < chunk.data.length; i++) {
+            floatData[i] = chunk.data[i] / 0x7FFF;
+          }
+
+          // Create audio buffer
+          const audioBuffer = this.audioContext.createBuffer(1, floatData.length, 24000);
+          audioBuffer.copyToChannel(floatData, 0);
+
+          // Create source and play
+          const source = this.audioContext.createBufferSource();
+          const gainNode = this.audioContext.createGain();
+          
+          source.buffer = audioBuffer;
+          source.connect(gainNode);
+          gainNode.connect(this.audioContext.destination);
+          gainNode.gain.setValueAtTime(this.volume, this.audioContext.currentTime);
+
+          return new Promise((resolve, reject) => {
+            source.onended = resolve;
+            source.onerror = reject;
+            source.start();
+          });
+        } catch (error) {
+          throw new Error(`Audio playback failed: ${error.message}`);
+        }
+      }
+
+      // Queue Management
+      addTestChunk() {
+        const frequency = Math.random() * 1000 + 200; // Random frequency
+        const chunk = this.generateAudioChunk(1024, frequency);
+        this.enqueue(chunk);
+        this.logEvent(`Added audio chunk to queue (${frequency.toFixed(0)}Hz)`);
+      }
+
+      addBurstChunks() {
+        for (let i = 0; i < 10; i++) {
+          this.addTestChunk();
+        }
+        this.logEvent('Added burst of 10 chunks to queue');
+      }
+
+      enqueue(chunk) {
+        if (this.audioQueue.length >= 20) {
+          const dropped = this.audioQueue.shift();
+          this.logEvent('Queue overflow - dropped chunk', 'warning');
+        }
+        
+        this.audioQueue.push(chunk);
+        this.updateQueueVisualization();
+        this.operationCount++;
+      }
+
+      clearQueue() {
+        const droppedCount = this.audioQueue.length;
+        this.audioQueue = [];
+        this.updateQueueVisualization();
+        this.logEvent(`Cleared queue - dropped ${droppedCount} chunks`);
+      }
+
+      // Performance Testing
+      async runLatencyTest() {
+        this.logEvent('Running latency test...');
+        const latencies = [];
+        
+        for (let i = 0; i < 20; i++) {
+          const start = performance.now();
+          const chunk = this.generateAudioChunk(512, 440);
+          await this.playAudioChunk(chunk);
+          const latency = performance.now() - start;
+          latencies.push(latency);
+          
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        
+        const avgLatency = latencies.reduce((a, b) => a + b, 0) / latencies.length;
+        const p95Latency = latencies.sort((a, b) => a - b)[Math.floor(latencies.length * 0.95)];
+        
+        this.logEvent(`Latency test completed - Avg: ${avgLatency.toFixed(2)}ms, P95: ${p95Latency.toFixed(2)}ms`);
+      }
+
+      async runThroughputTest() {
+        this.logEvent('Running throughput test...');
+        const chunkCount = parseInt(document.getElementById('load-test-chunks').value);
+        const concurrency = parseInt(document.getElementById('concurrency-level').value);
+        
+        const startTime = performance.now();
+        const chunks = Array.from({ length: chunkCount }, (_, i) => 
+          this.generateAudioChunk(1024, 440 + i * 10)
+        );
+        
+        // Process chunks with specified concurrency
+        if (concurrency === 1) {
+          for (const chunk of chunks) {
+            await this.playAudioChunk(chunk);
+          }
+        } else {
+          const batches = [];
+          for (let i = 0; i < chunks.length; i += concurrency) {
+            batches.push(chunks.slice(i, i + concurrency));
+          }
+          
+          for (const batch of batches) {
+            await Promise.all(batch.map(chunk => this.playAudioChunk(chunk)));
+          }
+        }
+        
+        const totalTime = (performance.now() - startTime) / 1000;
+        const throughput = chunkCount / totalTime;
+        
+        this.logEvent(`Throughput test completed - ${throughput.toFixed(2)} chunks/second`);
+      }
+
+      async runMemoryStressTest() {
+        this.logEvent('Running memory stress test...');
+        const initialMemory = this.getMemoryUsage();
+        
+        // Generate large amounts of audio data
+        for (let i = 0; i < 1000; i++) {
+          const chunk = this.generateAudioChunk(2048, 440);
+          this.enqueue(chunk);
+          
+          if (i % 100 === 0) {
+            // Force garbage collection if available
+            if (window.gc) window.gc();
+            
+            const currentMemory = this.getMemoryUsage();
+            this.logEvent(`Memory stress test progress: ${i}/1000 chunks, Memory: ${currentMemory}MB`);
+          }
+        }
+        
+        const finalMemory = this.getMemoryUsage();
+        const memoryIncrease = finalMemory - initialMemory;
+        
+        this.logEvent(`Memory stress test completed - Memory increase: ${memoryIncrease.toFixed(2)}MB`);
+        this.clearQueue(); // Cleanup
+      }
+
+      async runBurstTest() {
+        this.logEvent('Running burst load test...');
+        
+        // Generate rapid bursts of small chunks
+        const burstSize = 50;
+        const burstCount = 5;
+        
+        for (let burst = 0; burst < burstCount; burst++) {
+          const startTime = performance.now();
+          
+          const chunks = Array.from({ length: burstSize }, (_, i) => 
+            this.generateAudioChunk(128, 440 + i * 5)
+          );
+          
+          // Process all chunks in the burst simultaneously
+          await Promise.all(chunks.map(chunk => this.playAudioChunk(chunk)));
+          
+          const burstTime = performance.now() - startTime;
+          this.logEvent(`Burst ${burst + 1}/${burstCount} completed in ${burstTime.toFixed(2)}ms`);
+          
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        this.logEvent('Burst load test completed');
+      }
+
+      // Error Testing
+      testCorruptedData() {
+        this.logEvent('Testing corrupted audio data...');
+        
+        try {
+          const corruptChunk = {
+            data: null, // Intentionally corrupt
+            timestamp: Date.now(),
+            sequenceId: -1
+          };
+          
+          this.playAudioChunk(corruptChunk).catch(error => {
+            this.logEvent(`Corrupted data test - Error handled: ${error.message}`, 'warning');
+          });
+        } catch (error) {
+          this.logEvent(`Corrupted data test - Exception caught: ${error.message}`, 'error');
+        }
+      }
+
+      simulateContextError() {
+        this.logEvent('Simulating audio context error...');
+        
+        if (this.audioContext) {
+          this.audioContext.close().then(() => {
+            this.logEvent('Audio context closed - simulating recovery...');
+            
+            // Attempt to recreate context
+            setTimeout(() => {
+              this.initializeAudioContext();
+              this.logEvent('Audio context recovery attempted');
+            }, 1000);
+          });
+        }
+      }
+
+      async testErrorRecovery() {
+        this.logEvent('Testing error recovery capabilities...');
+        
+        // Test 1: Context failure and recovery
+        await this.simulateContextError();
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Test 2: Continue normal operation after recovery
+        try {
+          await this.playTestTone();
+          this.logEvent('Error recovery test - Normal operation restored', 'success');
+        } catch (error) {
+          this.logEvent(`Error recovery test - Failed to restore: ${error.message}`, 'error');
+        }
+      }
+
+      // Visualization and UI Updates
+      updateQueueVisualization() {
+        const visualizer = document.getElementById('queue-visualizer');
+        
+        if (this.audioQueue.length === 0) {
+          visualizer.innerHTML = '<span style="color: #6b7280; font-size: 14px;">Queue is empty</span>';
+        } else {
+          visualizer.innerHTML = this.audioQueue.map((chunk, index) => 
+            `<div class="queue-item" title="Chunk ${chunk.sequenceId}">${index + 1}</div>`
+          ).join('');
+        }
+        
+        document.getElementById('queue-metric').textContent = this.audioQueue.length;
+      }
+
+      startWaveformVisualization() {
+        const canvas = document.getElementById('waveform-canvas');
+        const ctx = canvas.getContext('2d');
+        let animationId;
+        
+        const drawWaveform = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.strokeStyle = '#2563eb';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          
+          const time = Date.now() / 1000;
+          const frequency = 440;
+          const amplitude = 80;
+          const centerY = canvas.height / 2;
+          
+          for (let x = 0; x < canvas.width; x++) {
+            const t = (x / canvas.width) * 4 * Math.PI + time * 2 * Math.PI * frequency / 1000;
+            const y = centerY + Math.sin(t) * amplitude;
+            
+            if (x === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              ctx.lineTo(x, y);
+            }
+          }
+          
+          ctx.stroke();
+          animationId = requestAnimationFrame(drawWaveform);
+        };
+        
+        drawWaveform();
+        this.logEvent('Waveform visualization started');
+        
+        // Store animation ID for cleanup
+        this.waveformAnimation = animationId;
+      }
+
+      stopWaveformVisualization() {
+        if (this.waveformAnimation) {
+          cancelAnimationFrame(this.waveformAnimation);
+          this.waveformAnimation = null;
+          
+          const canvas = document.getElementById('waveform-canvas');
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          this.logEvent('Waveform visualization stopped');
+        }
+      }
+
+      // Utility Methods
+      setVolume(volume) {
+        this.volume = volume;
+        this.logEvent(`Volume set to ${(volume * 100).toFixed(0)}%`);
+      }
+
+      toggleMute() {
+        this.isMuted = !this.isMuted;
+        const btn = document.getElementById('mute-btn');
+        btn.textContent = this.isMuted ? 'Unmute' : 'Toggle Mute';
+        this.logEvent(`Audio ${this.isMuted ? 'muted' : 'unmuted'}`);
+        this.updateStatus(this.isMuted ? 'Audio muted' : 'Audio active', 'idle');
+      }
+
+      stopPlayback() {
+        // Implementation would stop all active audio sources
+        this.logEvent('Playback stopped');
+        this.updateStatus('Playback stopped', 'idle');
+      }
+
+      getMemoryUsage() {
+        if (performance.memory) {
+          return performance.memory.usedJSHeapSize / 1024 / 1024; // Convert to MB
+        }
+        return 0;
+      }
+
+      startMetricsCollection() {
+        setInterval(() => {
+          // Update latency metric
+          if (this.metrics.latency.length > 0) {
+            const avgLatency = this.metrics.latency.slice(-10).reduce((a, b) => a + b, 0) / Math.min(10, this.metrics.latency.length);
+            document.getElementById('latency-metric').textContent = avgLatency.toFixed(1);
+          }
+          
+          // Update memory metric
+          const memoryUsage = this.getMemoryUsage();
+          document.getElementById('memory-metric').textContent = memoryUsage.toFixed(1);
+          
+          // Update throughput metric
+          const now = Date.now();
+          const timeDiff = (now - this.lastThroughputTime) / 1000;
+          if (timeDiff >= 1) {
+            const throughput = this.operationCount / timeDiff;
+            document.getElementById('throughput-metric').textContent = throughput.toFixed(1);
+            this.lastThroughputTime = now;
+            this.operationCount = 0;
+          }
+        }, 1000);
+      }
+
+      updateStatus(message, type = 'idle') {
+        const statusElement = document.getElementById('system-status');
+        statusElement.textContent = message;
+        statusElement.className = `status ${type}`;
+      }
+
+      logEvent(message, type = 'info') {
+        const log = document.getElementById('event-log');
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        
+        let prefix = '';
+        switch (type) {
+          case 'error': prefix = '❌ '; break;
+          case 'warning': prefix = '⚠️ '; break;
+          case 'success': prefix = '✅ '; break;
+          default: prefix = 'ℹ️ '; break;
+        }
+        
+        logEntry.innerHTML = `<span style="color: #6b7280;">[${timestamp}]</span> ${prefix}${message}`;
+        log.appendChild(logEntry);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      clearLog() {
+        const log = document.getElementById('event-log');
+        log.innerHTML = '<div>Log cleared</div>';
+      }
+
+      testQueueOverflow() {
+        this.logEvent('Testing queue overflow behavior...');
+        
+        // Add more chunks than the queue limit
+        for (let i = 0; i < 25; i++) {
+          this.addTestChunk();
+        }
+        
+        this.logEvent('Queue overflow test completed');
+      }
+    }
+
+    // Initialize the test harness when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      window.audioTestHarness = new AudioFeedbackManagerTest();
+      console.log('Audio Feedback Test Harness initialized');
+    });
+  </script>
+</body>
+</html>

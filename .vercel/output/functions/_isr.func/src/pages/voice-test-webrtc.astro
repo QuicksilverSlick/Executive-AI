@@ -1,0 +1,123 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="WebRTC Voice Assistant Test" disableVoiceWidget={true}>
+  <div class="container-narrow py-20">
+    <h1 class="text-4xl font-bold text-brand-charcoal dark:text-dark-text mb-8">
+      WebRTC Voice Assistant Test
+    </h1>
+    
+    <div class="bg-white dark:bg-dark-surface-2 rounded-lg shadow-lg p-8 mb-8">
+      <h2 class="text-2xl font-semibold mb-4">Testing OpenAI Realtime API</h2>
+      
+      <div class="prose dark:prose-invert">
+        <p>This page tests the WebRTC voice assistant with OpenAI's Realtime API.</p>
+        
+        <h3>How to use:</h3>
+        <ol>
+          <li>Click the golden microphone button in the bottom-right corner</li>
+          <li>Click the large microphone or hold Space to start talking</li>
+          <li>Release to stop recording and get a response</li>
+          <li>The AI will respond with both voice and text</li>
+        </ol>
+        
+        <h3>Features:</h3>
+        <ul>
+          <li>Real-time speech recognition via WebRTC</li>
+          <li>AI responses with natural voice synthesis</li>
+          <li>Live transcripts for both user and assistant</li>
+          <li>Keyboard shortcuts (Space to talk, Esc to minimize, Ctrl+M to mute)</li>
+        </ul>
+        
+        <h3>Connection Status:</h3>
+        <div id="connection-status" class="mt-4 p-4 bg-gray-100 dark:bg-dark-surface rounded-lg">
+          <p class="text-sm">Checking connection...</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-brand-pearl dark:bg-dark-surface-3 rounded-lg p-6">
+      <h3 class="text-lg font-semibold mb-3">Debug Console</h3>
+      <div id="debug-console" class="bg-white dark:bg-dark-surface rounded p-4 h-64 overflow-y-auto font-mono text-sm">
+        <p class="text-gray-500">Console messages will appear here...</p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // Debug console logging
+  const debugConsole = document.getElementById('debug-console');
+  const connectionStatus = document.getElementById('connection-status');
+  
+  function log(message: string, type: 'info' | 'error' | 'success' = 'info') {
+    const timestamp = new Date().toLocaleTimeString();
+    const color = type === 'error' ? 'text-red-600' : type === 'success' ? 'text-green-600' : 'text-gray-700';
+    
+    if (debugConsole) {
+      const entry = document.createElement('div');
+      entry.className = `mb-1 ${color}`;
+      entry.textContent = `[${timestamp}] ${message}`;
+      debugConsole.appendChild(entry);
+      debugConsole.scrollTop = debugConsole.scrollHeight;
+    }
+  }
+  
+  // Override console methods for debugging
+  const originalLog = console.log;
+  const originalError = console.error;
+  
+  console.log = (...args) => {
+    originalLog(...args);
+    log(args.join(' '), 'info');
+  };
+  
+  console.error = (...args) => {
+    originalError(...args);
+    log(args.join(' '), 'error');
+  };
+  
+  // Check health endpoint
+  async function checkHealth() {
+    try {
+      const response = await fetch('/api/voice-agent/health');
+      const data = await response.json();
+      
+      if (data.status === 'healthy') {
+        if (connectionStatus) {
+          connectionStatus.innerHTML = `
+            <p class="text-green-600 font-semibold">✅ Backend is healthy</p>
+            <p class="text-sm text-gray-600 mt-1">Version: ${data.version}</p>
+            <p class="text-sm text-gray-600">Mode: ${data.environment.VOICE_AGENT_MODE || 'standard'}</p>
+          `;
+        }
+        log('Backend health check passed', 'success');
+      } else {
+        throw new Error('Backend is not healthy');
+      }
+    } catch (error) {
+      if (connectionStatus) {
+        connectionStatus.innerHTML = `
+          <p class="text-red-600 font-semibold">❌ Backend connection failed</p>
+          <p class="text-sm text-gray-600 mt-1">Error: ${error.message}</p>
+        `;
+      }
+      log(`Health check failed: ${error.message}`, 'error');
+    }
+  }
+  
+  // Run health check on load
+  checkHealth();
+  
+  // Listen for voice agent events
+  window.addEventListener('voice-agent-ready', () => {
+    log('Voice agent is ready', 'success');
+  });
+  
+  window.addEventListener('voice-agent-error', (event) => {
+    log(`Voice agent error: ${event.detail}`, 'error');
+  });
+  
+  log('WebRTC Voice Test page loaded', 'info');
+</script>

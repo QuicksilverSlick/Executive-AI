@@ -1,0 +1,184 @@
+/*
+ * DREAMFORGE HIVE-MIND CHAIN OF CUSTODY
+ *
+ * @file-purpose: Cloudflare Workers configuration with 2025 static assets for Executive AI Training voice agent
+ * @version: 2.0.0
+ * @init-author: developer-agent
+ * @init-cc-sessionId: cc-unknown-20250815-296
+ * @init-timestamp: 2025-08-15T17:30:00Z
+ * @reasoning:
+ * - **Objective:** Configure Workers deployment with new 2025 static assets approach instead of Pages
+ * - **Strategy:** Use assets binding with run_worker_first for proper API routing and static file serving
+ * - **Outcome:** Proper Workers deployment resolving SSL issues from Pages approach
+ */
+
+name = "executive-ai-training"
+compatibility_date = "2025-08-15"
+compatibility_flags = ["nodejs_compat"]
+
+# Main Worker entry point
+main = "src/worker.js"
+
+# Static assets configuration (new 2025 approach)
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+# API routes handled by Worker first, then fallback to static assets
+html_handling = "auto-trailing-slash"
+not_found_handling = "single-page-app"
+
+# Routes configuration - handle API routes with Worker, static files with assets
+[[routes]]
+pattern = "executiveaitraining.com/api/*"
+zone_id = "your-zone-id" # Replace with actual zone ID
+
+[[routes]]
+pattern = "www.executiveaitraining.com/api/*"
+zone_id = "your-zone-id" # Replace with actual zone ID
+
+[[routes]]
+pattern = "executiveaitraining.com/*"
+zone_id = "your-zone-id" # Replace with actual zone ID
+
+[[routes]]
+pattern = "www.executiveaitraining.com/*"
+zone_id = "your-zone-id" # Replace with actual zone ID
+
+# Ensure Worker runs first for API routes
+[placement]
+mode = "smart"
+
+# Environment variables (non-sensitive)
+[vars]
+ENVIRONMENT = "production"
+API_VERSION = "v1"
+VOICE_AGENT_VERSION = "2.0"
+MAX_CONCURRENT_SESSIONS = "100"
+SESSION_TIMEOUT_MINUTES = "30"
+RATE_LIMIT_WINDOW_SECONDS = "60"
+RATE_LIMIT_MAX_REQUESTS = "10"
+WORKERS_ASSETS_MODE = "true"
+
+# KV Namespaces for session management and rate limiting
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "e2ff2f3f2a9d4bc0bcaaad7758d28417" # Replace with actual KV namespace ID
+preview_id = "your-sessions-preview-kv-id" # Replace with preview namespace ID
+
+[[kv_namespaces]]
+binding = "RATE_LIMITS"
+id = "4008f45ba4894fb29109f6dfcd006e97" # Replace with actual KV namespace ID
+preview_id = "your-rate-limits-preview-kv-id" # Replace with preview namespace ID
+
+[[kv_namespaces]]
+binding = "VOICE_TOKENS"
+id = "bb09da2325bf4b4aaff80cc0a2e47878" # Replace with actual KV namespace ID
+preview_id = "your-voice-tokens-preview-kv-id" # Replace with preview namespace ID
+
+[[kv_namespaces]]
+binding = "PERFORMANCE_LOGS"
+id = "0a078b9d691744a5ab0fa06a2668f880" # Replace with actual KV namespace ID
+preview_id = "your-performance-preview-kv-id" # Replace with preview namespace ID
+
+# Secrets (configure via: wrangler secret put SECRET_NAME)
+# OPENAI_API_KEY - OpenAI API key for voice agent
+# ALLOWED_ORIGINS - Comma-separated list of allowed origins for CORS
+# JWT_SECRET - Secret for signing JWT tokens
+
+# Resource limits for voice processing
+[limits]
+cpu_ms = 50000 # 50 seconds for complex voice operations
+
+# Development environment configuration
+[env.development]
+name = "executive-ai-training-dev"
+main = "src/worker.js"
+compatibility_date = "2025-08-15"
+
+[env.development.assets]
+directory = "./dist"
+binding = "ASSETS"
+html_handling = "auto-trailing-slash"
+not_found_handling = "single-page-app"
+
+# More lenient rate limits for development
+[env.development.vars]
+ENVIRONMENT = "development"
+MAX_CONCURRENT_SESSIONS = "10"
+RATE_LIMIT_MAX_REQUESTS = "50"
+WORKERS_ASSETS_MODE = "true"
+
+[[env.development.kv_namespaces]]
+binding = "SESSIONS"
+id = "5d893875ea784fb9aa63d2fd6cd88128"
+preview_id = "your-dev-sessions-preview-kv-id"
+
+[[env.development.kv_namespaces]]
+binding = "RATE_LIMITS"
+id = "0432cff93f904b17bee4f5fe36181a84"
+preview_id = "your-dev-rate-limits-preview-kv-id"
+
+[[env.development.kv_namespaces]]
+binding = "VOICE_TOKENS"
+id = "6628386925064903b42cd0d425cecfc9"
+preview_id = "your-dev-voice-tokens-preview-kv-id"
+
+[[env.development.kv_namespaces]]
+binding = "PERFORMANCE_LOGS"
+id = "44dae235584e4324bb89b5872f9d21ff"
+preview_id = "your-dev-performance-preview-kv-id"
+
+# Staging environment configuration
+[env.staging]
+name = "executive-ai-training-staging"
+main = "src/worker.js"
+compatibility_date = "2025-08-15"
+
+[env.staging.assets]
+directory = "./dist"
+binding = "ASSETS"
+html_handling = "auto-trailing-slash"
+not_found_handling = "single-page-app"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+MAX_CONCURRENT_SESSIONS = "50"
+WORKERS_ASSETS_MODE = "true"
+
+[[env.staging.kv_namespaces]]
+binding = "SESSIONS"
+id = "35b87435e9234e1995a4fac4b1e04fab"
+preview_id = "your-staging-sessions-preview-kv-id"
+
+[[env.staging.kv_namespaces]]
+binding = "RATE_LIMITS"
+id = "77ff70e6663b407d848c4aa8fb98576b"
+preview_id = "your-staging-rate-limits-preview-kv-id"
+
+[[env.staging.kv_namespaces]]
+binding = "VOICE_TOKENS"
+id = "512154ff8bfc4198b907257af2c87b62"
+preview_id = "your-staging-voice-tokens-preview-kv-id"
+
+[[env.staging.kv_namespaces]]
+binding = "PERFORMANCE_LOGS"
+id = "e8b3712a29594b188776280d6599be83"
+preview_id = "your-staging-performance-preview-kv-id"
+
+[[env.staging.routes]]
+pattern = "staging.executiveaitraining.com/*"
+zone_id = "your-zone-id"
+
+/*
+ * DREAMFORGE AUDIT TRAIL
+ *
+ * ---
+ * @revision: 2.0.0
+ * @author: developer-agent
+ * @cc-sessionId: cc-unknown-20250815-296
+ * @timestamp: 2025-08-15T17:30:00Z
+ * @reasoning:
+ * - **Objective:** Updated Workers configuration to use 2025 static assets approach for proper deployment
+ * - **Strategy:** Configured assets binding with proper routing to handle API routes through Worker and static files through assets
+ * - **Outcome:** Complete Workers configuration that avoids Pages SSL issues and provides proper asset serving
+ */

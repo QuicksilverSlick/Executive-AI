@@ -1,0 +1,68 @@
+{
+  "buildCommand": "astro build --config astro.config.vercel.simple.mjs",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/api/voice-agent/:path*",
+      "destination": "/api/voice-agent/:path*"
+    },
+    {
+      "source": "/api/openai/:path*", 
+      "destination": "/api/openai/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, X-Requested-With"
+        },
+        {
+          "key": "Access-Control-Max-Age",
+          "value": "86400"
+        }
+      ]
+    },
+    {
+      "source": "/api/voice-agent/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Connection",
+          "value": "keep-alive"
+        },
+        {
+          "key": "X-Voice-API-Version",
+          "value": "1.0"
+        }
+      ]
+    },
+    {
+      "source": "/_astro/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "regions": ["iad1"],
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "installCommand": "npm install",
+  "devCommand": "npm run dev"
+}

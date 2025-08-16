@@ -1,0 +1,24 @@
+---
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Page</title>
+</head>
+<body>
+    <h1>Test Page</h1>
+    <p>If you can see this, static pages are working!</p>
+    <p>Time: {new Date().toISOString()}</p>
+    
+    <h2>API Test Links:</h2>
+    <ul>
+        <li><a href="/api/hello">/api/hello (native Vercel function)</a></li>
+        <li><a href="/api/simple">/api/simple (Astro JS endpoint)</a></li>
+        <li><a href="/api/test">/api/test (Astro TS endpoint)</a></li>
+        <li><a href="/api/health">/api/health (health check)</a></li>
+    </ul>
+</body>
+</html>
