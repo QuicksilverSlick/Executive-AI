@@ -1,5 +1,5 @@
 {
-  "buildCommand": "astro build --config astro.config.vercel.mjs",
+  "buildCommand": "npm run build:vercel",
   "framework": null,
   "rewrites": [
     {
