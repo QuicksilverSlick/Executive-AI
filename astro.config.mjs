@@ -49,26 +49,34 @@ export default defineConfig({
   ],
   site: 'https://executiveaitraining.com',
   compressHTML: true,
+  // Workers-optimized build settings
   build: {
-    inlineStylesheets: 'never', // Don't inline CSS, keep as separate files
-    assets: '_assets', // Directory name for assets
+    inlineStylesheets: 'auto',
+    assets: '_astro',
+    splitting: false,
+    format: 'directory'
   },
   vite: {
     build: {
       cssMinify: 'lightningcss',
       rollupOptions: {
         output: {
-          assetFileNames: '_assets/[hash][extname]', // Include _assets in the filename
-          chunkFileNames: '_assets/[hash].js',
-          entryFileNames: '_assets/[name].[hash].js',
+          format: 'esm',
+          assetFileNames: '_astro/[name].[hash][extname]',
+          chunkFileNames: '_astro/[name].[hash].js',
+          manualChunks: undefined
         },
+        external: []
       },
+      target: 'esnext',
+      minify: 'terser',
+      sourcemap: false
     },
     ssr: {
       noExternal: process.env.NODE_ENV === 'production' 
-        ? ['@fontsource/*', 'react', 'react-dom', 'react-dom/server', 'react-dom/server.browser']
-        : ['@fontsource/*'],
-      external: ['node:crypto', 'crypto', 'node:buffer', 'node:stream', 'node:util']
+        ? ['@fontsource/*', 'react', 'react-dom', 'react-dom/server', 'react-dom/server.browser', 'astro-icon', '@iconify/*']
+        : ['@fontsource/*', 'astro-icon', '@iconify/*'],
+      external: ['node:crypto', 'crypto', 'node:buffer', 'node:stream', 'node:util', 'node:path', 'node:fs']
     },
     resolve: {
       alias: process.env.NODE_ENV === 'production' 
@@ -79,16 +87,22 @@ export default defineConfig({
         : {}
     },
     optimizeDeps: {
-      include: ['react', 'react-dom']
+      include: ['react', 'react-dom', 'framer-motion'],
+      exclude: ['@astrojs/cloudflare']
     }
   },
   output: 'server',
   adapter: cloudflare({
-    mode: process.env.NODE_ENV === 'production' ? 'directory' : 'advanced',
+    mode: 'advanced',
     functionPerRoute: false,
     runtime: {
       mode: 'local',
-      type: 'pages'
+      type: 'workers'
+    },
+    routes: {
+      strategy: 'include',
+      include: ['/*'],
+      exclude: ['/_astro/*', '/favicon.ico', '/robots.txt', '/sitemap.xml']
     }
   }),
   prefetch: {
