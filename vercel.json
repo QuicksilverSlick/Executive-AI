@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npm run build:vercel",
-  "outputDirectory": ".vercel/output",
+  "buildCommand": "astro build --config astro.config.vercel.mjs",
+  "outputDirectory": "dist",
   "framework": "astro",
   "rewrites": [
     {

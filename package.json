@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "astro dev --config astro.config.dev.mjs",
     "build": "astro build && npm run optimize && npm run postbuild",
-    "build:vercel": "astro build --config astro.config.vercel.mjs",
+    "build:vercel": "astro build --config astro.config.vercel.mjs && npm run optimize",
     "postbuild": "node scripts/inject-polyfill-complete.js && node scripts/fix-worker-imports.js",
     "postbuild:workers": "node scripts/prepare-workers.js",
     "build:prod": "npm run build && npm run analyze",
