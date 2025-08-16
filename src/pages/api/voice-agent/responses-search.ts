@@ -77,7 +77,7 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ success: false, error: 'Query parameter is required' }), { status: 400 });
     }
 
-    const apiKey = import.meta.env.OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       console.error('[Search API] ❌ OpenAI API key not configured.');
       return new Response(JSON.stringify({ success: false, error: 'API key not configured' }), { status: 500 });
@@ -111,7 +111,7 @@ export const GET: APIRoute = async ({ url }) => {
       return new Response(JSON.stringify({ success: false, error: 'Query parameter is required' }), { status: 400 });
     }
 
-    const apiKey = import.meta.env.OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       console.error('[Search API] ❌ OpenAI API key not configured.');
       return new Response(JSON.stringify({ success: false, error: 'API key not configured' }), { status: 500 });

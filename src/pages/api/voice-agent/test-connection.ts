@@ -11,13 +11,13 @@ export const GET: APIRoute = async ({ request }) => {
   
   // Check environment variables
   const envCheck = {
-    OPENAI_API_KEY: !!import.meta.env.OPENAI_API_KEY,
-    VITE_OPENAI_API_KEY: !!import.meta.env.VITE_OPENAI_API_KEY,
-    PUBLIC_OPENAI_API_KEY: !!import.meta.env.PUBLIC_OPENAI_API_KEY,
-    NODE_ENV: import.meta.env.NODE_ENV || process.env.NODE_ENV,
-    MODE: import.meta.env.MODE,
-    DEV: import.meta.env.DEV,
-    PROD: import.meta.env.PROD,
+    OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
+    VITE_OPENAI_API_KEY: !!process.env.VITE_OPENAI_API_KEY,
+    PUBLIC_OPENAI_API_KEY: !!process.env.PUBLIC_OPENAI_API_KEY,
+    NODE_ENV: process.env.NODE_ENV || process.env.NODE_ENV,
+    MODE: process.env.MODE,
+    DEV: process.env.DEV,
+    PROD: process.env.PROD,
   };
 
   // Test token generation
@@ -52,7 +52,7 @@ export const GET: APIRoute = async ({ request }) => {
     tokenEndpoint: tokenTest,
     cors: {
       origin: origin || 'none',
-      allowedOrigins: import.meta.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:4321']
+      allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:4321']
     }
   }, null, 2), {
     status: 200,

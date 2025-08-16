@@ -15,8 +15,8 @@ import type { APIRoute } from 'astro';
 export const prerender = false;
 
 // Environment validation
-const OPENAI_API_KEY = import.meta.env.OPENAI_API_KEY;
-const ALLOWED_ORIGINS = import.meta.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:4321', 'http://localhost:4322', 'https://executiveaitraining.com'];
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:4321', 'http://localhost:4322', 'https://executiveaitraining.com'];
 
 interface ChatRequest {
   message: string;

@@ -8,7 +8,7 @@
 import type { APIRoute } from 'astro';
 
 // Only enable in development
-const isDevelopment = import.meta.env.DEV || import.meta.env.NODE_ENV === 'development';
+const isDevelopment = process.env.DEV || process.env.NODE_ENV === 'development';
 
 if (!isDevelopment) {
   console.warn('⚠️ Rate limit clearing endpoint is disabled in production');

@@ -21,8 +21,8 @@ import { registerSession } from './refresh-token';
 export const prerender = false;
 
 // Environment validation
-const OPENAI_API_KEY = import.meta.env.OPENAI_API_KEY;
-const ALLOWED_ORIGINS = import.meta.env.ALLOWED_ORIGINS?.split(',') || [
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:4321', 
   'http://localhost:4322', 
   'http://localhost:4323', 
@@ -31,9 +31,9 @@ const ALLOWED_ORIGINS = import.meta.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:4326',
   'https://executiveaitraining.com'
 ];
-const TOKEN_DURATION = parseInt(import.meta.env.VOICE_AGENT_TOKEN_DURATION || '1800'); // 30 minutes
-const RATE_LIMIT_MAX = parseInt(import.meta.env.VOICE_AGENT_RATE_LIMIT || '10');
-const ENABLE_DEMO_MODE = import.meta.env.VOICE_AGENT_DEMO_MODE === 'true';
+const TOKEN_DURATION = parseInt(process.env.VOICE_AGENT_TOKEN_DURATION || '1800'); // 30 minutes
+const RATE_LIMIT_MAX = parseInt(process.env.VOICE_AGENT_RATE_LIMIT || '10');
+const ENABLE_DEMO_MODE = process.env.VOICE_AGENT_DEMO_MODE === 'true';
 
 // Tier detection cache (to avoid repeated API calls)
 let apiTierCache: {
@@ -53,7 +53,7 @@ const tokenRateLimiter = createTokenRateLimiter({
   windowMs: 60 * 1000, // 1 minute window
   maxRequests: RATE_LIMIT_MAX,
   onLimitReached: (clientIP: string, attempts: number) => {
-    const isDev = import.meta.env.DEV || import.meta.env.NODE_ENV === 'development';
+    const isDev = process.env.DEV || process.env.NODE_ENV === 'development';
     if (isDev) {
       console.log(`ℹ️ Token generation rate limit reached for ${clientIP} - Attempts: ${attempts} (Development mode)`);
     } else {
@@ -299,13 +299,13 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   
   // Environment and API key validation
   console.log('Environment check:', {
-    isDev: import.meta.env.DEV,
-    mode: import.meta.env.MODE,
-    baseUrl: import.meta.env.BASE_URL
+    isDev: process.env.DEV,
+    mode: process.env.MODE,
+    baseUrl: process.env.BASE_URL
   });
   
   console.log('API Key validation:', {
-    fromImportMeta: !!import.meta.env.OPENAI_API_KEY,
+    fromImportMeta: !!process.env.OPENAI_API_KEY,
     apiKeyAvailable: !!OPENAI_API_KEY,
     keyPrefix: OPENAI_API_KEY ? OPENAI_API_KEY.substring(0, 10) + '...' : 'NOT_SET',
     keyLength: OPENAI_API_KEY ? OPENAI_API_KEY.length : 0

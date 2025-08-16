@@ -17,8 +17,8 @@ import { createTokenRateLimiter, createRateLimitMiddleware } from '../../../api/
 export const prerender = false;
 
 // Environment validation
-const OPENAI_API_KEY = import.meta.env.OPENAI_API_KEY;
-const ALLOWED_ORIGINS = import.meta.env.ALLOWED_ORIGINS?.split(',') || [
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:4321', 
   'http://localhost:4322',
   'https://executiveaitraining.com'
@@ -31,9 +31,9 @@ if (!OPENAI_API_KEY) {
 // Rate limiter for refresh requests (more restrictive than initial token requests)
 const refreshRateLimiter = createTokenRateLimiter({
   windowMs: 60 * 1000, // 1 minute window
-  maxRequests: import.meta.env.DEV ? 20 : 5, // More lenient in development
+  maxRequests: process.env.DEV ? 20 : 5, // More lenient in development
   onLimitReached: (clientIP: string, attempts: number) => {
-    const isDev = import.meta.env.DEV || import.meta.env.NODE_ENV === 'development';
+    const isDev = process.env.DEV || process.env.NODE_ENV === 'development';
     if (isDev) {
       console.log(`ℹ️ Token refresh rate limit reached for ${clientIP} - Attempts: ${attempts} (Development mode)`);
     } else {

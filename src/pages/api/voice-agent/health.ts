@@ -18,8 +18,8 @@ import { getSessionStats } from './refresh-token';
 export const prerender = false;
 
 // Environment validation with better error handling
-const OPENAI_API_KEY = import.meta.env.OPENAI_API_KEY;
-const ALLOWED_ORIGINS = import.meta.env.ALLOWED_ORIGINS?.split(',') || [
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:4321', 
   'http://localhost:4322',
   'http://localhost:4323',

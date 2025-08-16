@@ -35,7 +35,7 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
     
-    const apiKey = import.meta.env.OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return new Response(
         JSON.stringify({ success: false, error: 'API key not configured' }), 
@@ -74,7 +74,7 @@ export const GET: APIRoute = async ({ url }) => {
       );
     }
     
-    const apiKey = import.meta.env.OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return new Response(
         JSON.stringify({ success: false, error: 'API key not configured' }), 

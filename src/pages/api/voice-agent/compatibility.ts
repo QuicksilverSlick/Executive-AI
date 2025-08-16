@@ -15,7 +15,7 @@ import type { APIRoute } from 'astro';
 export const prerender = false;
 
 // Environment validation
-const OPENAI_API_KEY = import.meta.env.OPENAI_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 interface CompatibilityResponse {
   success: boolean;
