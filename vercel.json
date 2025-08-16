@@ -72,14 +72,6 @@
       "memory": 256
     }
   },
-  "env": {
-    "OPENAI_API_KEY": "@openai_api_key",
-    "ALLOWED_ORIGINS": "@allowed_origins",
-    "VOICE_AGENT_RATE_LIMIT": "@voice_agent_rate_limit",
-    "VOICE_AGENT_TOKEN_DURATION": "@voice_agent_token_duration",
-    "PUBLIC_SITE_URL": "@public_site_url",
-    "PUBLIC_SITE_NAME": "@public_site_name"
-  },
   "regions": ["iad1"],
   "cleanUrls": true,
   "trailingSlash": false,
