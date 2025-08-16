@@ -54,7 +54,7 @@ export default defineConfig({
     inlineStylesheets: 'auto',
     assets: '_astro',
     splitting: true, // Enable code splitting for better performance
-    format: 'directory',
+    format: 'file',
   },
   vite: {
     build: {
