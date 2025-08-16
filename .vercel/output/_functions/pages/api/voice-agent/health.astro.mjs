@@ -1,9 +1,9 @@
-import { g as getSessionStats } from '../../../_astro/refresh-token.Dxva4WRz.js';
+import { g as getSessionStats } from '../../../chunks/refresh-token_B3YlMXTR.mjs';
 export { renderers } from '../../../renderers.mjs';
 
 const prerender = false;
-const OPENAI_API_KEY = "sk-your-openai-api-key-here";
-const ALLOWED_ORIGINS = "https://executiveaitraining.com,https://executiveaitraining.vercel.app"?.split(",") || [
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(",") || [
   "http://localhost:4321",
   "http://localhost:4322",
   "http://localhost:4323",
@@ -12,6 +12,9 @@ const ALLOWED_ORIGINS = "https://executiveaitraining.com,https://executiveaitrai
   "http://localhost:4326",
   "https://executiveaitraining.com"
 ];
+if (!OPENAI_API_KEY) {
+  console.error("❌ OPENAI_API_KEY environment variable is required for health checks");
+}
 let globalMetrics = {
   totalRequests: 0,
   totalErrors: 0,
@@ -25,7 +28,14 @@ const SERVICE_CHECK_INTERVAL = 30 * 1e3;
 async function testOpenAIConnection() {
   const startTime = Date.now();
   try {
-    if (!OPENAI_API_KEY) ;
+    if (!OPENAI_API_KEY) {
+      return {
+        status: "down",
+        latency: 0,
+        lastCheck: Date.now(),
+        message: "OpenAI API key not configured"
+      };
+    }
     const response = await Promise.race([
       fetch("https://api.openai.com/v1/models", {
         method: "GET",

@@ -48,3 +48,6 @@ docs/openai-security-setup.md
 **/security-audit-report.md
 
 # Deployment triggers (temporarily removed to allow trigger file)
+
+# Vercel
+.vercel

@@ -4,13 +4,13 @@ const prerender = false;
 const GET = async ({ request }) => {
   const origin = request.headers.get("origin");
   const envCheck = {
-    OPENAI_API_KEY: true,
-    VITE_OPENAI_API_KEY: false                                   ,
-    PUBLIC_OPENAI_API_KEY: false                                     ,
-    NODE_ENV: "production",
-    MODE: "production",
-    DEV: false,
-    PROD: true
+    OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
+    VITE_OPENAI_API_KEY: !!process.env.VITE_OPENAI_API_KEY,
+    PUBLIC_OPENAI_API_KEY: !!process.env.PUBLIC_OPENAI_API_KEY,
+    NODE_ENV: process.env.NODE_ENV || process.env.NODE_ENV,
+    MODE: process.env.MODE,
+    DEV: process.env.DEV,
+    PROD: process.env.PROD
   };
   let tokenTest = { success: false, error: null };
   try {
@@ -41,7 +41,7 @@ const GET = async ({ request }) => {
     tokenEndpoint: tokenTest,
     cors: {
       origin: origin || "none",
-      allowedOrigins: "https://executiveaitraining.com,https://executiveaitraining.vercel.app"?.split(",") || ["http://localhost:4321"]
+      allowedOrigins: process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:4321"]
     }
   }, null, 2), {
     status: 200,

@@ -1,2 +1,2 @@
-export { a as page } from '../_astro/generic@_@js.D1aajiKV.js';
+export { a as page } from '../chunks/generic_DXNqd5w6.mjs';
 export { renderers } from '../renderers.mjs';

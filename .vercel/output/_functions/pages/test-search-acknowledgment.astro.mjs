@@ -1,7 +1,8 @@
-import { f as createComponent, o as renderHead, l as renderScript, r as renderTemplate } from '../_astro/astro/server.DAk61OsX.js';
+/* empty css                                 */
+import { e as createComponent, ak as renderHead, l as renderScript, r as renderTemplate } from '../chunks/astro/server_BUcCHCB2.mjs';
 import 'kleur/colors';
 import 'clsx';
-/* empty css                                                     */
+/* empty css                                                      */
 export { renderers } from '../renderers.mjs';
 
 const $$TestSearchAcknowledgment = createComponent(async ($$result, $$props, $$slots) => {

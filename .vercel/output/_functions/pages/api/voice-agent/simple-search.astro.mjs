@@ -1,4 +1,4 @@
-import { O as OpenAI } from '../../../_astro/index.Bc7mdO2K.js';
+import OpenAI from 'openai';
 export { renderers } from '../../../renderers.mjs';
 
 const POST = async ({ request }) => {
@@ -12,8 +12,13 @@ const POST = async ({ request }) => {
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
-    const apiKey = "sk-your-openai-api-key-here";
-    if (!apiKey) ;
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ success: false, error: "API key not configured" }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
     const searchResponse = await performSimpleSearch(query, conversationContext, apiKey);
     return new Response(
       JSON.stringify(searchResponse),
@@ -41,8 +46,13 @@ const GET = async ({ url }) => {
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
-    const apiKey = "sk-your-openai-api-key-here";
-    if (!apiKey) ;
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ success: false, error: "API key not configured" }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
     const searchResponse = await performSimpleSearch(query, conversationContext, apiKey);
     return new Response(
       JSON.stringify(searchResponse),

@@ -1,7 +1,8 @@
-import { f as createComponent, r as renderTemplate, o as renderHead } from '../_astro/astro/server.DAk61OsX.js';
+/* empty css                                 */
+import { e as createComponent, r as renderTemplate, ak as renderHead } from '../chunks/astro/server_BUcCHCB2.mjs';
 import 'kleur/colors';
 import 'clsx';
-/* empty css                                           */
+/* empty css                                            */
 export { renderers } from '../renderers.mjs';
 
 var __freeze = Object.freeze;

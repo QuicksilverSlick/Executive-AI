@@ -1,8 +1,9 @@
-import { f as createComponent, k as renderComponent, r as renderTemplate, m as maybeRenderHead, h as addAttribute } from '../_astro/astro/server.DAk61OsX.js';
+/* empty css                                 */
+import { e as createComponent, k as renderComponent, r as renderTemplate, m as maybeRenderHead, h as addAttribute } from '../chunks/astro/server_BUcCHCB2.mjs';
 import 'kleur/colors';
-import { $ as $$Layout } from '../_astro/Layout.Dz-ECntR.js';
-import { $ as $$Button } from '../_astro/Button.C3I3YVj5.js';
-import { $ as $$AnimatedSection } from '../_astro/AnimatedSection.fHVqQ-iE.js';
+import { $ as $$Layout } from '../chunks/Layout_7UizUh1a.mjs';
+import { $ as $$Button } from '../chunks/Button_DEO6jh-a.mjs';
+import { $ as $$AnimatedSection } from '../chunks/AnimatedSection_BzMoGi4H.mjs';
 export { renderers } from '../renderers.mjs';
 
 const $$CaseStudies = createComponent(($$result, $$props, $$slots) => {

@@ -1,11 +1,12 @@
 export { renderers } from '../../renderers.mjs';
 
-const __vite_import_meta_env__ = {"ASSETS_PREFIX": undefined, "BASE_URL": "/", "DEV": false, "MODE": "production", "PROD": true, "PUBLIC_CALENDLY_URL": "https://calendly.com/your-username", "PUBLIC_GA_MEASUREMENT_ID": "G-XXXXXXXXXX", "PUBLIC_SITE_NAME": "Executive AI Training", "PUBLIC_SITE_URL": "https://executiveaitraining.com", "SITE": "https://executiveaitraining.com", "SSR": true};
 const startTime = Date.now();
 async function checkOpenAIConnection() {
   try {
-    const apiKey = "sk-your-openai-api-key-here";
-    if (!apiKey) ;
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return "unhealthy";
+    }
     if (apiKey.startsWith("sk-") && apiKey.length > 20) {
       return "healthy";
     }
@@ -23,7 +24,7 @@ function checkVoiceServices() {
       "VOICE_AGENT_RATE_LIMIT"
     ];
     const missingVars = requiredEnvVars.filter(
-      (varName) => !Object.assign(__vite_import_meta_env__, { NODE_ENV: "production", VOICE_AGENT_RATE_LIMIT: "100", ALLOWED_ORIGINS: "https://executiveaitraining.com,https://executiveaitraining.vercel.app", OPENAI_API_KEY: "sk-your-openai-api-key-here", VERCEL_ENV: "production", _: process.env._, NODE: process.env.NODE })[varName]
+      (varName) => !process.env[varName]
     );
     if (missingVars.length === 0) {
       return "healthy";
@@ -64,7 +65,7 @@ const GET = async ({ request }) => {
     const healthStatus = {
       status: overallStatus,
       timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-      environment: "production",
+      environment: process.env.VERCEL_ENV || process.env.NODE_ENV || "unknown",
       version: "1.0.0",
       services: {
         api: apiStatus,
@@ -89,7 +90,7 @@ const GET = async ({ request }) => {
     const errorStatus = {
       status: "unhealthy",
       timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-      environment: "production",
+      environment: process.env.VERCEL_ENV || "unknown",
       version: "1.0.0",
       services: {
         api: "unhealthy",

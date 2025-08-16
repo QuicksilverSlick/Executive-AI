@@ -1,1 +1,363 @@
-<!DOCTYPE html><html lang=en><head><meta charset=UTF-8><meta content="width=device-width,initial-scale=1" name=viewport><title>Session Timeout Test Monitor</title><style>body{font-family:system-ui,-apple-system,sans-serif;max-width:1200px;margin:0 auto;padding:20px;background:linear-gradient(135deg,#667eea 0,#764ba2 100%);min-height:100vh}.container{background:#fff;border-radius:12px;padding:30px;box-shadow:0 20px 40px rgba(0,0,0,.1)}h1{color:#333;margin-bottom:10px}.test-info{background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:15px;margin-bottom:20px}.test-info h3{margin-top:0;color:#856404}.timeline{background:#f8f9fa;border-radius:8px;padding:20px;margin:20px 0}.timeline-item{display:flex;align-items:center;margin:10px 0;padding:10px;background:#fff;border-radius:6px;border-left:4px solid #ddd;transition:all .3s}.timeline-item.active{border-left-color:#28a745;background:#d4edda}.timeline-item.warning{border-left-color:#ffc107;background:#fff3cd}.timeline-item.critical{border-left-color:#dc3545;background:#f8d7da}.time-marker{font-weight:700;margin-right:15px;min-width:60px}.session-timer{text-align:center;padding:30px;background:#f8f9fa;border-radius:8px;margin:20px 0}.timer-display{font-size:48px;font-weight:700;color:#333;font-family:'Courier New',monospace}.timer-label{color:#666;margin-top:10px}.progress-bar{width:100%;height:30px;background:#e9ecef;border-radius:15px;overflow:hidden;margin:20px 0}.progress-fill{height:100%;background:linear-gradient(90deg,#28a745,#ffc107,#dc3545);transition:width 1s linear;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;color:#fff;font-weight:700}.console-output{background:#1e1e1e;color:#d4d4d4;padding:15px;border-radius:8px;font-family:'Courier New',monospace;font-size:14px;max-height:400px;overflow-y:auto;margin-top:20px}.log-entry{margin:5px 0;padding:5px;border-left:3px solid transparent}.log-info{border-left-color:#4a9eff}.log-warning{border-left-color:#ffc107;color:#ffeb3b}.log-critical{border-left-color:#f44336;color:#ef9a9a}.log-success{border-left-color:#4caf50;color:#a5d6a7}button{background:#667eea;color:#fff;border:none;padding:12px 24px;border-radius:6px;font-size:16px;cursor:pointer;transition:all .3s;margin:5px}button:hover{background:#5a67d8;transform:translateY(-2px);box-shadow:0 4px 12px rgba(102,126,234,.3)}.status-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:14px;font-weight:500;margin-left:10px}.status-badge.idle{background:#e9ecef;color:#495057}.status-badge.active{background:#d4edda;color:#155724}.status-badge.warning{background:#fff3cd;color:#856404}.status-badge.reconnecting{background:#cce5ff;color:#004085}</style></head><body><div class=container><h1>🕐 Session Timeout Test Monitor</h1><div class=test-info><h3>⚠️ TEST MODE ACTIVE</h3><p><strong>Test Configuration:</strong></p><ul><li>Session Duration: <strong>5 minutes</strong> (normally 30 minutes)</li><li>First Warning: <strong>2 minutes</strong> (3 minutes remaining)</li><li>Second Warning: <strong>3 minutes</strong> (2 minutes remaining)</li><li>Final Warning: <strong>4 minutes</strong> (1 minute remaining)</li><li>Auto-Reconnect: <strong>4.5 minutes</strong> (30 seconds before timeout)</li></ul></div><div class=session-timer><div class=timer-display id=timer>0:00</div><div class=timer-label>Session Duration</div><div class="idle status-badge" id=statusBadge>Idle</div></div><div class=progress-bar><div class=progress-fill id=progressBar style=width:0%>0%</div></div><div class=timeline><h3>Expected Timeline</h3><div class=timeline-item data-time=0><span class=time-marker>0:00</span> <span>Session starts - Tracking begins</span></div><div class=timeline-item data-time=120><span class=time-marker>2:00</span> <span>⚠️ First warning - "Session will refresh in 3 minutes"</span></div><div class=timeline-item data-time=180><span class=time-marker>3:00</span> <span>⚠️ Second warning - "Session will refresh in 2 minutes"</span></div><div class=timeline-item data-time=240><span class=time-marker>4:00</span> <span>⚠️ Final warning - "Session will reconnect in 1 minute"</span></div><div class=timeline-item data-time=270><span class=time-marker>4:30</span> <span>🔄 Automatic reconnection triggered</span></div><div class=timeline-item data-time=280><span class=time-marker>~4:40</span> <span>✅ New session established - Conversation continues</span></div></div><div style="text-align:center;margin:20px 0"><button onclick=startMonitoring()>Start Session Monitoring</button> <button onclick=simulateSession()>Simulate Full Test</button> <button onclick=clearConsole()>Clear Console</button></div><div class=console-output id=console><div class="log-entry log-info">Test monitor ready. Start a voice session to begin monitoring.</div></div></div><script>let startTime=null,timerInterval=null,sessionActive=!1;function log(e,t="info"){const n=document.getElementById("console"),i=document.createElement("div");i.className=`log-entry log-${t}`;const o=(new Date).toLocaleTimeString();i.textContent=`[${o}] ${e}`,n.appendChild(i),n.scrollTop=n.scrollHeight}function updateTimer(){if(!startTime)return;const e=Date.now()-startTime,t=Math.floor(e/1e3),n=Math.floor(t/60),i=t%60;document.getElementById("timer").textContent=`${n}:${i.toString().padStart(2,"0")}`;const o=Math.min(100,t/300*100),s=document.getElementById("progressBar");s.style.width=`${o}%`,s.textContent=`${Math.round(o)}%`,document.querySelectorAll(".timeline-item").forEach((e=>{const n=parseInt(e.dataset.time);t>=n&&(e.classList.add("active"),n>=120&&n<270?e.classList.add("warning"):n>=270&&e.classList.add("critical"))}));const l=document.getElementById("statusBadge");t>=270?(l.textContent="Reconnecting",l.className="status-badge reconnecting"):t>=120?(l.textContent="Warning",l.className="status-badge warning"):sessionActive&&(l.textContent="Active",l.className="status-badge active")}function startMonitoring(){log("Starting session monitoring...","info"),log("Open browser console to see detailed WebRTC Voice Agent logs","info"),startTime=Date.now(),sessionActive=!0,timerInterval&&clearInterval(timerInterval),timerInterval=setInterval(updateTimer,100),document.querySelectorAll(".timeline-item").forEach((e=>{e.classList.remove("active","warning","critical")})),log("Session tracking started - 5 minute test duration","success"),log("Warnings will appear at: 2:00, 3:00, 4:00","warning"),log("Automatic reconnection at: 4:30","critical")}function simulateSession(){startMonitoring(),setTimeout((()=>{log("[SessionTimeout] TEST Warning: Session will expire in 3 minutes","warning")}),12e4),setTimeout((()=>{log("[SessionTimeout] TEST Warning: Session will expire in 2 minutes","warning")}),18e4),setTimeout((()=>{log("[SessionTimeout] TEST Warning: Session will expire in 1 minute","warning")}),24e4),setTimeout((()=>{log("[SessionTimeout] TEST MODE: Proactively reconnecting before timeout","critical"),log("Disconnecting current session...","info"),log("Getting new authentication token...","info"),setTimeout((()=>{log("Reconnection successful!","success"),log("Session refreshed - ready to continue","success"),startTime=Date.now(),document.querySelectorAll(".timeline-item").forEach((e=>{e.classList.remove("active","warning","critical")}))}),1e4)}),27e4)}function clearConsole(){document.getElementById("console").innerHTML='<div class="log-entry log-info">Console cleared. Ready for monitoring.</div>'}if(window.console){const e=console.log;console.log=function(...t){e.apply(console,t);const n=t.join(" ");n.includes("[SessionTimeout]")&&(n.includes("Warning")?log(n,"warning"):n.includes("reconnecting")?log(n,"critical"):log(n,"info"))}}log("Session Timeout Test Monitor Ready","info"),log("This monitor tracks the 5-minute test session lifecycle","info")</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session Timeout Test Monitor</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .test-info {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .test-info h3 {
+      margin-top: 0;
+      color: #856404;
+    }
+    .timeline {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .timeline-item {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+      padding: 10px;
+      background: white;
+      border-radius: 6px;
+      border-left: 4px solid #ddd;
+      transition: all 0.3s;
+    }
+    .timeline-item.active {
+      border-left-color: #28a745;
+      background: #d4edda;
+    }
+    .timeline-item.warning {
+      border-left-color: #ffc107;
+      background: #fff3cd;
+    }
+    .timeline-item.critical {
+      border-left-color: #dc3545;
+      background: #f8d7da;
+    }
+    .time-marker {
+      font-weight: bold;
+      margin-right: 15px;
+      min-width: 60px;
+    }
+    .session-timer {
+      text-align: center;
+      padding: 30px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .timer-display {
+      font-size: 48px;
+      font-weight: bold;
+      color: #333;
+      font-family: 'Courier New', monospace;
+    }
+    .timer-label {
+      color: #666;
+      margin-top: 10px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 30px;
+      background: #e9ecef;
+      border-radius: 15px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+      transition: width 1s linear;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+      color: white;
+      font-weight: bold;
+    }
+    .console-output {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+    .log-entry {
+      margin: 5px 0;
+      padding: 5px;
+      border-left: 3px solid transparent;
+    }
+    .log-info { border-left-color: #4a9eff; }
+    .log-warning { border-left-color: #ffc107; color: #ffeb3b; }
+    .log-critical { border-left-color: #f44336; color: #ef9a9a; }
+    .log-success { border-left-color: #4caf50; color: #a5d6a7; }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin: 5px;
+    }
+    button:hover {
+      background: #5a67d8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-left: 10px;
+    }
+    .status-badge.idle { background: #e9ecef; color: #495057; }
+    .status-badge.active { background: #d4edda; color: #155724; }
+    .status-badge.warning { background: #fff3cd; color: #856404; }
+    .status-badge.reconnecting { background: #cce5ff; color: #004085; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🕐 Session Timeout Test Monitor</h1>
+    
+    <div class="test-info">
+      <h3>⚠️ TEST MODE ACTIVE</h3>
+      <p><strong>Test Configuration:</strong></p>
+      <ul>
+        <li>Session Duration: <strong>5 minutes</strong> (normally 30 minutes)</li>
+        <li>First Warning: <strong>2 minutes</strong> (3 minutes remaining)</li>
+        <li>Second Warning: <strong>3 minutes</strong> (2 minutes remaining)</li>
+        <li>Final Warning: <strong>4 minutes</strong> (1 minute remaining)</li>
+        <li>Auto-Reconnect: <strong>4.5 minutes</strong> (30 seconds before timeout)</li>
+      </ul>
+    </div>
+
+    <div class="session-timer">
+      <div class="timer-display" id="timer">0:00</div>
+      <div class="timer-label">Session Duration</div>
+      <div class="status-badge idle" id="statusBadge">Idle</div>
+    </div>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressBar" style="width: 0%">0%</div>
+    </div>
+
+    <div class="timeline">
+      <h3>Expected Timeline</h3>
+      <div class="timeline-item" data-time="0">
+        <span class="time-marker">0:00</span>
+        <span>Session starts - Tracking begins</span>
+      </div>
+      <div class="timeline-item" data-time="120">
+        <span class="time-marker">2:00</span>
+        <span>⚠️ First warning - "Session will refresh in 3 minutes"</span>
+      </div>
+      <div class="timeline-item" data-time="180">
+        <span class="time-marker">3:00</span>
+        <span>⚠️ Second warning - "Session will refresh in 2 minutes"</span>
+      </div>
+      <div class="timeline-item" data-time="240">
+        <span class="time-marker">4:00</span>
+        <span>⚠️ Final warning - "Session will reconnect in 1 minute"</span>
+      </div>
+      <div class="timeline-item" data-time="270">
+        <span class="time-marker">4:30</span>
+        <span>🔄 Automatic reconnection triggered</span>
+      </div>
+      <div class="timeline-item" data-time="280">
+        <span class="time-marker">~4:40</span>
+        <span>✅ New session established - Conversation continues</span>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin: 20px 0;">
+      <button onclick="startMonitoring()">Start Session Monitoring</button>
+      <button onclick="simulateSession()">Simulate Full Test</button>
+      <button onclick="clearConsole()">Clear Console</button>
+    </div>
+
+    <div class="console-output" id="console">
+      <div class="log-entry log-info">Test monitor ready. Start a voice session to begin monitoring.</div>
+    </div>
+  </div>
+
+  <script>
+    let startTime = null;
+    let timerInterval = null;
+    let sessionActive = false;
+
+    function log(message, type = 'info') {
+      const console = document.getElementById('console');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      const timestamp = new Date().toLocaleTimeString();
+      entry.textContent = `[${timestamp}] ${message}`;
+      console.appendChild(entry);
+      console.scrollTop = console.scrollHeight;
+    }
+
+    function updateTimer() {
+      if (!startTime) return;
+      
+      const elapsed = Date.now() - startTime;
+      const seconds = Math.floor(elapsed / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      
+      document.getElementById('timer').textContent = 
+        `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+      
+      // Update progress bar
+      const maxDuration = 5 * 60; // 5 minutes in seconds
+      const progress = Math.min(100, (seconds / maxDuration) * 100);
+      const progressBar = document.getElementById('progressBar');
+      progressBar.style.width = `${progress}%`;
+      progressBar.textContent = `${Math.round(progress)}%`;
+      
+      // Update timeline items
+      document.querySelectorAll('.timeline-item').forEach(item => {
+        const itemTime = parseInt(item.dataset.time);
+        if (seconds >= itemTime) {
+          item.classList.add('active');
+          if (itemTime >= 120 && itemTime < 270) {
+            item.classList.add('warning');
+          } else if (itemTime >= 270) {
+            item.classList.add('critical');
+          }
+        }
+      });
+      
+      // Update status badge
+      const statusBadge = document.getElementById('statusBadge');
+      if (seconds >= 270) {
+        statusBadge.textContent = 'Reconnecting';
+        statusBadge.className = 'status-badge reconnecting';
+      } else if (seconds >= 120) {
+        statusBadge.textContent = 'Warning';
+        statusBadge.className = 'status-badge warning';
+      } else if (sessionActive) {
+        statusBadge.textContent = 'Active';
+        statusBadge.className = 'status-badge active';
+      }
+    }
+
+    function startMonitoring() {
+      log('Starting session monitoring...', 'info');
+      log('Open browser console to see detailed WebRTC Voice Agent logs', 'info');
+      
+      startTime = Date.now();
+      sessionActive = true;
+      
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(updateTimer, 100);
+      
+      // Reset timeline
+      document.querySelectorAll('.timeline-item').forEach(item => {
+        item.classList.remove('active', 'warning', 'critical');
+      });
+      
+      log('Session tracking started - 5 minute test duration', 'success');
+      log('Warnings will appear at: 2:00, 3:00, 4:00', 'warning');
+      log('Automatic reconnection at: 4:30', 'critical');
+    }
+
+    function simulateSession() {
+      startMonitoring();
+      
+      // Simulate events at expected times
+      setTimeout(() => {
+        log('[SessionTimeout] TEST Warning: Session will expire in 3 minutes', 'warning');
+      }, 2 * 60 * 1000);
+      
+      setTimeout(() => {
+        log('[SessionTimeout] TEST Warning: Session will expire in 2 minutes', 'warning');
+      }, 3 * 60 * 1000);
+      
+      setTimeout(() => {
+        log('[SessionTimeout] TEST Warning: Session will expire in 1 minute', 'warning');
+      }, 4 * 60 * 1000);
+      
+      setTimeout(() => {
+        log('[SessionTimeout] TEST MODE: Proactively reconnecting before timeout', 'critical');
+        log('Disconnecting current session...', 'info');
+        log('Getting new authentication token...', 'info');
+        
+        setTimeout(() => {
+          log('Reconnection successful!', 'success');
+          log('Session refreshed - ready to continue', 'success');
+          
+          // Reset for new session
+          startTime = Date.now();
+          document.querySelectorAll('.timeline-item').forEach(item => {
+            item.classList.remove('active', 'warning', 'critical');
+          });
+        }, 10000); // Simulate 10 second reconnection
+      }, 4.5 * 60 * 1000);
+    }
+
+    function clearConsole() {
+      document.getElementById('console').innerHTML = 
+        '<div class="log-entry log-info">Console cleared. Ready for monitoring.</div>';
+    }
+
+    // Listen for actual console messages if running in same context
+    if (window.console) {
+      const originalLog = console.log;
+      console.log = function(...args) {
+        originalLog.apply(console, args);
+        const message = args.join(' ');
+        if (message.includes('[SessionTimeout]')) {
+          if (message.includes('Warning')) {
+            log(message, 'warning');
+          } else if (message.includes('reconnecting')) {
+            log(message, 'critical');
+          } else {
+            log(message, 'info');
+          }
+        }
+      };
+    }
+
+    // Initial message
+    log('Session Timeout Test Monitor Ready', 'info');
+    log('This monitor tracks the 5-minute test session lifecycle', 'info');
+  </script>
+</body>
+</html>

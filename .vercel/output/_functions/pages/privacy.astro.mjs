@@ -1,8 +1,9 @@
-import { f as createComponent, k as renderComponent, r as renderTemplate, m as maybeRenderHead, l as renderScript, h as addAttribute } from '../_astro/astro/server.DAk61OsX.js';
+/* empty css                                 */
+import { e as createComponent, k as renderComponent, r as renderTemplate, m as maybeRenderHead, l as renderScript, h as addAttribute } from '../chunks/astro/server_BUcCHCB2.mjs';
 import 'kleur/colors';
-import { $ as $$Layout, a as $$Icon } from '../_astro/Layout.Dz-ECntR.js';
-import { $ as $$AnimatedSection } from '../_astro/AnimatedSection.fHVqQ-iE.js';
-/* empty css                                  */
+import { $ as $$Layout, a as $$Icon } from '../chunks/Layout_7UizUh1a.mjs';
+import { $ as $$AnimatedSection } from '../chunks/AnimatedSection_BzMoGi4H.mjs';
+/* empty css                                   */
 export { renderers } from '../renderers.mjs';
 
 const $$Privacy = createComponent(($$result, $$props, $$slots) => {

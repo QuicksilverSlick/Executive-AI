@@ -1,4 +1,5 @@
-import { f as createComponent, l as renderScript, o as renderHead, r as renderTemplate } from '../_astro/astro/server.DAk61OsX.js';
+/* empty css                                 */
+import { e as createComponent, l as renderScript, ak as renderHead, r as renderTemplate } from '../chunks/astro/server_BUcCHCB2.mjs';
 import 'kleur/colors';
 import 'clsx';
 export { renderers } from '../renderers.mjs';

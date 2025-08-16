@@ -1,11 +1,11 @@
-import { b as createTokenRateLimiter, a as createRateLimitMiddleware } from '../../../_astro/rateLimiter.yR3vRFgB.js';
-import { r as registerSession } from '../../../_astro/refresh-token.Dxva4WRz.js';
+import { c as createTokenRateLimiter, b as createRateLimitMiddleware } from '../../../chunks/rateLimiter_B7mgpYIE.mjs';
+import { r as registerSession } from '../../../chunks/refresh-token_B3YlMXTR.mjs';
 export { renderers } from '../../../renderers.mjs';
 
-const __vite_import_meta_env__ = {"ASSETS_PREFIX": undefined, "BASE_URL": "/", "DEV": false, "MODE": "production", "PROD": true, "PUBLIC_CALENDLY_URL": "https://calendly.com/your-username", "PUBLIC_GA_MEASUREMENT_ID": "G-XXXXXXXXXX", "PUBLIC_SITE_NAME": "Executive AI Training", "PUBLIC_SITE_URL": "https://executiveaitraining.com", "SITE": "https://executiveaitraining.com", "SSR": true};
+const __vite_import_meta_env__ = {"ASSETS_PREFIX": undefined, "BASE_URL": "/", "DEV": false, "MODE": "production", "PROD": true, "PUBLIC_CALENDLY_URL": "https://calendly.com/your-username", "PUBLIC_GA_MEASUREMENT_ID": "G-XXXXXXXXXX", "PUBLIC_SITE_NAME": "Executive AI Training", "PUBLIC_SITE_URL": "https://executiveaitraining.com", "SITE": undefined, "SSR": true};
 const prerender = false;
-const OPENAI_API_KEY = "sk-your-openai-api-key-here";
-const ALLOWED_ORIGINS = "https://executiveaitraining.com,https://executiveaitraining.vercel.app"?.split(",") || [
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(",") || [
   "http://localhost:4321",
   "http://localhost:4322",
   "http://localhost:4323",
@@ -14,17 +14,20 @@ const ALLOWED_ORIGINS = "https://executiveaitraining.com,https://executiveaitrai
   "http://localhost:4326",
   "https://executiveaitraining.com"
 ];
-const TOKEN_DURATION = parseInt("60");
-const RATE_LIMIT_MAX = parseInt("100");
-const ENABLE_DEMO_MODE = Object.assign(__vite_import_meta_env__, { NODE_ENV: "production", VOICE_AGENT_RATE_LIMIT: "100", VOICE_AGENT_TOKEN_DURATION: "60", ALLOWED_ORIGINS: "https://executiveaitraining.com,https://executiveaitraining.vercel.app", OPENAI_API_KEY: "sk-your-openai-api-key-here", _: process.env._, NODE: process.env.NODE }).VOICE_AGENT_DEMO_MODE === "true";
+const TOKEN_DURATION = parseInt(process.env.VOICE_AGENT_TOKEN_DURATION || "1800");
+const RATE_LIMIT_MAX = parseInt(process.env.VOICE_AGENT_RATE_LIMIT || "10");
+const ENABLE_DEMO_MODE = process.env.VOICE_AGENT_DEMO_MODE === "true";
 let apiTierCache = null;
 const TIER_CACHE_DURATION = 5 * 60 * 1e3;
+if (!OPENAI_API_KEY) {
+  console.error("❌ OPENAI_API_KEY environment variable is required");
+}
 const tokenRateLimiter = createTokenRateLimiter({
   windowMs: 60 * 1e3,
   // 1 minute window
   maxRequests: RATE_LIMIT_MAX,
   onLimitReached: (clientIP, attempts) => {
-    const isDev = Object.assign(__vite_import_meta_env__, { NODE_ENV: "production", VOICE_AGENT_RATE_LIMIT: "100", VOICE_AGENT_TOKEN_DURATION: "60", ALLOWED_ORIGINS: "https://executiveaitraining.com,https://executiveaitraining.vercel.app", OPENAI_API_KEY: "sk-your-openai-api-key-here", _: process.env._, NODE: process.env.NODE }).DEV || false;
+    const isDev = process.env.DEV || process.env.NODE_ENV === "development";
     if (isDev) {
       console.log(`ℹ️ Token generation rate limit reached for ${clientIP} - Attempts: ${attempts} (Development mode)`);
     } else {
@@ -209,15 +212,15 @@ const POST = async ({ request, clientAddress }) => {
     console.error("Failed to parse request body:", e);
   }
   console.log("Environment check:", {
-    isDev: Object.assign(__vite_import_meta_env__, { NODE_ENV: "production", VOICE_AGENT_RATE_LIMIT: "100", VOICE_AGENT_TOKEN_DURATION: "60", ALLOWED_ORIGINS: "https://executiveaitraining.com,https://executiveaitraining.vercel.app", OPENAI_API_KEY: "sk-your-openai-api-key-here", _: process.env._, NODE: process.env.NODE }).DEV,
-    mode: Object.assign(__vite_import_meta_env__, { NODE_ENV: "production", VOICE_AGENT_RATE_LIMIT: "100", VOICE_AGENT_TOKEN_DURATION: "60", ALLOWED_ORIGINS: "https://executiveaitraining.com,https://executiveaitraining.vercel.app", OPENAI_API_KEY: "sk-your-openai-api-key-here", _: process.env._, NODE: process.env.NODE }).MODE,
-    baseUrl: Object.assign(__vite_import_meta_env__, { NODE_ENV: "production", VOICE_AGENT_RATE_LIMIT: "100", VOICE_AGENT_TOKEN_DURATION: "60", ALLOWED_ORIGINS: "https://executiveaitraining.com,https://executiveaitraining.vercel.app", OPENAI_API_KEY: "sk-your-openai-api-key-here", _: process.env._, NODE: process.env.NODE }).BASE_URL
+    isDev: process.env.DEV,
+    mode: process.env.MODE,
+    baseUrl: process.env.BASE_URL
   });
   console.log("API Key validation:", {
-    fromImportMeta: true,
-    apiKeyAvailable: true,
-    keyPrefix: OPENAI_API_KEY.substring(0, 10) + "..." ,
-    keyLength: OPENAI_API_KEY.length 
+    fromImportMeta: !!process.env.OPENAI_API_KEY,
+    apiKeyAvailable: !!OPENAI_API_KEY,
+    keyPrefix: OPENAI_API_KEY ? OPENAI_API_KEY.substring(0, 10) + "..." : "NOT_SET",
+    keyLength: OPENAI_API_KEY ? OPENAI_API_KEY.length : 0
   });
   console.log("CORS configuration:", {
     allowedOrigins: ALLOWED_ORIGINS,
@@ -252,7 +255,25 @@ const POST = async ({ request, clientAddress }) => {
     if (rateLimitResponse) {
       return rateLimitResponse;
     }
-    if (!OPENAI_API_KEY) ;
+    if (!OPENAI_API_KEY) {
+      console.error("❌ CRITICAL ERROR: OpenAI API key not configured");
+      console.error("Env var sources checked:", {
+        importMetaEnv: Object.keys(Object.assign(__vite_import_meta_env__, { NODE_ENV: process.env.NODE_ENV, VOICE_AGENT_RATE_LIMIT: "100", VOICE_AGENT_TOKEN_DURATION: "60", ALLOWED_ORIGINS: "https://executiveaitraining.com,https://executiveaitraining.vercel.app", OPENAI_API_KEY: "sk-your-openai-api-key-here", _: process.env._, NODE: process.env.NODE })).filter((k) => k.includes("OPENAI"))
+      });
+      const apiKeyError = {
+        success: false,
+        error: "Service temporarily unavailable",
+        details: "OpenAI API key not found in environment"
+      };
+      console.log("Returning API key error:", apiKeyError);
+      return new Response(JSON.stringify(apiKeyError), {
+        status: 503,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Error-Reason": "Missing-API-Key"
+        }
+      });
+    }
     console.log("✅ All validations passed, proceeding to generate token...");
     let tokenData;
     let mode = "realtime";
@@ -296,6 +317,10 @@ const POST = async ({ request, clientAddress }) => {
           tokenData = await generateFallbackToken();
           mode = "fallback";
           warnings.push("API tier unknown - attempting fallback mode");
+        } else {
+          tokenData = await generateDemoToken();
+          mode = "demo";
+          warnings.push("No API access - running in demo mode");
         }
       }
     }

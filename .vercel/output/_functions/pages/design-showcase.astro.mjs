@@ -1,11 +1,12 @@
-import { e as createAstro, f as createComponent, m as maybeRenderHead, h as addAttribute, n as renderSlot, r as renderTemplate, l as renderScript, k as renderComponent } from '../_astro/astro/server.DAk61OsX.js';
+/* empty css                                 */
+import { e as createComponent, f as createAstro, m as maybeRenderHead, h as addAttribute, n as renderSlot, r as renderTemplate, l as renderScript, k as renderComponent } from '../chunks/astro/server_BUcCHCB2.mjs';
 import 'kleur/colors';
-import { $ as $$Layout } from '../_astro/Layout.Dz-ECntR.js';
-import { $ as $$Button } from '../_astro/Button.C3I3YVj5.js';
+import { $ as $$Layout } from '../chunks/Layout_7UizUh1a.mjs';
+import { $ as $$Button } from '../chunks/Button_DEO6jh-a.mjs';
 import 'clsx';
 export { renderers } from '../renderers.mjs';
 
-const $$Astro$1 = createAstro("https://executiveaitraining.com");
+const $$Astro$1 = createAstro();
 const $$Card = createComponent(($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro$1, $$props, $$slots);
   Astro2.self = $$Card;
@@ -45,7 +46,7 @@ const $$Card = createComponent(($$result, $$props, $$slots) => {
  -->`;
 }, "/home/dreamforge/ai_masterclass/executive-ai-training/src/components/Card.astro", void 0);
 
-const $$Astro = createAstro("https://executiveaitraining.com");
+const $$Astro = createAstro();
 const $$VoiceAgentWidget = createComponent(($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro, $$props, $$slots);
   Astro2.self = $$VoiceAgentWidget;

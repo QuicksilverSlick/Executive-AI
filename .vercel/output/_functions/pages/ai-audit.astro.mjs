@@ -1,9 +1,10 @@
-import { f as createComponent, l as renderScript, r as renderTemplate, k as renderComponent, m as maybeRenderHead } from '../_astro/astro/server.DAk61OsX.js';
+/* empty css                                 */
+import { e as createComponent, l as renderScript, r as renderTemplate, k as renderComponent, m as maybeRenderHead } from '../chunks/astro/server_BUcCHCB2.mjs';
 import 'kleur/colors';
-import { $ as $$Layout, a as $$Icon } from '../_astro/Layout.Dz-ECntR.js';
-import { $ as $$Button } from '../_astro/Button.C3I3YVj5.js';
+import { $ as $$Layout, a as $$Icon } from '../chunks/Layout_7UizUh1a.mjs';
+import { $ as $$Button } from '../chunks/Button_DEO6jh-a.mjs';
 import 'clsx';
-/* empty css                                   */
+/* empty css                                    */
 export { renderers } from '../renderers.mjs';
 
 const $$AuditTracking = createComponent(($$result, $$props, $$slots) => {

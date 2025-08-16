@@ -1,6 +1,7 @@
-import { f as createComponent, k as renderComponent, l as renderScript, r as renderTemplate, m as maybeRenderHead } from '../_astro/astro/server.DAk61OsX.js';
+/* empty css                                 */
+import { e as createComponent, k as renderComponent, l as renderScript, r as renderTemplate, m as maybeRenderHead } from '../chunks/astro/server_BUcCHCB2.mjs';
 import 'kleur/colors';
-import { $ as $$Layout } from '../_astro/Layout.Dz-ECntR.js';
+import { $ as $$Layout } from '../chunks/Layout_7UizUh1a.mjs';
 export { renderers } from '../renderers.mjs';
 
 const $$VoiceTestWebrtc = createComponent(async ($$result, $$props, $$slots) => {

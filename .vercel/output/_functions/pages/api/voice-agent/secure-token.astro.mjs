@@ -1,5 +1,5 @@
-import { b as createTokenRateLimiter, a as createRateLimitMiddleware } from '../../../_astro/rateLimiter.yR3vRFgB.js';
-import { S as SecurityAuditor, c as getKeyManager, g as getSecureProxy, a as getSecurityConfig, b as getSecurityHeaders, v as validateRequest } from '../../../_astro/secureProxy.ByfO_XkS.js';
+import { c as createTokenRateLimiter, b as createRateLimitMiddleware } from '../../../chunks/rateLimiter_B7mgpYIE.mjs';
+import { S as SecurityAuditor, g as getSecurityConfig, c as getKeyManager, a as getSecureProxy, b as getSecurityHeaders, v as validateRequest } from '../../../chunks/secureProxy_8Wiy_pmD.mjs';
 import crypto from 'crypto';
 export { renderers } from '../../../renderers.mjs';
 
@@ -461,10 +461,10 @@ class EnvValidator {
 function initializeSecureEnvironment(config) {
   const defaultConfig = {
     encryptionKey: process.env.KEY_ENCRYPTION_SECRET || crypto.randomBytes(32).toString("hex"),
-    enableEncryption: true,
-    enableAuditLogging: true,
+    enableEncryption: process.env.NODE_ENV === "production",
+    enableAuditLogging: process.env.NODE_ENV === "production",
     validateOnStartup: true,
-    allowDevOverrides: false
+    allowDevOverrides: process.env.NODE_ENV !== "production"
   };
   const finalConfig = { ...defaultConfig, ...config };
   const validator = new EnvValidator(finalConfig);
@@ -502,7 +502,7 @@ try {
   environmentValidation = { isValid: false, errors: [error.message] };
 }
 const securityConfig = getSecurityConfig();
-const keyManager = getKeyManager("production");
+const keyManager = getKeyManager(process.env.NODE_ENV);
 const secureProxy = getSecureProxy();
 const tokenRateLimiter = createTokenRateLimiter({
   windowMs: securityConfig.rateLimit.windowMs,

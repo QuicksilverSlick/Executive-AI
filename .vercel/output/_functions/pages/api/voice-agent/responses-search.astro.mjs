@@ -1,4 +1,4 @@
-import { O as OpenAI } from '../../../_astro/index.Bc7mdO2K.js';
+import OpenAI from 'openai';
 export { renderers } from '../../../renderers.mjs';
 
 const POST = async ({ request }) => {
@@ -10,8 +10,11 @@ const POST = async ({ request }) => {
     if (!query) {
       return new Response(JSON.stringify({ success: false, error: "Query parameter is required" }), { status: 400 });
     }
-    const apiKey = "sk-your-openai-api-key-here";
-    if (!apiKey) ;
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      console.error("[Search API] ❌ OpenAI API key not configured.");
+      return new Response(JSON.stringify({ success: false, error: "API key not configured" }), { status: 500 });
+    }
     const searchResponse = await performWebSearchWithResponsesAPI(query, conversationContext, apiKey);
     return new Response(JSON.stringify(searchResponse), { status: 200 });
   } catch (error) {
@@ -35,8 +38,11 @@ const GET = async ({ url }) => {
     if (!query) {
       return new Response(JSON.stringify({ success: false, error: "Query parameter is required" }), { status: 400 });
     }
-    const apiKey = "sk-your-openai-api-key-here";
-    if (!apiKey) ;
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      console.error("[Search API] ❌ OpenAI API key not configured.");
+      return new Response(JSON.stringify({ success: false, error: "API key not configured" }), { status: 500 });
+    }
     const searchResponse = await performWebSearchWithResponsesAPI(query, conversationContext, apiKey);
     return new Response(JSON.stringify(searchResponse), { status: 200 });
   } catch (error) {

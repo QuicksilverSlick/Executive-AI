@@ -1,9 +1,6 @@
 import React, { createElement } from 'react';
 import ReactDOM from 'react-dom/server';
 
-const opts = {
-						experimentalReactChildren: true};
-
 const contexts = /* @__PURE__ */ new WeakMap();
 const ID_PREFIX = "r";
 function getContext(rendererContextResult) {
@@ -102,11 +99,7 @@ async function renderToStaticMarkup(Component, props, { default: children, ...sl
     ...slots
   };
   const newChildren = children ?? props.children;
-  if (children && opts.experimentalReactChildren) {
-    attrs["data-react-children"] = true;
-    const convert = await import('./_astro/vnode-children.Gljd-95D.js').then((mod) => mod.default);
-    newProps.children = convert(children);
-  } else if (newChildren != null) {
+  if (newChildren != null) {
     newProps.children = React.createElement(static_html_default, {
       hydrate: needsHydration(metadata),
       value: newChildren

@@ -1,5 +1,5 @@
-import { g as getSecureProxy, v as validateRequest, a as getSecurityConfig, S as SecurityAuditor, b as getSecurityHeaders } from '../../../_astro/secureProxy.ByfO_XkS.js';
-import { c as createProxyRateLimiter, a as createRateLimitMiddleware } from '../../../_astro/rateLimiter.yR3vRFgB.js';
+import { g as getSecurityConfig, a as getSecureProxy, v as validateRequest, S as SecurityAuditor, b as getSecurityHeaders } from '../../../chunks/secureProxy_8Wiy_pmD.mjs';
+import { a as createProxyRateLimiter, b as createRateLimitMiddleware } from '../../../chunks/rateLimiter_B7mgpYIE.mjs';
 import crypto from 'crypto';
 export { renderers } from '../../../renderers.mjs';
 

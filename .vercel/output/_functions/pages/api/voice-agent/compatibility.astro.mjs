@@ -1,8 +1,9 @@
 export { renderers } from '../../../renderers.mjs';
 
 const prerender = false;
-const OPENAI_API_KEY = "sk-your-openai-api-key-here";
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 async function testRealtimeAPI() {
+  if (!OPENAI_API_KEY) return false;
   try {
     const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
       method: "POST",
@@ -22,6 +23,7 @@ async function testRealtimeAPI() {
   }
 }
 async function testStandardAPI() {
+  if (!OPENAI_API_KEY) return false;
   try {
     const response = await fetch("https://api.openai.com/v1/models", {
       headers: {
@@ -34,6 +36,7 @@ async function testStandardAPI() {
   }
 }
 async function testTTSAPI() {
+  if (!OPENAI_API_KEY) return false;
   try {
     const response = await fetch("https://api.openai.com/v1/audio/speech", {
       method: "POST",
@@ -56,7 +59,44 @@ const GET = async ({ request }) => {
   const startTime = Date.now();
   console.log("🔍 API compatibility check requested");
   try {
-    if (!OPENAI_API_KEY) ;
+    if (!OPENAI_API_KEY) {
+      const response2 = {
+        success: true,
+        tier: "none",
+        features: {
+          realtimeVoice: false,
+          chatCompletion: false,
+          textToSpeech: false,
+          speechToText: false,
+          functionCalling: false
+        },
+        limitations: [
+          "No OpenAI API key configured",
+          "All AI features disabled",
+          "Only demo mode available"
+        ],
+        recommendations: [
+          "Configure OPENAI_API_KEY environment variable",
+          "Sign up for OpenAI API access",
+          "Start with a standard tier account for basic features"
+        ],
+        upgradeInfo: {
+          required: true,
+          tierName: "OpenAI API Access",
+          benefits: [
+            "AI-powered conversations",
+            "Text-to-speech synthesis",
+            "Speech-to-text transcription",
+            "Function calling capabilities"
+          ],
+          upgradeUrl: "https://platform.openai.com/signup"
+        }
+      };
+      return new Response(JSON.stringify(response2), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
     const [hasRealtimeAPI, hasStandardAPI, hasTTSAPI] = await Promise.all([
       testRealtimeAPI(),
       testStandardAPI(),

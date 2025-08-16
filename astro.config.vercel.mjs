@@ -5,7 +5,7 @@ import sitemap from '@astrojs/sitemap';
 import compress from 'astro-compress';
 import icon from 'astro-icon';
 import react from '@astrojs/react';
-import vercel from '@astrojs/vercel';
+import vercel from '@astrojs/vercel/serverless';
 
 // Vercel-optimized Astro configuration
 export default defineConfig({

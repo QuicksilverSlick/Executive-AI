@@ -1,8 +1,8 @@
 export { renderers } from '../../../renderers.mjs';
 
 const prerender = false;
-const OPENAI_API_KEY = "sk-your-openai-api-key-here";
-const ALLOWED_ORIGINS = "https://executiveaitraining.com,https://executiveaitraining.vercel.app"?.split(",") || ["http://localhost:4321", "http://localhost:4322", "https://executiveaitraining.com"];
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:4321", "http://localhost:4322", "https://executiveaitraining.com"];
 async function generateChatCompletion(messages, functions) {
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
