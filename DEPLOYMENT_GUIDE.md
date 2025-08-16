@@ -1,12 +1,11 @@
-# Executive AI Training - Cloudflare Pages Deployment Guide
+# Executive AI Training - Multi-Platform Deployment Guide (August 2025)
 
-## Current Status ✅
+## Current Status & Issues
 - **Repository**: https://github.com/QuicksilverSlick/Executive-AI
-- **Latest Commit**: a1cb8ed - CSS fixes for Cloudflare Pages
-- **Build Status**: Polyfills and configurations applied
-- **Domain**: executiveaitraining.com (configured in Cloudflare)
-- **Adapter**: Cloudflare Pages with Worker Functions
-- **Status**: ✅ MessageChannel polyfill applied, CSS configuration fixed
+- **Primary Issue**: Serverless function crashes on Vercel (FUNCTION_INVOCATION_FAILED)
+- **Domain**: executiveaitraining.com
+- **Voice Agent**: OpenAI Realtime API with WebRTC requirements
+- **Status**: Cloudflare deployment issues, Vercel migration attempted with serverless crashes
 
 ## Cloudflare Pages Configuration
 
@@ -169,5 +168,144 @@ npm run preview
 
 ---
 
-*Last Updated: December 2024*
-*Deployment Guide Version: 2.0 - Cloudflare Pages Edition*
+## Alternative Deployment Options (August 2025 Best Practices)
+
+### Option 1: Vercel with Fixed Configuration
+
+**Status**: Configuration fixed but requires testing
+
+**Key Changes Made**:
+1. Updated `astro.config.mjs` to use `@astrojs/vercel/serverless` adapter
+2. Added `includeFiles` for problematic dependencies
+3. Created middleware for CORS handling
+4. Simplified `vercel.json` configuration
+
+**Deploy Commands**:
+```bash
+# Install dependencies
+npm install
+
+# Build project
+npm run build
+
+# Deploy to Vercel
+vercel --prod
+
+# Test endpoint
+curl https://your-app.vercel.app/api/vercel-test
+```
+
+### Option 2: Railway (Recommended for Voice Agents)
+
+**Why Railway?**
+- Full Node.js runtime (no serverless limitations)
+- WebSocket support for real-time voice
+- No function duration limits
+- Better for persistent connections
+
+**Configuration**: `railway.json` and `astro.config.node.mjs` created
+
+**Deploy Commands**:
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login and deploy
+railway login
+railway init
+railway up
+
+# Set env vars in Railway dashboard
+```
+
+### Option 3: Render
+
+**Benefits**:
+- Simple deployment process
+- Good documentation
+- Supports both static and dynamic content
+
+**Configuration**: `render.yaml` created with web service and static site definitions
+
+### Option 4: LiveKit + Platform Hybrid (Production Recommended)
+
+**Architecture for Voice Agents**:
+1. **Frontend**: Deploy to Vercel/Cloudflare for edge performance
+2. **Voice Processing**: Use LiveKit (cloud or self-hosted)
+3. **API**: Deploy to Railway/Render for WebSocket support
+
+**Why This Approach?**
+- LiveKit is specifically designed for WebRTC and real-time communication
+- Integrates directly with OpenAI Realtime API
+- Handles echo cancellation and audio processing
+- Production-ready with enterprise support
+
+## Critical Fixes Applied
+
+### 1. Vercel Adapter Fix
+```javascript
+// OLD (causing crashes)
+import vercel from '@astrojs/vercel';
+
+// NEW (correct for SSR)
+import vercel from '@astrojs/vercel/serverless';
+```
+
+### 2. Module Bundling Fix
+```javascript
+adapter: vercel({
+  includeFiles: [
+    './node_modules/react/**/*',
+    './node_modules/react-dom/**/*',
+    './node_modules/framer-motion/**/*'
+  ]
+})
+```
+
+### 3. Environment Variables Fix
+```javascript
+// OLD (import.meta.env - doesn't work in serverless)
+const apiKey = import.meta.env.OPENAI_API_KEY;
+
+// NEW (process.env - works in serverless)
+const apiKey = process.env.OPENAI_API_KEY;
+```
+
+## Deployment Recommendations by Use Case
+
+### For Development/Testing
+- **Platform**: Vercel
+- **Reason**: Fast iteration, good DX, automatic previews
+
+### For Production Voice Agent
+- **Platform**: Railway or LiveKit Hybrid
+- **Reason**: WebSocket support, no duration limits, real-time optimized
+
+### For Cost-Conscious Deployment
+- **Platform**: Render (with limitations)
+- **Reason**: Free tier available, but has cold starts
+
+### For Enterprise
+- **Platform**: LiveKit Cloud + Vercel Edge
+- **Reason**: Best performance, scalability, and support
+
+## Next Immediate Steps
+
+1. **For Vercel**: 
+   - Run `npm install` to update dependencies
+   - Commit and push the fixed configuration
+   - Monitor function logs for any remaining errors
+
+2. **For Railway** (Recommended):
+   - Sign up for Railway account
+   - Use `astro.config.node.mjs` configuration
+   - Deploy using Railway CLI
+   - Set OPENAI_API_KEY in dashboard
+
+3. **For Production**:
+   - Evaluate LiveKit for voice agent handling
+   - Consider hybrid deployment strategy
+   - Implement proper monitoring and logging
+
+*Last Updated: August 2025*
+*Deployment Guide Version: 3.0 - Multi-Platform Edition with Voice Agent Focus*

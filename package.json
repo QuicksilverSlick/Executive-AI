@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev --config astro.config.dev.mjs",
-    "build": "astro build && npm run optimize && npm run postbuild",
+    "build": "astro build",
     "build:vercel": "astro build --config astro.config.vercel.mjs && npm run optimize",
     "postbuild": "node scripts/inject-polyfill-complete.js && node scripts/fix-worker-imports.js",
     "postbuild:workers": "node scripts/prepare-workers.js",
@@ -102,6 +102,7 @@
   },
   "devDependencies": {
     "@astrojs/cloudflare": "^12.6.3",
+    "@astrojs/node": "^8.3.4",
     "@astrojs/tailwind": "^6.0.2",
     "@astrojs/vercel": "^8.2.6",
     "@playwright/test": "^1.40.0",

@@ -1,0 +1,35 @@
+services:
+  # Web Service for the main application
+  - type: web
+    name: executive-ai-training
+    runtime: node
+    region: oregon # or virginia, ohio, frankfurt, singapore
+    plan: free # upgrade to 'starter' or 'standard' for production
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false # Set manually in Render dashboard
+      - key: VITE_OPENAI_API_KEY
+        sync: false # Set manually in Render dashboard
+    healthCheckPath: /api/health
+    autoDeploy: true # Automatically deploy on push to main branch
+    
+# Optional: Static Site for better performance of static assets
+  - type: static
+    name: executive-ai-training-static
+    buildCommand: npm run build
+    staticPublishPath: ./dist/client
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /api/*
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://executive-ai-training.onrender.com/api/*
