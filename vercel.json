@@ -1,15 +1,7 @@
 {
-  "buildCommand": "npm run build:static",
-  "outputDirectory": "dist",
   "functions": {
-    "api/*.js": {
+    "api/**/*.js": {
       "runtime": "nodejs18.x"
     }
-  },
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
-    }
-  ]
+  }
 }
