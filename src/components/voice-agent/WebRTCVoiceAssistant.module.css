@@ -17,6 +17,12 @@
   position: fixed;
   z-index: 1000;
   font-family: 'Inter', system-ui, sans-serif;
+  
+  /* Ensure proper positioning on mobile */
+  bottom: max(1.5rem, env(safe-area-inset-bottom, 1.5rem));
+  right: max(1.5rem, env(safe-area-inset-right, 1.5rem));
+  left: auto;
+  top: auto;
 }
 
 .voicePanel {
@@ -27,11 +33,16 @@
   transform: translateZ(0); /* GPU acceleration */
   backface-visibility: hidden;
   
-  /* Mobile default: full width minus margins */
+  /* Mobile default: controlled sizing */
   width: calc(100vw - 2rem);
   max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 120px);
   margin-left: 1rem;
   margin-right: 1rem;
+  
+  /* Ensure proper overflow handling */
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* Tablet sizing */
@@ -84,6 +95,42 @@
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateZ(0);
   z-index: 1001;
+}
+
+/* Mobile-specific FAB improvements */
+@media (max-width: 768px) {
+  .floatingActionButton {
+    bottom: max(20px, env(safe-area-inset-bottom, 20px)) !important;
+    right: max(20px, env(safe-area-inset-right, 20px)) !important;
+    width: 4rem;
+    height: 4rem;
+    /* Ensure it stays above everything */
+    z-index: 1002;
+  }
+  
+  /* Mobile panel modal behavior */
+  .voicePanel:not(.panelMinimized) {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: calc(100vh - 80px) !important;
+    margin: 0 !important;
+    z-index: 1001;
+    
+    /* Add backdrop effect */
+    box-shadow: 
+      0 25px 50px -12px rgba(0, 0, 0, 0.4),
+      0 0 0 9999px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Container adjustments for mobile */
+  .voiceAssistantContainer {
+    bottom: max(20px, env(safe-area-inset-bottom, 20px)) !important;
+    right: max(20px, env(safe-area-inset-right, 20px)) !important;
+  }
 }
 
 /* Animation states with motion safety */

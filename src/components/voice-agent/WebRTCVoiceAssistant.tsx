@@ -546,6 +546,35 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
     };
   }, []);
 
+  // Handle body scroll lock on mobile when panel is open
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile && !isMinimized) {
+      // Lock body scroll
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+    } else {
+      // Restore body scroll
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+    };
+  }, [isMinimized]);
+
   const handleTogglePanel = useCallback(() => {
     console.log('[WebRTC Voice] Toggle panel clicked, current state:', isMinimized);
     setIsMinimized(!isMinimized);
@@ -681,7 +710,10 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
               animationState === 'speaking' ? 'voice-speaking-pulse voice-motion-safe' : 
               'hover:scale-[1.02] voice-motion-safe'
             ) : ''
-          } ${accessibilityMode === 'high-contrast' ? 'border-4 border-yellow-400' : ''}`}
+          } ${accessibilityMode === 'high-contrast' ? 'border-4 border-yellow-400' : ''} ${
+            // Add mobile modal class when expanded on mobile
+            !isMinimized ? 'voice-mobile-modal' : ''
+          }`}
           style={{
             ...getGlassStyles(),
             transformOrigin: position.includes('bottom') ? 'bottom' : 'top'
@@ -781,7 +813,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
           </div>
 
           {/* Main Content Area */}
-          <div className="relative z-10 p-6 space-y-6">
+          <div className="relative z-10 p-6 space-y-6 voice-content-area">
             {/* Session Controls */}
             {sessionState.state !== 'idle' && sessionState.state !== 'ended' && (
               <SessionControls
@@ -992,8 +1024,8 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
 
             {/* Message Transcript or Advanced Conversation Interface */}
             {showTranscript && (
-              <div className="h-64 flex flex-col">
-                <div className="flex-1 overflow-y-auto space-y-3 pb-3">
+              <div className="h-64 flex flex-col voice-transcript-container">
+                <div className="flex-1 overflow-y-auto space-y-3 pb-3 voice-transcript-scroll">
                   {enableAdvancedConversation ? (
                     <ConversationInterface
                       messages={messages}
