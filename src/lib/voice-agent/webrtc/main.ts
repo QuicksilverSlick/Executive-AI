@@ -44,6 +44,9 @@ export interface WebRTCVoiceAgentEvents {
   sessionExpired: () => void;
   reconnecting: () => void;
   reconnected: () => void;
+  sessionPaused: () => void;
+  sessionResumed: () => void;
+  sessionEnded: () => void;
   
   // Audio events
   recordingStarted: () => void;
@@ -685,6 +688,134 @@ Please continue the conversation naturally from where it left off, maintaining a
   }
 
   /**
+   * Pause the voice session
+   */
+  pauseSession(): void {
+    if (this.connectionState !== 'connected') {
+      console.warn('Cannot pause: not connected');
+      return;
+    }
+
+    console.log('[WebRTC Voice Agent] Pausing session...');
+    
+    try {
+      // Interrupt any current speech
+      this.interrupt();
+      
+      // Pause the connection (disable audio tracks)
+      this.connection.pause();
+      
+      // Stop audio processing
+      this.audioProcessor.stopRecording();
+      
+      // Update conversation state
+      this.updateConversationState('idle');
+      
+      // Emit pause event
+      this.emit('sessionPaused');
+      
+      console.log('[WebRTC Voice Agent] Session paused successfully');
+      
+    } catch (error) {
+      console.error('[WebRTC Voice Agent] Error pausing session:', error);
+      this.handleError({
+        type: 'session_pause_failed',
+        message: 'Failed to pause session',
+        timestamp: Date.now(),
+        details: error,
+        recoverable: true
+      });
+    }
+  }
+
+  /**
+   * Resume the voice session
+   */
+  resumeSession(): void {
+    if (this.connectionState !== 'connected') {
+      console.warn('Cannot resume: not connected');
+      return;
+    }
+
+    console.log('[WebRTC Voice Agent] Resuming session...');
+    
+    try {
+      // Resume the connection (re-enable audio tracks)
+      this.connection.resume();
+      
+      // Resume audio processing
+      this.audioProcessor.startRecording();
+      
+      // Update conversation state
+      this.updateConversationState('listening');
+      
+      // Emit resume event
+      this.emit('sessionResumed');
+      
+      console.log('[WebRTC Voice Agent] Session resumed successfully');
+      
+    } catch (error) {
+      console.error('[WebRTC Voice Agent] Error resuming session:', error);
+      this.handleError({
+        type: 'session_resume_failed',
+        message: 'Failed to resume session',
+        timestamp: Date.now(),
+        details: error,
+        recoverable: true
+      });
+    }
+  }
+
+  /**
+   * End the session gracefully
+   */
+  async endSession(): Promise<void> {
+    console.log('[WebRTC Voice Agent] Ending session gracefully...');
+    
+    try {
+      // Stop timeout tracking
+      this.timeoutHandler.stopSession();
+      
+      // Interrupt any current speech
+      this.interrupt();
+      
+      // End session but preserve data for potential restoration
+      if (this.sessionManager) {
+        await this.sessionManager.endSession();
+      }
+      
+      // End the connection gracefully
+      await this.connection.endSession();
+      
+      // Update states
+      this.updateConversationState('idle');
+      this.updateConnectionState('disconnected');
+      
+      // Emit session ended event
+      this.emit('sessionEnded');
+      
+      console.log('[WebRTC Voice Agent] Session ended successfully');
+      
+    } catch (error) {
+      console.error('[WebRTC Voice Agent] Error ending session:', error);
+      this.handleError({
+        type: 'session_end_failed',
+        message: 'Failed to end session gracefully',
+        timestamp: Date.now(),
+        details: error,
+        recoverable: false
+      });
+    }
+  }
+
+  /**
+   * Check if session is paused
+   */
+  isSessionPaused(): boolean {
+    return this.connection.isPausedState();
+  }
+
+  /**
    * Test function to trigger a response
    */
   testResponse(): void {
@@ -737,6 +868,21 @@ Please continue the conversation naturally from where it left off, maintaining a
       console.log('[WebRTC Main] Connection disconnected event received');
       this.updateConnectionState('disconnected');
       this.emit('connectionStateChanged', 'disconnected');
+    });
+    
+    this.connection.on('paused', () => {
+      console.log('[WebRTC Main] Connection paused event received');
+      this.emit('sessionPaused');
+    });
+    
+    this.connection.on('resumed', () => {
+      console.log('[WebRTC Main] Connection resumed event received');
+      this.emit('sessionResumed');
+    });
+    
+    this.connection.on('sessionEnded', () => {
+      console.log('[WebRTC Main] Session ended event received');
+      this.emit('sessionEnded');
     });
     
     this.connection.on('error', (error: any) => {

@@ -556,6 +556,29 @@ export const useWebRTCVoiceAssistant = (
     setStatusText('Ready to assist');
   }, [clearMessages]);
 
+  // Session control methods
+  const pauseSession = useCallback(() => {
+    if (voiceAgentRef.current && isConnected) {
+      voiceAgentRef.current.pauseSession();
+    }
+  }, [isConnected]);
+
+  const resumeSession = useCallback(() => {
+    if (voiceAgentRef.current && isConnected) {
+      voiceAgentRef.current.resumeSession();
+    }
+  }, [isConnected]);
+
+  const endSession = useCallback(async () => {
+    if (voiceAgentRef.current) {
+      await voiceAgentRef.current.endSession();
+    }
+  }, []);
+
+  const isSessionPaused = useCallback(() => {
+    return voiceAgentRef.current ? voiceAgentRef.current.isSessionPaused() : false;
+  }, []);
+
   // Enhanced voice controls
   const changeVoice = useCallback((voice: string) => {
     if (voiceAgentRef.current && isConnected) {
@@ -674,6 +697,12 @@ export const useWebRTCVoiceAssistant = (
     sendMessage,
     clearMessages,
     resetSession,
+    
+    // Session control actions
+    pauseSession,
+    resumeSession,
+    endSession,
+    isSessionPaused,
     
     // Enhanced controls
     changeVoice,

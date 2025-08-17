@@ -51,6 +51,8 @@ export class WebRTCConnection {
   private sessionConfig: SessionConfig | null = null;
   private remoteAudioStream: MediaStream | null = null; // Store remote audio stream
   private isConnecting = false; // Prevent multiple simultaneous connections
+  private isPaused = false; // Track pause state
+  private pausedTracks: MediaStreamTrack[] = []; // Store paused tracks
 
   constructor(
     private readonly maxReconnects: number = 3,
@@ -542,12 +544,143 @@ export class WebRTCConnection {
   }
 
   /**
+   * Pause the connection (disable audio tracks)
+   */
+  pause(): void {
+    if (this.isPaused || !this._peerConnection) {
+      console.log('[WebRTC Connection] Already paused or no connection');
+      return;
+    }
+
+    console.log('[WebRTC Connection] Pausing connection...');
+    
+    try {
+      // Disable all local audio tracks
+      const senders = this._peerConnection.getSenders();
+      senders.forEach(sender => {
+        if (sender.track && sender.track.kind === 'audio') {
+          sender.track.enabled = false;
+          this.pausedTracks.push(sender.track);
+          console.log('[WebRTC Connection] Disabled audio track:', sender.track.id);
+        }
+      });
+
+      // Disable remote audio tracks
+      if (this.remoteAudioStream) {
+        this.remoteAudioStream.getAudioTracks().forEach(track => {
+          track.enabled = false;
+          console.log('[WebRTC Connection] Disabled remote audio track:', track.id);
+        });
+      }
+
+      this.isPaused = true;
+      this.emit('paused');
+      console.log('[WebRTC Connection] Connection paused successfully');
+      
+    } catch (error) {
+      console.error('[WebRTC Connection] Error pausing connection:', error);
+      this.emit('error', {
+        type: 'pause_failed',
+        message: 'Failed to pause connection',
+        timestamp: Date.now(),
+        details: error,
+        recoverable: true
+      });
+    }
+  }
+
+  /**
+   * Resume the connection (re-enable audio tracks)
+   */
+  resume(): void {
+    if (!this.isPaused || !this._peerConnection) {
+      console.log('[WebRTC Connection] Not paused or no connection');
+      return;
+    }
+
+    console.log('[WebRTC Connection] Resuming connection...');
+    
+    try {
+      // Re-enable all paused local audio tracks
+      this.pausedTracks.forEach(track => {
+        track.enabled = true;
+        console.log('[WebRTC Connection] Re-enabled audio track:', track.id);
+      });
+      this.pausedTracks = [];
+
+      // Re-enable remote audio tracks
+      if (this.remoteAudioStream) {
+        this.remoteAudioStream.getAudioTracks().forEach(track => {
+          track.enabled = true;
+          console.log('[WebRTC Connection] Re-enabled remote audio track:', track.id);
+        });
+      }
+
+      this.isPaused = false;
+      this.emit('resumed');
+      console.log('[WebRTC Connection] Connection resumed successfully');
+      
+    } catch (error) {
+      console.error('[WebRTC Connection] Error resuming connection:', error);
+      this.emit('error', {
+        type: 'resume_failed',
+        message: 'Failed to resume connection',
+        timestamp: Date.now(),
+        details: error,
+        recoverable: true
+      });
+    }
+  }
+
+  /**
+   * Check if connection is paused
+   */
+  isPausedState(): boolean {
+    return this.isPaused;
+  }
+
+  /**
+   * Gracefully end the session with proper cleanup
+   */
+  async endSession(): Promise<void> {
+    console.log('[WebRTC Connection] Ending session gracefully...');
+    
+    try {
+      // Send session end event if data channel is available
+      if (this._dataChannel && this._dataChannel.readyState === 'open') {
+        const endEvent = {
+          type: 'session.end',
+          event_id: `session_end_${Date.now()}`,
+          timestamp: Date.now()
+        };
+        
+        this._dataChannel.send(JSON.stringify(endEvent));
+        console.log('[WebRTC Connection] Session end event sent');
+        
+        // Give time for the event to be processed
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      // Then disconnect
+      await this.disconnect();
+      this.emit('sessionEnded');
+      
+    } catch (error) {
+      console.error('[WebRTC Connection] Error ending session:', error);
+      // Still try to disconnect even if session end failed
+      await this.disconnect();
+    }
+  }
+
+  /**
    * Disconnect and cleanup
    */
   async disconnect(): Promise<void> {
     try {
       // Clear connection flags
       this.isConnecting = false;
+      this.isPaused = false;
+      this.pausedTracks = [];
       
       // Clear stored remote audio stream
       this.remoteAudioStream = null;
