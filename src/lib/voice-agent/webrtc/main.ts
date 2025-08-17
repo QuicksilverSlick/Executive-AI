@@ -32,6 +32,7 @@ import type {
   templatizeInstructions
 } from '../../../features/voice-agent/types';
 import { DEFAULT_SESSION_CONFIG } from '../../../features/voice-agent/types';
+import { templatizeInstructions } from '../utils';
 
 export interface WebRTCVoiceAgentEvents {
   // Connection events

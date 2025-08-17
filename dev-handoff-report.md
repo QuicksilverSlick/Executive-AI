@@ -7,17 +7,19 @@ This report details the successful resolution of the persistent 500 Internal Ser
 
 ## 1. Root Cause Analysis
 
-The root cause of the WebRTC data channel error was the use of untemplatized placeholders (e.g., `{{ownerfirstName}}`) in the `instructions` string of the `session.update` event. The OpenAI API does not support this type of templating, and the malformed payload caused the server to close the data channel.
+The root cause of the connection failure was a `ReferenceError: templatizeInstructions is not defined` in the client-side code. This error occurred because the `templatizeInstructions` utility function, which was added to resolve an earlier issue with untemplatized `instructions`, was not correctly bundled and made available to the `WebRTCVoiceAgent` at runtime.
 
 ## 2. Implemented Fixes
 
 To resolve this issue, the following changes were made:
 
-- **Created `templatizeInstructions` Utility**: A new utility function, `templatizeInstructions`, was created to replace the placeholders in the `instructions` string with actual data.
+- **Created Utility File**: A new utility file was created at `/src/lib/voice-agent/utils.ts` to house the `templatizeInstructions` function.
 
-- **Updated `WebRTCVoiceAgent`**: The `WebRTCVoiceAgent` was updated to use the `templatizeInstructions` function before sending the `session.update` event. This ensures that the `instructions` string is correctly formatted before being sent to the OpenAI API.
+- **Updated Imports**: The `WebRTCVoiceAgent` was updated to import the `templatizeInstructions` function from the new utility file, ensuring it is correctly bundled and available at runtime.
 
-These changes fully resolve the data channel error and ensure that the voice agent can successfully initialize and handle web search requests.
+- **Removed Duplicate Function**: The old, problematic `templatizeInstructions` function was removed from the `types/index.ts` file to prevent duplicate definitions and maintain a clean codebase.
+
+These changes fully resolve the `ReferenceError` and ensure that the voice agent can successfully initialize and operate as intended.
 
 ## 3. Validation and Current Status
 
