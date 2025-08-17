@@ -653,7 +653,7 @@ export class VoicePreferencesManager {
   private static getDefaultPreferences(): SessionPreferences {
     return {
       voicePersonality: 'sage',
-      isMinimized: true,
+      isMinimized: true, // Always default to minimized for better UX
       showTranscript: true,
       volume: 0.8,
       theme: 'auto',

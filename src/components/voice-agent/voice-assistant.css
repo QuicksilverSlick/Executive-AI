@@ -16,23 +16,27 @@
  * DREAMFORGE AUDIT TRAIL
  *
  * ---
- * @revision: 1.1.0
+ * @revision: 1.2.0
  * @author: developer-agent
- * @cc-sessionId: cc-unknown-20250803-812
- * @timestamp: 2025-08-03T22:06:00Z
+ * @cc-sessionId: cc-unknown-20250817-267
+ * @timestamp: 2025-08-17T16:00:00Z
  * @reasoning:
- * - **Objective:** Add comprehensive accessibility CSS classes and viewport bounds handling
- * - **Strategy:** Implement WCAG 2.1 AA compliant styles and responsive positioning
- * - **Outcome:** Full accessibility support with high contrast, large targets, and viewport containment
+ * - **Objective:** Enhance CSS with comprehensive responsive design and mobile-first approach
+ * - **Strategy:** Add responsive breakpoints, safe area support, and improved touch targets
+ * - **Outcome:** Complete responsive CSS supporting all device sizes with enhanced accessibility
  * 
- * CRITICAL ENHANCEMENTS APPLIED:
- * - ADDED: High contrast mode classes with proper color contrast ratios (7:1)
- * - ADDED: Large click target sizing for improved accessibility 
- * - ADDED: Reduced motion classes to disable animations when requested
- * - ADDED: Screen reader optimization classes and focus indicators
- * - ADDED: Viewport bounds handling classes for settings expansion
- * - ADDED: Font size override capabilities for accessibility scaling
- * - ENHANCED: Focus visible styles with 3px outline for WCAG compliance
+ * RESPONSIVE ENHANCEMENTS APPLIED:
+ * - ADDED: Mobile-first responsive breakpoints (768px, 1024px, 1025px+)
+ * - IMPLEMENTED: Safe area support using env(safe-area-inset-*) for notched devices
+ * - ENHANCED: Touch target sizing with 44px minimum for all interactive elements
+ * - IMPROVED: Motion reduction support with enhanced prefers-reduced-motion handling
+ * - ADDED: Viewport-safe positioning utilities and responsive container classes
+ * - OPTIMIZED: Performance with GPU acceleration hints and will-change properties
+ * 
+ * Previous revision (1.1.0):
+ * - Added comprehensive accessibility CSS classes and viewport bounds handling
+ * - Implemented WCAG 2.1 AA compliant styles and responsive positioning
+ * - Added high contrast mode classes, large click targets, and screen reader optimizations
  */
 
 /* Voice Assistant Widget Base Styles */
@@ -372,10 +376,56 @@
   }
 }
 
-/* Responsive Breakpoints */
+/* Responsive Breakpoints and Safe Area Support */
 @media (max-width: 768px) {
   .voice-assistant-widget {
     --voice-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Mobile responsive adjustments */
+  #webrtc-voice-assistant {
+    /* Account for safe areas on mobile devices */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  /* Mobile panel sizing */
+  #webrtc-voice-assistant .voice-panel-container {
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+    margin: 0 16px;
+  }
+  
+  /* Ensure FAB positioning accounts for safe areas */
+  #webrtc-voice-assistant.fixed {
+    bottom: calc(1.5rem + env(safe-area-inset-bottom));
+    right: calc(1.5rem + env(safe-area-inset-right));
+    left: auto;
+  }
+  
+  /* Mobile touch targets */
+  #webrtc-voice-assistant button {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Tablet sizing */
+  #webrtc-voice-assistant .voice-panel-container {
+    width: 384px !important;
+    max-width: 384px !important;
+  }
+}
+
+@media (min-width: 1025px) {
+  /* Desktop sizing */
+  #webrtc-voice-assistant .voice-panel-container {
+    width: 448px !important;
+    max-width: 448px !important;
   }
 }
 
@@ -622,4 +672,52 @@
   clip: rect(0, 0, 0, 0) !important;
   white-space: nowrap !important;
   border: 0 !important;
+}
+
+/* Enhanced responsive utilities */
+.voice-responsive-container {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Viewport-aware positioning */
+.voice-viewport-safe {
+  position: fixed;
+  bottom: max(1.5rem, env(safe-area-inset-bottom, 1.5rem));
+  right: max(1.5rem, env(safe-area-inset-right, 1.5rem));
+  left: auto;
+  top: auto;
+}
+
+/* Touch-friendly interaction zones */
+.voice-touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Responsive text scaling */
+@media (max-width: 768px) {
+  .voice-responsive-text {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 769px) {
+  .voice-responsive-text {
+    font-size: 16px;
+  }
+}
+
+/* Enhanced motion reduction support */
+@media (prefers-reduced-motion: reduce) {
+  .voice-motion-safe {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

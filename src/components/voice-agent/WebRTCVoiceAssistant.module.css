@@ -1,0 +1,278 @@
+/*
+ * DREAMFORGE HIVE-MIND CHAIN OF CUSTODY
+ *
+ * @file-purpose: Responsive CSS module for WebRTC Voice Assistant component
+ * @version: 1.0.0
+ * @init-author: developer-agent
+ * @init-cc-sessionId: cc-unknown-20250817-267
+ * @init-timestamp: 2025-08-17T16:00:00Z
+ * @reasoning:
+ * - **Objective:** Implement responsive voice assistant UI with proper touch targets and accessibility
+ * - **Strategy:** CSS module with mobile-first responsive design and WCAG compliance
+ * - **Outcome:** Responsive component supporting mobile, tablet, and desktop with 44px touch targets
+ */
+
+/* Mobile-first responsive design */
+.voiceAssistantContainer {
+  position: fixed;
+  z-index: 1000;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.voicePanel {
+  margin-bottom: 1rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0); /* GPU acceleration */
+  backface-visibility: hidden;
+  
+  /* Mobile default: full width minus margins */
+  width: calc(100vw - 2rem);
+  max-width: calc(100vw - 2rem);
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+/* Tablet sizing */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .voicePanel {
+    width: 384px;
+    max-width: 384px;
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+/* Desktop sizing */
+@media (min-width: 1025px) {
+  .voicePanel {
+    width: 448px;
+    max-width: 448px;
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+/* Touch targets - ensure 44x44px minimum */
+.touchTarget {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+/* Safe area support */
+.safeAreaContainer {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+/* Floating Action Button positioning */
+.floatingActionButton {
+  position: fixed;
+  bottom: max(1.5rem, env(safe-area-inset-bottom, 1.5rem));
+  right: max(1.5rem, env(safe-area-inset-right, 1.5rem));
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0);
+  z-index: 1001;
+}
+
+/* Animation states with motion safety */
+.pulseAnimation {
+  animation: voicePulse 2s ease-in-out infinite;
+}
+
+.bounceAnimation {
+  animation: voiceBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes voicePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+@keyframes voiceBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .pulseAnimation,
+  .bounceAnimation {
+    animation: none !important;
+  }
+  
+  .voicePanel,
+  .floatingActionButton {
+    transition: opacity 0.2s ease !important;
+    transform: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .voicePanel {
+    border: 3px solid currentColor;
+  }
+  
+  .touchTarget:focus-visible {
+    outline: 3px solid currentColor;
+    outline-offset: 2px;
+  }
+}
+
+/* Focus states for accessibility */
+.touchTarget:focus-visible {
+  outline: 3px solid #D4A034;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Panel states */
+.panelMinimized {
+  opacity: 0;
+  transform: scale(0.8) translateY(1rem);
+  pointer-events: none;
+}
+
+.panelVisible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+
+/* Input field responsive sizing */
+.textInput {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  min-height: 44px; /* Touch target compliance */
+}
+
+/* Send button positioning and sizing */
+.sendButton {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Status indicator responsive sizing */
+.statusIndicator {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .statusIndicator {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+/* Glassmorphism effects */
+.glassEffect {
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glassEffectDark {
+  backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive typography */
+.responsiveText {
+  font-size: 0.875rem; /* 14px on mobile */
+}
+
+@media (min-width: 769px) {
+  .responsiveText {
+    font-size: 1rem; /* 16px on tablet+ */
+  }
+}
+
+/* Loading states */
+.loadingDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: currentColor;
+  opacity: 0.4;
+  animation: loadingPulse 1.4s ease-in-out infinite;
+}
+
+.loadingDot:nth-child(1) { animation-delay: 0s; }
+.loadingDot:nth-child(2) { animation-delay: 0.2s; }
+.loadingDot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes loadingPulse {
+  0%, 20% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+}
+
+/* Utility classes */
+.srOnly {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/*
+ * DREAMFORGE AUDIT TRAIL
+ *
+ * ---
+ * @revision: 1.0.0
+ * @author: developer-agent
+ * @cc-sessionId: cc-unknown-20250817-267
+ * @timestamp: 2025-08-17T16:00:00Z
+ * @reasoning:
+ * - **Objective:** Complete responsive CSS module for voice assistant
+ * - **Strategy:** Mobile-first design with proper touch targets and accessibility features
+ * - **Outcome:** Comprehensive CSS module supporting all device sizes with WCAG compliance
+ */
