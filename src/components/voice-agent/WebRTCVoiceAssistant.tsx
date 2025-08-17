@@ -50,6 +50,7 @@ import { ConversationInterface } from './ConversationInterface';
 import { VoicePreferencesManager, sessionPersistence } from '../../lib/voice-agent/session-persistence';
 import { SessionRestoration } from '../../lib/voice-agent/session-restoration';
 import { templatizeInstructions } from '../../lib/voice-agent/utils';
+import { DEFAULT_SESSION_CONFIG } from '../../features/voice-agent/types';
 import type { VoiceStatus, VoiceMessage, VoiceAssistantConfig, VoicePersonality, ConnectionState } from './types';
 import './voice-assistant.css';
 
