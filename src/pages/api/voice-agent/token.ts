@@ -20,20 +20,30 @@ import { registerSession } from './refresh-token';
 // Disable prerendering for this API endpoint
 export const prerender = false;
 
-// Environment validation
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || [
-  'http://localhost:4321', 
-  'http://localhost:4322', 
-  'http://localhost:4323', 
-  'http://localhost:4324',
-  'http://localhost:4325',
-  'http://localhost:4326',
-  'https://executiveaitraining.com'
-];
-const TOKEN_DURATION = parseInt(process.env.VOICE_AGENT_TOKEN_DURATION || '1800'); // 30 minutes
-const RATE_LIMIT_MAX = parseInt(process.env.VOICE_AGENT_RATE_LIMIT || '10');
-const ENABLE_DEMO_MODE = process.env.VOICE_AGENT_DEMO_MODE === 'true';
+// Environment validation - Cloudflare compatible
+function getEnvVar(key: string, env?: any): string | undefined {
+  // Try multiple sources for environment variables
+  return env?.[key] || import.meta.env?.[key] || (typeof process !== 'undefined' ? process.env?.[key] : undefined);
+}
+
+function getEnvConfig(env?: any) {
+  const OPENAI_API_KEY = getEnvVar('OPENAI_API_KEY', env);
+  const ALLOWED_ORIGINS_STR = getEnvVar('ALLOWED_ORIGINS', env);
+  const ALLOWED_ORIGINS = ALLOWED_ORIGINS_STR?.split(',') || [
+    'http://localhost:4321', 
+    'http://localhost:4322', 
+    'http://localhost:4323', 
+    'http://localhost:4324',
+    'http://localhost:4325',
+    'http://localhost:4326',
+    'https://executiveaitraining.com'
+  ];
+  const TOKEN_DURATION = parseInt(getEnvVar('VOICE_AGENT_TOKEN_DURATION', env) || '1800'); // 30 minutes
+  const RATE_LIMIT_MAX = parseInt(getEnvVar('VOICE_AGENT_RATE_LIMIT', env) || '10');
+  const ENABLE_DEMO_MODE = getEnvVar('VOICE_AGENT_DEMO_MODE', env) === 'true';
+  
+  return { OPENAI_API_KEY, ALLOWED_ORIGINS, TOKEN_DURATION, RATE_LIMIT_MAX, ENABLE_DEMO_MODE };
+}
 
 // Tier detection cache (to avoid repeated API calls)
 let apiTierCache: {
@@ -44,28 +54,15 @@ let apiTierCache: {
 
 const TIER_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-if (!OPENAI_API_KEY) {
-  console.error('❌ OPENAI_API_KEY environment variable is required');
-}
+// Rate limiter initialization happens in the handler
 
-// Enhanced rate limiter with configurable limits
-const tokenRateLimiter = createTokenRateLimiter({
-  windowMs: 60 * 1000, // 1 minute window
-  maxRequests: RATE_LIMIT_MAX,
-  onLimitReached: (clientIP: string, attempts: number) => {
-    const isDev = process.env.DEV || process.env.NODE_ENV === 'development';
-    if (isDev) {
-      console.log(`ℹ️ Token generation rate limit reached for ${clientIP} - Attempts: ${attempts} (Development mode)`);
-    } else {
-      console.warn(`🚫 Token generation rate limit exceeded for ${clientIP} - Attempts: ${attempts}`);
-    }
-  }
-});
+// Rate limiter will be created in the handler with proper config
+// This allows us to access environment variables properly in Cloudflare Workers
 
 /**
  * Detect OpenAI API tier and Realtime API availability
  */
-async function detectAPITier(): Promise<'realtime' | 'standard' | 'unknown'> {
+async function detectAPITier(apiKey: string): Promise<'realtime' | 'standard' | 'unknown'> {
   // Check cache first
   if (apiTierCache && Date.now() < apiTierCache.expiresAt) {
     return apiTierCache.tier;
@@ -77,7 +74,7 @@ async function detectAPITier(): Promise<'realtime' | 'standard' | 'unknown'> {
     const response = await fetch('https://api.openai.com/v1/realtime/sessions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -141,7 +138,7 @@ async function detectAPITier(): Promise<'realtime' | 'standard' | 'unknown'> {
 /**
  * Generate ephemeral token for OpenAI Realtime API with WebRTC support
  */
-async function generateEphemeralToken(): Promise<{ token: string; expiresAt: number; sessionId: string; }> {
+async function generateEphemeralToken(apiKey: string): Promise<{ token: string; expiresAt: number; sessionId: string; }> {
   console.log('🔐 Generating ephemeral token for WebRTC...');
   
   // Import the DEFAULT_SESSION_CONFIG to use consistent settings
@@ -158,7 +155,7 @@ async function generateEphemeralToken(): Promise<{ token: string; expiresAt: num
   const response = await fetch('https://api.openai.com/v1/realtime/sessions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(requestBody),
@@ -232,12 +229,12 @@ async function generateEphemeralToken(): Promise<{ token: string; expiresAt: num
  * Generate fallback token for standard OpenAI API
  * Returns the API key directly with a simulated expiration
  */
-async function generateFallbackToken(): Promise<{ token: string; expiresAt: number; mode: 'fallback' }> {
+async function generateFallbackToken(apiKey: string, tokenDuration: number): Promise<{ token: string; expiresAt: number; mode: 'fallback' }> {
   // In fallback mode, we return the API key directly
   // The client will use this for Chat API + TTS
   return {
-    token: OPENAI_API_KEY,
-    expiresAt: Date.now() + (TOKEN_DURATION * 1000),
+    token: apiKey,
+    expiresAt: Date.now() + (tokenDuration * 1000),
     mode: 'fallback'
   };
 }
@@ -245,11 +242,11 @@ async function generateFallbackToken(): Promise<{ token: string; expiresAt: numb
 /**
  * Generate demo token for testing without API access
  */
-async function generateDemoToken(): Promise<{ token: string; expiresAt: number; mode: 'demo' }> {
+async function generateDemoToken(tokenDuration: number): Promise<{ token: string; expiresAt: number; mode: 'demo' }> {
   // Demo mode - returns a fake token for UI testing
   return {
-    token: 'demo_token_' + Math.random().toString(36).substr(2, 9),
-    expiresAt: Date.now() + (TOKEN_DURATION * 1000),
+    token: 'demo_token_' + Math.random().toString(36).substring(2, 11),
+    expiresAt: Date.now() + (tokenDuration * 1000),
     mode: 'demo'
   };
 }
@@ -258,7 +255,10 @@ async function generateDemoToken(): Promise<{ token: string; expiresAt: number; 
  * POST /api/voice-agent/token
  * Generates ephemeral tokens for voice agent authentication
  */
-export const POST: APIRoute = async ({ request, clientAddress }) => {
+export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
+  // Get environment config from Cloudflare env
+  const env = (locals as any)?.runtime?.env;
+  const { OPENAI_API_KEY, ALLOWED_ORIGINS, TOKEN_DURATION, RATE_LIMIT_MAX, ENABLE_DEMO_MODE } = getEnvConfig(env);
   console.log('===== TOKEN ENDPOINT REQUEST =====');
   console.log('🔍 Token endpoint POST handler started at:', new Date().toISOString());
   const startTime = Date.now();
@@ -345,6 +345,13 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     }
     
     // Enhanced rate limiting
+    const tokenRateLimiter = createTokenRateLimiter({
+      windowMs: 60 * 1000, // 1 minute window
+      maxRequests: RATE_LIMIT_MAX,
+      onLimitReached: (clientIP: string, attempts: number) => {
+        console.warn(`🚫 Token generation rate limit exceeded for ${clientIP} - Attempts: ${attempts}`);
+      }
+    });
     const rateLimitMiddleware = createRateLimitMiddleware(tokenRateLimiter);
     const rateLimitResponse = rateLimitMiddleware(request, clientIP);
     if (rateLimitResponse) {
@@ -383,15 +390,15 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 
     if (ENABLE_DEMO_MODE) {
       // Demo mode override
-      tokenData = await generateDemoToken();
+      tokenData = await generateDemoToken(TOKEN_DURATION);
       mode = 'demo';
       warnings.push('Running in demo mode - no actual API calls will be made');
     } else {
-      const apiTier = await detectAPITier();
+      const apiTier = await detectAPITier(OPENAI_API_KEY);
       
       if (apiTier === 'realtime') {
         try {
-          const ephemeralTokenData = await generateEphemeralToken();
+          const ephemeralTokenData = await generateEphemeralToken(OPENAI_API_KEY);
           tokenData = {
             token: ephemeralTokenData.token,
             expiresAt: ephemeralTokenData.expiresAt,
@@ -400,7 +407,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           mode = 'realtime';
         } catch (error) {
           console.warn('⚠️ Realtime token generation failed, falling back to standard API:', error);
-          tokenData = await generateFallbackToken();
+          tokenData = await generateFallbackToken(OPENAI_API_KEY, TOKEN_DURATION);
           mode = 'fallback';
           const errorMsg = error instanceof Error ? error.message : 'Unknown error';
           if (errorMsg.includes('tier limitation') || errorMsg.includes('access forbidden') || errorMsg.includes('not available on current tier')) {
@@ -414,17 +421,17 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           }
         }
       } else if (apiTier === 'standard') {
-        tokenData = await generateFallbackToken();
+        tokenData = await generateFallbackToken(OPENAI_API_KEY, TOKEN_DURATION);
         mode = 'fallback';
         warnings.push('Realtime API not available on current tier - using Chat API with TTS');
       } else {
         // Unknown tier - try demo mode as last resort
         if (OPENAI_API_KEY) {
-          tokenData = await generateFallbackToken();
+          tokenData = await generateFallbackToken(OPENAI_API_KEY, TOKEN_DURATION);
           mode = 'fallback';
           warnings.push('API tier unknown - attempting fallback mode');
         } else {
-          tokenData = await generateDemoToken();
+          tokenData = await generateDemoToken(TOKEN_DURATION);
           mode = 'demo';
           warnings.push('No API access - running in demo mode');
         }
@@ -522,8 +529,10 @@ export const GET: APIRoute = async ({ request }) => {
  * OPTIONS /api/voice-agent/token
  * Handle CORS preflight requests
  */
-export const OPTIONS: APIRoute = async ({ request }) => {
+export const OPTIONS: APIRoute = async ({ request, locals }) => {
   const origin = request.headers.get('origin');
+  const env = (locals as any)?.runtime?.env;
+  const { ALLOWED_ORIGINS } = getEnvConfig(env);
   
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
     return new Response(null, {
