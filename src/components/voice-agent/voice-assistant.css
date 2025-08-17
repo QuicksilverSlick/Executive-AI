@@ -916,4 +916,27 @@
     width: 5rem !important;
     height: 5rem !important;
   }
+  
+  /* CRITICAL: Always ensure CTA button remains visible and accessible */
+  .voice-mobile-modal + .voice-bottom-control-bar,
+  .voice-mobile-modal ~ .voice-bottom-control-bar,
+  .voice-mobile-modal + [data-testid="bottom-control-bar"],
+  .voice-mobile-modal ~ [data-testid="bottom-control-bar"] {
+    z-index: 1002 !important;
+    position: fixed !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+  
+  /* Ensure CTA button in bottom bar is always clickable */
+  .voice-mobile-modal + * [data-testid="cta-button"],
+  .voice-mobile-modal ~ * [data-testid="cta-button"] {
+    pointer-events: auto !important;
+    z-index: 1003 !important;
+    position: relative !important;
+  }
 }
