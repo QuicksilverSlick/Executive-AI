@@ -47,10 +47,24 @@ import { WaveformVisualizer } from './WaveformVisualizer';
 import { VoicePersonalitySelector } from './VoicePersonalitySelector';
 import { AccessibilityControls } from './AccessibilityControls';
 import { ConversationInterface } from './ConversationInterface';
-import { VoicePreferencesManager, sessionPersistence } from '../../lib/voice-agent/session-persistence';
-import { SessionRestoration } from '../../lib/voice-agent/session-restoration';
 import { templatizeInstructions } from '../../lib/voice-agent/utils';
 import { DEFAULT_SESSION_CONFIG } from '../../features/voice-agent/types';
+
+// Lazy load browser-only modules to avoid SSR issues
+let VoicePreferencesManager: any = null;
+let sessionPersistence: any = null;
+let SessionRestoration: any = null;
+
+// Only import these modules on the client side
+if (typeof window !== 'undefined') {
+  import('../../lib/voice-agent/session-persistence').then(module => {
+    VoicePreferencesManager = module.VoicePreferencesManager;
+    sessionPersistence = module.sessionPersistence;
+  });
+  import('../../lib/voice-agent/session-restoration').then(module => {
+    SessionRestoration = module.SessionRestoration;
+  });
+}
 import type { VoiceStatus, VoiceMessage, VoiceAssistantConfig, VoicePersonality, ConnectionState } from './types';
 import './voice-assistant.css';
 
@@ -118,7 +132,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
 
   useEffect(() => {
     if (isClient) {
-      const storedData = sessionPersistence.getUserData();
+      const storedData = sessionPersistence?.getUserData() || {};
       if (storedData) {
         setUserData({
           ownerfirstName: storedData.name || 'Valued Customer',
@@ -265,7 +279,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
   useEffect(() => {
     if (isClient) {
       try {
-        const prefs = VoicePreferencesManager.getPreferences();
+        const prefs = VoicePreferencesManager?.getPreferences() || {};
         console.log('[WebRTC Voice] Loaded preferences after hydration:', prefs);
         setIsMinimized(prefs.isMinimized);
       } catch (error) {
@@ -284,7 +298,9 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
           position 
         };
         console.log('[WebRTC Voice] Saving preferences:', prefsToSave);
-        VoicePreferencesManager.savePreferences(prefsToSave);
+        if (VoicePreferencesManager) {
+          VoicePreferencesManager.savePreferences(prefsToSave);
+        }
         console.log('[WebRTC Voice] Preferences saved successfully');
       } catch (error) {
         console.error('[WebRTC Voice] Failed to save preferences:', error);
@@ -406,17 +422,17 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
     if (typeof window !== 'undefined') {
       try {
         console.log('[WebRTC Voice] Session persistence modules loaded successfully');
-        console.log('[WebRTC Voice] Current preferences:', VoicePreferencesManager.getPreferences());
-        console.log('[WebRTC Voice] Session restoration stats:', SessionRestoration.getRestorationStats());
+        console.log('[WebRTC Voice] Current preferences:', VoicePreferencesManager?.getPreferences() || 'N/A');
+        console.log('[WebRTC Voice] Session restoration stats:', SessionRestoration?.getRestorationStats() || 'N/A');
         
         // Set global reference for debugging
         (window as any).WebRTCVoiceAgent = { 
           status, 
           isListening, 
           messages, 
-          sessionPersistence,
-          VoicePreferencesManager,
-          SessionRestoration 
+          sessionPersistence: sessionPersistence || 'Not loaded',
+          VoicePreferencesManager: VoicePreferencesManager || 'Not loaded',
+          SessionRestoration: SessionRestoration || 'Not loaded' 
         };
         
       } catch (error) {
