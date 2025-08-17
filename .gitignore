@@ -51,3 +51,6 @@ docs/openai-security-setup.md
 
 # Vercel
 .vercel
+
+# Wrangler
+.wrangler/

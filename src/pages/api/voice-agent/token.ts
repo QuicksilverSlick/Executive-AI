@@ -21,14 +21,50 @@ import { registerSession } from './refresh-token';
 export const prerender = false;
 
 // Environment validation - Cloudflare compatible
-function getEnvVar(key: string, env?: any): string | undefined {
-  // Try multiple sources for environment variables
-  return env?.[key] || import.meta.env?.[key] || (typeof process !== 'undefined' ? process.env?.[key] : undefined);
+function getEnvVar(key: string, context?: any): string | undefined {
+  // Try Cloudflare Workers/Pages context.env first (primary method for secrets)
+  if (context?.env?.[key]) {
+    console.log(`✅ Found ${key} in context.env`);
+    return context.env[key];
+  }
+  
+  // Try Astro locals.runtime.env (Cloudflare adapter pattern)
+  if (context?.locals?.runtime?.env?.[key]) {
+    console.log(`✅ Found ${key} in locals.runtime.env`);
+    return context.locals.runtime.env[key];
+  }
+  
+  // Try direct runtime.env
+  if (context?.runtime?.env?.[key]) {
+    console.log(`✅ Found ${key} in runtime.env`);
+    return context.runtime.env[key];
+  }
+  
+  // Try direct env object passed
+  if (context?.[key]) {
+    console.log(`✅ Found ${key} in direct context`);
+    return context[key];
+  }
+  
+  // Build-time environment variables (PUBLIC_ prefixed in Astro)
+  if (import.meta.env[key]) {
+    console.log(`✅ Found ${key} in import.meta.env`);
+    return import.meta.env[key];
+  }
+  
+  // Node.js environment (local development)
+  if (typeof process !== 'undefined' && process.env?.[key]) {
+    console.log(`✅ Found ${key} in process.env`);
+    return process.env[key];
+  }
+  
+  console.log(`❌ ${key} not found in any environment source`);
+  return undefined;
 }
 
-function getEnvConfig(env?: any) {
-  const OPENAI_API_KEY = getEnvVar('OPENAI_API_KEY', env);
-  const ALLOWED_ORIGINS_STR = getEnvVar('ALLOWED_ORIGINS', env);
+function getEnvConfig(context?: any) {
+  const OPENAI_API_KEY = getEnvVar('OPENAI_API_KEY', context);
+  const ALLOWED_ORIGINS_STR = getEnvVar('ALLOWED_ORIGINS', context);
   
   // Default allowed origins including the Cloudflare Pages URL
   const defaultOrigins = [
@@ -40,6 +76,7 @@ function getEnvConfig(env?: any) {
     'http://localhost:4326',
     'https://executiveaitraining.com',
     'https://91c1a4d4.executive-ai.pages.dev',
+    'https://d30fdb40.executive-ai.pages.dev',
     'https://executive-ai.pages.dev'
   ];
   
@@ -47,9 +84,9 @@ function getEnvConfig(env?: any) {
     ? [...defaultOrigins, ...ALLOWED_ORIGINS_STR.split(',')]
     : defaultOrigins;
     
-  const TOKEN_DURATION = parseInt(getEnvVar('VOICE_AGENT_TOKEN_DURATION', env) || '1800'); // 30 minutes
-  const RATE_LIMIT_MAX = parseInt(getEnvVar('VOICE_AGENT_RATE_LIMIT', env) || '10');
-  const ENABLE_DEMO_MODE = getEnvVar('VOICE_AGENT_DEMO_MODE', env) === 'true';
+  const TOKEN_DURATION = parseInt(getEnvVar('VOICE_AGENT_TOKEN_DURATION', context) || '1800'); // 30 minutes
+  const RATE_LIMIT_MAX = parseInt(getEnvVar('VOICE_AGENT_RATE_LIMIT', context) || '10');
+  const ENABLE_DEMO_MODE = getEnvVar('VOICE_AGENT_DEMO_MODE', context) === 'true';
   
   return { OPENAI_API_KEY, ALLOWED_ORIGINS, TOKEN_DURATION, RATE_LIMIT_MAX, ENABLE_DEMO_MODE };
 }
@@ -146,20 +183,33 @@ async function detectAPITier(apiKey: string): Promise<'realtime' | 'standard' | 
 
 /**
  * Generate ephemeral token for OpenAI Realtime API with WebRTC support
+ * Following the official OpenAI documentation for session creation
  */
-async function generateEphemeralToken(apiKey: string): Promise<{ token: string; expiresAt: number; sessionId: string; }> {
+async function generateEphemeralToken(apiKey: string): Promise<{ token: string; expiresAt: number; sessionId: string; sessionConfig?: any; }> {
   console.log('🔐 Generating ephemeral token for WebRTC...');
   
-  // Import the DEFAULT_SESSION_CONFIG to use consistent settings
-  // Note: Since this is an API endpoint, we'll define minimal config here
-  // The full instructions will be set by the client when establishing connection
+  // Create session with recommended configuration for WebRTC
   const requestBody = {
     model: 'gpt-4o-realtime-preview-2025-06-03',
-    modalities: ['audio', 'text']
-    // Minimal config - let the client set the full session config including instructions
+    modalities: ['audio', 'text'],
+    instructions: 'You are a helpful AI assistant for voice interactions. Be concise and conversational.',
+    voice: 'alloy',
+    input_audio_format: 'pcm16',
+    output_audio_format: 'pcm16',
+    input_audio_transcription: {
+      model: 'whisper-1'
+    },
+    turn_detection: {
+      type: 'server_vad',
+      threshold: 0.5,
+      prefix_padding_ms: 300,
+      silence_duration_ms: 500
+    },
+    temperature: 0.8,
+    max_response_output_tokens: 'inf'
   };
   
-  console.log('📤 Ephemeral token request:', JSON.stringify(requestBody, null, 2));
+  console.log('📤 Creating session with config:', JSON.stringify(requestBody, null, 2));
   
   const response = await fetch('https://api.openai.com/v1/realtime/sessions', {
     method: 'POST',
@@ -170,12 +220,12 @@ async function generateEphemeralToken(apiKey: string): Promise<{ token: string; 
     body: JSON.stringify(requestBody),
   });
   
-  console.log('📥 Ephemeral token response status:', response.status);
+  console.log('📥 Session creation response status:', response.status);
   console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('OpenAI token generation failed:', response.status, errorText);
+    console.error('OpenAI session creation failed:', response.status, errorText);
     
     // Provide more specific error messages for common failure cases
     if (response.status === 403) {
@@ -196,7 +246,7 @@ async function generateEphemeralToken(apiKey: string): Promise<{ token: string; 
     } else if (response.status === 401) {
       throw new Error('Invalid API key');
     } else {
-      throw new Error(`Token generation failed: ${response.status} - ${errorText}`);
+      throw new Error(`Session creation failed: ${response.status} - ${errorText}`);
     }
   }
 
@@ -206,29 +256,40 @@ async function generateEphemeralToken(apiKey: string): Promise<{ token: string; 
   let data;
   try {
     data = JSON.parse(responseText);
-    console.log('📥 Parsed response:', JSON.stringify(data, null, 2));
+    console.log('📥 Parsed session response:', JSON.stringify(data, null, 2));
   } catch (e) {
     console.error('Failed to parse response:', e);
     throw new Error('Invalid JSON response from OpenAI API');
   }
   
-  // Validate response structure
+  // Validate response structure according to OpenAI docs
   if (!data.client_secret?.value || !data.client_secret?.expires_at) {
     console.error('❌ Invalid response structure:', data);
-    console.error('Expected: { client_secret: { value: string, expires_at: number } }');
-    throw new Error('Invalid token response structure from OpenAI API');
+    console.error('Expected: { client_secret: { value: string, expires_at: number }, ... }');
+    throw new Error('Invalid session response structure from OpenAI API');
   }
   
   const tokenResult = {
     token: data.client_secret.value,
     expiresAt: data.client_secret.expires_at * 1000, // Convert to milliseconds
-    sessionId: data.id || `session_${Date.now()}`
+    sessionId: data.id || `sess_${Date.now()}`,
+    sessionConfig: {
+      model: data.model,
+      modalities: data.modalities,
+      voice: data.voice,
+      instructions: data.instructions,
+      input_audio_format: data.input_audio_format,
+      output_audio_format: data.output_audio_format,
+      turn_detection: data.turn_detection
+    }
   };
   
-  console.log('✅ Ephemeral token generated successfully:', {
+  console.log('✅ Ephemeral session created successfully:', {
     sessionId: tokenResult.sessionId,
     expiresAt: new Date(tokenResult.expiresAt).toISOString(),
-    tokenLength: tokenResult.token.length
+    tokenLength: tokenResult.token.length,
+    model: data.model,
+    voice: data.voice
   });
   
   return tokenResult;
@@ -264,10 +325,11 @@ async function generateDemoToken(tokenDuration: number): Promise<{ token: string
  * POST /api/voice-agent/token
  * Generates ephemeral tokens for voice agent authentication
  */
-export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
-  // Get environment config from Cloudflare env
-  const env = (locals as any)?.runtime?.env;
-  const { OPENAI_API_KEY, ALLOWED_ORIGINS, TOKEN_DURATION, RATE_LIMIT_MAX, ENABLE_DEMO_MODE } = getEnvConfig(env);
+export const POST: APIRoute = async (context) => {
+  const { request, clientAddress, locals } = context;
+  
+  // Get environment config - pass the full context which may have env at different levels
+  const { OPENAI_API_KEY, ALLOWED_ORIGINS, TOKEN_DURATION, RATE_LIMIT_MAX, ENABLE_DEMO_MODE } = getEnvConfig(context);
   console.log('===== TOKEN ENDPOINT REQUEST =====');
   console.log('🔍 Token endpoint POST handler started at:', new Date().toISOString());
   const startTime = Date.now();
@@ -308,13 +370,16 @@ export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
   
   // Environment and API key validation
   console.log('Environment check:', {
-    isDev: process.env.DEV,
-    mode: process.env.MODE,
-    baseUrl: process.env.BASE_URL
+    isDev: import.meta.env.DEV,
+    mode: import.meta.env.MODE,
+    baseUrl: import.meta.env.BASE_URL,
+    runtime: 'cloudflare-workers'
   });
   
   console.log('API Key validation:', {
-    fromImportMeta: !!process.env.OPENAI_API_KEY,
+    hasContextEnv: !!(context as any)?.env?.OPENAI_API_KEY,
+    hasLocalsRuntimeEnv: !!(locals as any)?.runtime?.env?.OPENAI_API_KEY,
+    hasImportMetaKey: !!import.meta.env.OPENAI_API_KEY,
     apiKeyAvailable: !!OPENAI_API_KEY,
     keyPrefix: OPENAI_API_KEY ? OPENAI_API_KEY.substring(0, 10) + '...' : 'NOT_SET',
     keyLength: OPENAI_API_KEY ? OPENAI_API_KEY.length : 0
@@ -455,7 +520,7 @@ export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
     }
 
     // Use the session ID from the token data if available, otherwise generate one
-    const sessionId = tokenData.sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const sessionId = tokenData.sessionId || `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     
     // Register session for tracking and refresh capability
     registerSession(sessionId, clientIP);
@@ -466,6 +531,7 @@ export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
       expiresAt: tokenData.expiresAt,
       sessionId,
       mode,
+      ...(tokenData.sessionConfig && { sessionConfig: tokenData.sessionConfig }),
       ...(warnings.length > 0 && { warnings })
     };
     
@@ -526,7 +592,7 @@ export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
  * GET /api/voice-agent/token
  * Returns helpful error message for incorrect method
  */
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async () => {
   console.log('⚠️ GET request to token endpoint - should be POST');
   return new Response(JSON.stringify({
     success: false,
@@ -545,10 +611,10 @@ export const GET: APIRoute = async ({ request }) => {
  * OPTIONS /api/voice-agent/token
  * Handle CORS preflight requests
  */
-export const OPTIONS: APIRoute = async ({ request, locals }) => {
+export const OPTIONS: APIRoute = async (context) => {
+  const { request } = context;
   const origin = request.headers.get('origin');
-  const env = (locals as any)?.runtime?.env;
-  const { ALLOWED_ORIGINS } = getEnvConfig(env);
+  const { ALLOWED_ORIGINS } = getEnvConfig(context);
   
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
     return new Response(null, {

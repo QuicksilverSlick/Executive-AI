@@ -3,38 +3,62 @@
 ---
 
 <script>
-  // Only load in production
-  if (import.meta.env.PROD) {
-    // Lazy load web-vitals library
-    import('web-vitals').then(({ onCLS, onFID, onFCP, onLCP, onTTFB, onINP }) => {
-      function sendToAnalytics(metric) {
-        // Send to Google Analytics
-        if (window.gtag) {
-          window.gtag('event', metric.name, {
-            value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
-            metric_id: metric.id,
-            metric_value: metric.value,
-            metric_delta: metric.delta,
-            event_category: 'Web Vitals',
-            event_label: metric.id,
-            non_interaction: true,
-          });
-        }
+  // Only load in production and in browser environment
+  if (import.meta.env.PROD && typeof window !== 'undefined') {
+    // Wrap in try-catch to handle any import failures gracefully
+    try {
+      // Lazy load web-vitals library with error handling
+      import('web-vitals').then(
+        (webVitals) => {
+          // Destructure with fallback checks
+          const { onCLS, onFID, onFCP, onLCP, onTTFB, onINP } = webVitals || {};
+          
+          // Verify functions exist before using them
+          if (!onCLS || !onFID || !onFCP || !onLCP || !onTTFB || !onINP) {
+            console.warn('Web Vitals functions not available');
+            return;
+          }
+          
+          function sendToAnalytics(metric) {
+            // Send to Google Analytics
+            if (window.gtag) {
+              window.gtag('event', metric.name, {
+                value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
+                metric_id: metric.id,
+                metric_value: metric.value,
+                metric_delta: metric.delta,
+                event_category: 'Web Vitals',
+                event_label: metric.id,
+                non_interaction: true,
+              });
+            }
 
-        // Log to console in dev
-        if (import.meta.env.DEV) {
-          console.log(metric);
-        }
-      }
+            // Log to console in dev
+            if (import.meta.env.DEV) {
+              console.log(metric);
+            }
+          }
 
-      // Core Web Vitals
-      onCLS(sendToAnalytics);
-      onFID(sendToAnalytics);
-      onFCP(sendToAnalytics);
-      onLCP(sendToAnalytics);
-      onTTFB(sendToAnalytics);
-      onINP(sendToAnalytics);
-    });
+          // Core Web Vitals - wrapped in try-catch for safety
+          try {
+            onCLS(sendToAnalytics);
+            onFID(sendToAnalytics);
+            onFCP(sendToAnalytics);
+            onLCP(sendToAnalytics);
+            onTTFB(sendToAnalytics);
+            onINP(sendToAnalytics);
+          } catch (e) {
+            console.warn('Error setting up Web Vitals monitoring:', e);
+          }
+        },
+        (error) => {
+          // Handle import failure gracefully
+          console.warn('Web Vitals library could not be loaded:', error);
+        }
+      );
+    } catch (error) {
+      console.warn('Performance monitoring setup failed:', error);
+    }
   }
 
   // Custom performance marks

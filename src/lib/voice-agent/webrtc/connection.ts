@@ -170,12 +170,30 @@ export class WebRTCConnection {
   private async connectToOpenAI(offer: RTCSessionDescriptionInit, token: EphemeralToken): Promise<void> {
     try {
       console.log('Connecting to OpenAI Realtime WebRTC...');
+      console.log('Token info:', {
+        tokenLength: token.token?.length,
+        expiresAt: new Date(token.expiresAt).toISOString(),
+        sessionId: token.sessionId,
+        mode: token.mode
+      });
       
       // Following the official OpenAI documentation for WebRTC connection
+      // The WebRTC endpoint uses the ephemeral token for authentication
       const baseUrl = "https://api.openai.com/v1/realtime";
-      const model = "gpt-4o-realtime-preview-2024-12-17";
+      const model = "gpt-4o-realtime-preview-2025-06-03";
       
-      // Send the SDP offer to OpenAI
+      // Check if we're in fallback mode
+      if (token.mode === 'fallback' || token.mode === 'demo') {
+        console.warn(`[WebRTC Connection] Token is in ${token.mode} mode - WebRTC may not be available`);
+        throw new Error(`WebRTC not available in ${token.mode} mode - please use a different connection method`);
+      }
+      
+      console.log(`[WebRTC Connection] Initiating WebRTC SDP exchange`);
+      console.log(`[WebRTC Connection] Endpoint: ${baseUrl}?model=${model}`);
+      console.log(`[WebRTC Connection] Using ephemeral token (expires: ${new Date(token.expiresAt).toISOString()})`);
+      
+      // Send the SDP offer to OpenAI's WebRTC endpoint
+      // This follows the exact pattern from the OpenAI documentation
       const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
         method: "POST",
         body: offer.sdp,

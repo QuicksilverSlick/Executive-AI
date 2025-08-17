@@ -17,21 +17,64 @@ import { getSessionStats } from './refresh-token';
 // Disable prerendering for this API endpoint
 export const prerender = false;
 
-// Environment validation with better error handling
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || [
-  'http://localhost:4321', 
-  'http://localhost:4322',
-  'http://localhost:4323',
-  'http://localhost:4324',
-  'http://localhost:4325',
-  'http://localhost:4326',
-  'https://executiveaitraining.com'
-];
+// Environment variable access function - Cloudflare compatible
+function getEnvVar(key: string, context?: any): string | undefined {
+  // Try Cloudflare Workers/Pages context.env first (primary method for secrets)
+  if (context?.env?.[key]) {
+    console.log(`✅ Found ${key} in context.env`);
+    return context.env[key];
+  }
+  
+  // Try Astro locals.runtime.env (Cloudflare adapter pattern)
+  if (context?.locals?.runtime?.env?.[key]) {
+    console.log(`✅ Found ${key} in locals.runtime.env`);
+    return context.locals.runtime.env[key];
+  }
+  
+  // Try direct runtime.env
+  if (context?.runtime?.env?.[key]) {
+    console.log(`✅ Found ${key} in runtime.env`);
+    return context.runtime.env[key];
+  }
+  
+  // Build-time environment variables
+  if (import.meta.env[key]) {
+    console.log(`✅ Found ${key} in import.meta.env`);
+    return import.meta.env[key];
+  }
+  
+  // Node.js environment (local development)
+  if (typeof process !== 'undefined' && process.env?.[key]) {
+    console.log(`✅ Found ${key} in process.env`);
+    return process.env[key];
+  }
+  
+  console.log(`❌ ${key} not found in any environment source`);
+  return undefined;
+}
 
-// Validate environment setup
-if (!OPENAI_API_KEY) {
-  console.error('❌ OPENAI_API_KEY environment variable is required for health checks');
+function getEnvConfig(context?: any) {
+  const OPENAI_API_KEY = getEnvVar('OPENAI_API_KEY', context);
+  const ALLOWED_ORIGINS_STR = getEnvVar('ALLOWED_ORIGINS', context);
+  
+  const defaultOrigins = [
+    'http://localhost:4321', 
+    'http://localhost:4322',
+    'http://localhost:4323',
+    'http://localhost:4324',
+    'http://localhost:4325',
+    'http://localhost:4326',
+    'https://executiveaitraining.com',
+    'https://91c1a4d4.executive-ai.pages.dev',
+    'https://d30fdb40.executive-ai.pages.dev',
+    'https://executive-ai.pages.dev'
+  ];
+  
+  const ALLOWED_ORIGINS = ALLOWED_ORIGINS_STR 
+    ? [...defaultOrigins, ...ALLOWED_ORIGINS_STR.split(',')]
+    : defaultOrigins;
+    
+  return { OPENAI_API_KEY, ALLOWED_ORIGINS };
 }
 
 interface HealthCheckResult {
@@ -87,12 +130,12 @@ const SERVICE_CHECK_INTERVAL = 30 * 1000; // 30 seconds
 /**
  * Test OpenAI API connectivity
  */
-async function testOpenAIConnection(): Promise<ServiceStatus> {
+async function testOpenAIConnection(apiKey: string | undefined): Promise<ServiceStatus> {
   const startTime = Date.now();
   
   try {
     // Check if API key is available
-    if (!OPENAI_API_KEY) {
+    if (!apiKey) {
       return {
         status: 'down',
         latency: 0,
@@ -107,7 +150,7 @@ async function testOpenAIConnection(): Promise<ServiceStatus> {
       fetch('https://api.openai.com/v1/models', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         }
       }),
@@ -187,7 +230,7 @@ function checkSessionTrackingHealth(): ServiceStatus {
 /**
  * Get or refresh service status
  */
-async function getServiceStatus(): Promise<HealthCheckResult['services']> {
+async function getServiceStatus(apiKey: string | undefined): Promise<HealthCheckResult['services']> {
   const now = Date.now();
   
   // Return cached status if still fresh
@@ -197,7 +240,7 @@ async function getServiceStatus(): Promise<HealthCheckResult['services']> {
 
   // Refresh service status
   const [openaiStatus, rateLimitStatus, sessionStatus] = await Promise.allSettled([
-    testOpenAIConnection(),
+    testOpenAIConnection(apiKey),
     Promise.resolve(checkRateLimitHealth()),
     Promise.resolve(checkSessionTrackingHealth())
   ]);
@@ -243,8 +286,13 @@ function calculateOverallHealth(services: HealthCheckResult['services']): Health
  * GET /api/voice-agent/health
  * Returns comprehensive health check information
  */
-export const GET: APIRoute = async ({ request, clientAddress }) => {
+export const GET: APIRoute = async (context) => {
+  const { request, clientAddress } = context;
   const startTime = Date.now();
+  
+  // Get environment config
+  const { OPENAI_API_KEY, ALLOWED_ORIGINS } = getEnvConfig(context);
+  
   // Safe clientAddress handling - fallback to IP from headers if needed
   const clientIP = clientAddress || request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
   const origin = request.headers.get('origin');
@@ -265,7 +313,7 @@ export const GET: APIRoute = async ({ request, clientAddress }) => {
     }
     
     // Get service status
-    const services = await getServiceStatus();
+    const services = await getServiceStatus(OPENAI_API_KEY);
     const sessionStats = getSessionStats();
     
     // Calculate metrics
@@ -284,7 +332,7 @@ export const GET: APIRoute = async ({ request, clientAddress }) => {
       environment: {
         openaiConfigured: !!OPENAI_API_KEY,
         allowedOrigins: ALLOWED_ORIGINS,
-        nodeVersion: process.version
+        nodeVersion: typeof process !== 'undefined' ? process.version : 'N/A'
       },
       services,
       metrics: {
@@ -359,7 +407,9 @@ export const GET: APIRoute = async ({ request, clientAddress }) => {
  * OPTIONS /api/voice-agent/health
  * Handle CORS preflight requests
  */
-export const OPTIONS: APIRoute = async ({ request }) => {
+export const OPTIONS: APIRoute = async (context) => {
+  const { request } = context;
+  const { ALLOWED_ORIGINS } = getEnvConfig(context);
   const origin = request.headers.get('origin');
   
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
