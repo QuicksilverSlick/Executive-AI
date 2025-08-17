@@ -1,4 +1,0 @@
-FORCE REBUILD: 2025-08-16 18:45:00
-SIMPLIFIED DEPLOYMENT - Testing basic Node.js functions only
-No Astro, no SSR, just simple API endpoints
-Random value: 0.923847293847

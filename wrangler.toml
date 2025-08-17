@@ -103,7 +103,12 @@ pages_build_output_dir = "dist"
 
 [env.production.vars]
 ENVIRONMENT = "production"
+API_VERSION = "v1"
+VOICE_AGENT_VERSION = "2.0"
 MAX_CONCURRENT_SESSIONS = "100"
+SESSION_TIMEOUT_MINUTES = "30"
+RATE_LIMIT_WINDOW_SECONDS = "60"
+RATE_LIMIT_MAX_REQUESTS = "10"
 WORKERS_ASSETS_MODE = "true"
 
 [[env.production.kv_namespaces]]

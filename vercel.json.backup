@@ -1,8 +1,0 @@
-{
-  "buildCommand": "echo 'Starting fresh build...' && rm -rf .vercel dist node_modules package-lock.json && npm install && npm run build && echo 'Build complete!'",
-  "outputDirectory": "dist",
-  "installCommand": "npm install",
-  "framework": null,
-  "cleanUrls": true,
-  "trailingSlash": false
-}
