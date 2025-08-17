@@ -544,7 +544,7 @@ export class WebRTCConnection {
   }
 
   /**
-   * Pause the connection (disable audio tracks)
+   * Mark connection as paused (without disabling tracks to keep data channel alive)
    */
   pause(): void {
     if (this.isPaused || !this._peerConnection) {
@@ -552,30 +552,15 @@ export class WebRTCConnection {
       return;
     }
 
-    console.log('[WebRTC Connection] Pausing connection...');
+    console.log('[WebRTC Connection] Marking connection as paused...');
     
     try {
-      // Disable all local audio tracks
-      const senders = this._peerConnection.getSenders();
-      senders.forEach(sender => {
-        if (sender.track && sender.track.kind === 'audio') {
-          sender.track.enabled = false;
-          this.pausedTracks.push(sender.track);
-          console.log('[WebRTC Connection] Disabled audio track:', sender.track.id);
-        }
-      });
-
-      // Disable remote audio tracks
-      if (this.remoteAudioStream) {
-        this.remoteAudioStream.getAudioTracks().forEach(track => {
-          track.enabled = false;
-          console.log('[WebRTC Connection] Disabled remote audio track:', track.id);
-        });
-      }
-
+      // DO NOT disable audio tracks - this causes OpenAI to close the data channel
+      // Instead, we'll handle pause at the application level (stop processing audio)
+      
       this.isPaused = true;
       this.emit('paused');
-      console.log('[WebRTC Connection] Connection paused successfully');
+      console.log('[WebRTC Connection] Connection marked as paused (tracks still enabled)');
       
     } catch (error) {
       console.error('[WebRTC Connection] Error pausing connection:', error);
@@ -590,7 +575,7 @@ export class WebRTCConnection {
   }
 
   /**
-   * Resume the connection (re-enable audio tracks)
+   * Mark connection as resumed
    */
   resume(): void {
     if (!this.isPaused || !this._peerConnection) {
@@ -598,27 +583,15 @@ export class WebRTCConnection {
       return;
     }
 
-    console.log('[WebRTC Connection] Resuming connection...');
+    console.log('[WebRTC Connection] Marking connection as resumed...');
     
     try {
-      // Re-enable all paused local audio tracks
-      this.pausedTracks.forEach(track => {
-        track.enabled = true;
-        console.log('[WebRTC Connection] Re-enabled audio track:', track.id);
-      });
-      this.pausedTracks = [];
-
-      // Re-enable remote audio tracks
-      if (this.remoteAudioStream) {
-        this.remoteAudioStream.getAudioTracks().forEach(track => {
-          track.enabled = true;
-          console.log('[WebRTC Connection] Re-enabled remote audio track:', track.id);
-        });
-      }
-
+      // Tracks were never disabled, so no need to re-enable them
+      // Just update the pause state
+      
       this.isPaused = false;
       this.emit('resumed');
-      console.log('[WebRTC Connection] Connection resumed successfully');
+      console.log('[WebRTC Connection] Connection marked as resumed');
       
     } catch (error) {
       console.error('[WebRTC Connection] Error resuming connection:', error);

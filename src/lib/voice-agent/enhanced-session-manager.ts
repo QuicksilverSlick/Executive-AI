@@ -599,18 +599,29 @@ export class EnhancedSessionManager {
     if (!this.currentSession) return;
 
     try {
+      // Store references before any async operations
+      const sessionId = this.currentSession.sessionId;
+      const messages = this.currentSession.messages || [];
+      const messageCount = messages.length;
+      
       // Calculate total duration
       this.currentSession.metadata.totalDuration = Date.now() - this.currentSession.startTime;
       
       // Ensure we have the session in the persistence layer
-      await this.sessionPersistence.createSession(this.currentSession.sessionId);
+      await this.sessionPersistence.createSession(sessionId);
+      
+      // Check if session still exists after async operation
+      if (!this.currentSession) {
+        console.log('[Enhanced Session Manager] Session was cleared during save operation');
+        return;
+      }
       
       // Update the messages and metadata
-      if (this.currentSession.messages && this.currentSession.messages.length > 0) {
+      if (messages.length > 0) {
         // Clear existing messages and re-add them to ensure consistency
         const currentSessionData = this.sessionPersistence.getCurrentSession();
         if (currentSessionData) {
-          currentSessionData.messages = this.currentSession.messages;
+          currentSessionData.messages = messages;
           currentSessionData.connectionState = this.currentSession.connectionState;
           currentSessionData.conversationState = this.currentSession.conversationState;
           currentSessionData.lastActivity = this.currentSession.lastActivity;
@@ -618,7 +629,7 @@ export class EnhancedSessionManager {
         }
       }
       
-      console.log('[Enhanced Session Manager] Session saved with', this.currentSession.messages.length, 'messages');
+      console.log('[Enhanced Session Manager] Session saved with', messageCount, 'messages');
       
     } catch (error) {
       console.error('[Enhanced Session Manager] Failed to save session:', error);

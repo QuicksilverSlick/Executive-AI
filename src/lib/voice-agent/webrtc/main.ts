@@ -108,6 +108,7 @@ export class WebRTCVoiceAgent extends EventEmitter<WebRTCVoiceAgentEvents> {
   // Session restoration
   private pendingHistoryInjection: VoiceMessage[] = [];
   private isSessionCreated = false;
+  private isSessionPaused = false;
 
   // Search acknowledgment management
   
@@ -699,17 +700,29 @@ Please continue the conversation naturally from where it left off, maintaining a
     console.log('[WebRTC Voice Agent] Pausing session...');
     
     try {
-      // Interrupt any current speech
-      this.interrupt();
+      // Send cancel events to stop any ongoing responses
+      this.connection.sendEvent({
+        type: 'response.cancel',
+        event_id: `cancel_${Date.now()}`
+      });
       
-      // Pause the connection (disable audio tracks)
-      this.connection.pause();
+      // Clear output audio buffer
+      this.connection.sendEvent({
+        type: 'output_audio_buffer.clear',
+        event_id: `clear_${Date.now()}`
+      });
       
-      // Stop audio processing
+      // Update conversation state BEFORE stopping audio
+      this.updateConversationState('idle');
+      
+      // Stop audio processing but keep connection alive
       this.audioProcessor.stopRecording();
       
-      // Update conversation state
-      this.updateConversationState('idle');
+      // Don't call connection.pause() - this closes the data channel
+      // Just stop processing audio to keep connection alive
+      
+      // Mark as paused internally
+      this.isSessionPaused = true;
       
       // Emit pause event
       this.emit('sessionPaused');
@@ -737,17 +750,25 @@ Please continue the conversation naturally from where it left off, maintaining a
       return;
     }
 
+    if (!this.isSessionPaused) {
+      console.warn('Session is not paused');
+      return;
+    }
+
     console.log('[WebRTC Voice Agent] Resuming session...');
     
     try {
-      // Resume the connection (re-enable audio tracks)
-      this.connection.resume();
+      // Clear paused state first
+      this.isSessionPaused = false;
       
       // Resume audio processing
       this.audioProcessor.startRecording();
       
       // Update conversation state
       this.updateConversationState('listening');
+      
+      // Don't call connection.resume() since we didn't disable tracks
+      // Connection is still alive
       
       // Emit resume event
       this.emit('sessionResumed');
@@ -756,6 +777,7 @@ Please continue the conversation naturally from where it left off, maintaining a
       
     } catch (error) {
       console.error('[WebRTC Voice Agent] Error resuming session:', error);
+      this.isSessionPaused = true; // Reset state on error
       this.handleError({
         type: 'session_resume_failed',
         message: 'Failed to resume session',
