@@ -49,6 +49,7 @@ import { AccessibilityControls } from './AccessibilityControls';
 import { ConversationInterface } from './ConversationInterface';
 import { VoicePreferencesManager, sessionPersistence } from '../../lib/voice-agent/session-persistence';
 import { SessionRestoration } from '../../lib/voice-agent/session-restoration';
+import { templatizeInstructions } from '../../lib/voice-agent/utils';
 import type { VoiceStatus, VoiceMessage, VoiceAssistantConfig, VoicePersonality, ConnectionState } from './types';
 import './voice-assistant.css';
 
@@ -107,11 +108,34 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
   const particleCanvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
 
+  // Get user data from session persistence
+  const [userData, setUserData] = useState({
+    ownerfirstName: 'Valued Customer',
+    businessName: 'your business',
+    businessIndustry: 'your industry'
+  });
+
+  useEffect(() => {
+    if (isClient) {
+      const storedData = sessionPersistence.getUserData();
+      if (storedData) {
+        setUserData({
+          ownerfirstName: storedData.name || 'Valued Customer',
+          businessName: storedData.company || 'your business',
+          businessIndustry: storedData.industry || 'your industry'
+        });
+      }
+    }
+  }, [isClient]);
+
   const config: VoiceAssistantConfig = {
     apiEndpoint,
     showTranscript,
     enableKeyboard: enableKeyboardShortcut,
-    autoMinimize
+    autoMinimize,
+    sessionConfig: {
+      instructions: templatizeInstructions(DEFAULT_SESSION_CONFIG.instructions, userData)
+    }
   };
 
   // Haptic feedback handler
