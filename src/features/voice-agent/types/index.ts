@@ -917,6 +917,12 @@ Call this near the end of the assessment to provide a preliminary score that hel
   max_response_output_tokens: 'inf'
 };
 
+export function templatizeInstructions(instructions: string, data: Record<string, string>): string {
+  return instructions.replace(/\{\{(\w+)\}\}/g, (placeholder, key) => {
+    return data[key] || placeholder;
+  });
+}
+
 /*
  * DREAMFORGE AUDIT TRAIL
  *

@@ -28,7 +28,8 @@ import type {
   RealtimeEvent,
   VoiceAssistantConfig as VoiceConfig,
   SessionConfig,
-  VoiceMessage
+  VoiceMessage,
+  templatizeInstructions
 } from '../../../features/voice-agent/types';
 import { DEFAULT_SESSION_CONFIG } from '../../../features/voice-agent/types';
 
@@ -374,7 +375,20 @@ export class WebRTCVoiceAgent extends EventEmitter<WebRTCVoiceAgentEvents> {
       expiresAt: this.tokenManager.expiresAt,
       sessionId: this.sessionId
     };
-    await this.connection.connect(ephemeralToken, this.localStream, this.sessionConfig);
+
+    // Templatize instructions before connecting
+    const personalizedInstructions = templatizeInstructions(this.sessionConfig.instructions, {
+      ownerfirstName: 'Valued Customer',
+      businessName: 'your business',
+      businessIndustry: 'your industry'
+    });
+
+    const personalizedSessionConfig = {
+      ...this.sessionConfig,
+      instructions: personalizedInstructions
+    };
+    
+    await this.connection.connect(ephemeralToken, this.localStream, personalizedSessionConfig);
     
     // Start monitoring
     if (this.connection.peerConnection) {

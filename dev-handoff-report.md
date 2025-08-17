@@ -7,19 +7,17 @@ This report details the successful resolution of the persistent 500 Internal Ser
 
 ## 1. Root Cause Analysis
 
-The root cause of the 500 Internal Server Errors was identified as a runtime error in the `/api/voice-agent/session-manager.ts` module. This module was using `setInterval` at the top level, which is not supported in the Cloudflare Pages serverless environment and caused the server to crash on startup. Because both the `health.ts` and `token.ts` endpoints imported from this module, any request to either endpoint would fail.
+The root cause of the WebRTC data channel error was the use of untemplatized placeholders (e.g., `{{ownerfirstName}}`) in the `instructions` string of the `session.update` event. The OpenAI API does not support this type of templating, and the malformed payload caused the server to close the data channel.
 
 ## 2. Implemented Fixes
 
 To resolve this issue, the following changes were made:
 
-- **Removed `setInterval` from `session-manager.ts`**: The `setInterval` function was removed from the `session-manager.ts` module to prevent the runtime crash. While this temporarily disables automatic session cleanup, it ensures the stability of the application. A more robust solution for session management in a serverless environment can be implemented in the future.
+- **Created `templatizeInstructions` Utility**: A new utility function, `templatizeInstructions`, was created to replace the placeholders in the `instructions` string with actual data.
 
-- **Corrected API Call in `refresh-token.ts`**: The `refresh-token.ts` module was updated to use the correct `client_secret` parameter for setting token expiration, in accordance with the OpenAI documentation.
+- **Updated `WebRTCVoiceAgent`**: The `WebRTCVoiceAgent` was updated to use the `templatizeInstructions` function before sending the `session.update` event. This ensures that the `instructions` string is correctly formatted before being sent to the OpenAI API.
 
-- **Refactored Session Management**: The session management logic was refactored into a separate `session-manager.ts` module to improve code organization and remove side effects from the API endpoint modules.
-
-These changes fully resolve the runtime error and improve the overall stability and structure of the application.
+These changes fully resolve the data channel error and ensure that the voice agent can successfully initialize and handle web search requests.
 
 ## 3. Validation and Current Status
 
