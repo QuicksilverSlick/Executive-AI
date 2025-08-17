@@ -34,9 +34,9 @@ interface HealthStatus {
 const startTime = Date.now();
 
 // Simple OpenAI API connectivity check
-async function checkOpenAIConnection(): Promise<'healthy' | 'degraded' | 'unhealthy'> {
+async function checkOpenAIConnection(env?: any): Promise<'healthy' | 'degraded' | 'unhealthy'> {
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = env?.OPENAI_API_KEY || import.meta.env?.OPENAI_API_KEY || process.env?.OPENAI_API_KEY;
     if (!apiKey) {
       return 'unhealthy';
     }
@@ -55,9 +55,10 @@ async function checkOpenAIConnection(): Promise<'healthy' | 'degraded' | 'unheal
 }
 
 // Check voice agent capabilities
-function checkVoiceServices(): 'healthy' | 'degraded' | 'unhealthy' {
+function checkVoiceServices(env?: any): 'healthy' | 'degraded' | 'unhealthy' {
   try {
     // Check if required environment variables are present
+    const envSource = env || import.meta.env || process.env || {};
     const requiredEnvVars = [
       'OPENAI_API_KEY',
       'ALLOWED_ORIGINS',
@@ -65,7 +66,7 @@ function checkVoiceServices(): 'healthy' | 'degraded' | 'unhealthy' {
     ];
 
     const missingVars = requiredEnvVars.filter(
-      varName => !process.env[varName]
+      varName => !envSource[varName]
     );
 
     if (missingVars.length === 0) {
@@ -97,14 +98,15 @@ function getMemoryUsage() {
   return undefined;
 }
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ request, locals }) => {
+  const env = (locals as any)?.runtime?.env;
   try {
     const uptime = Math.floor((Date.now() - startTime) / 1000);
     
     // Run health checks
     const [openaiStatus, voiceStatus] = await Promise.all([
-      checkOpenAIConnection(),
-      Promise.resolve(checkVoiceServices())
+      checkOpenAIConnection(env),
+      Promise.resolve(checkVoiceServices(env))
     ]);
 
     // Determine overall API status
@@ -120,7 +122,7 @@ export const GET: APIRoute = async ({ request }) => {
     const healthStatus: HealthStatus = {
       status: overallStatus,
       timestamp: new Date().toISOString(),
-      environment: process.env.VERCEL_ENV || process.env.NODE_ENV || 'unknown',
+      environment: env?.ENVIRONMENT || import.meta.env?.MODE || process.env?.NODE_ENV || 'production',
       version: '1.0.0',
       services: {
         api: apiStatus,
@@ -151,7 +153,7 @@ export const GET: APIRoute = async ({ request }) => {
     const errorStatus: HealthStatus = {
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
-      environment: process.env.VERCEL_ENV || 'unknown',
+      environment: env?.ENVIRONMENT || 'production',
       version: '1.0.0',
       services: {
         api: 'unhealthy',

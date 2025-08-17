@@ -5,6 +5,7 @@ import react from '@astrojs/react';
 import icon from 'astro-icon';
 
 export default defineConfig({
+  site: 'https://executiveaitraining.com',
   integrations: [
     react(),
     tailwind(),
