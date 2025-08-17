@@ -115,6 +115,7 @@ export class WebRTCVoiceAgent extends EventEmitter<WebRTCVoiceAgentEvents> {
   // Response tracking for timeout warnings
   private activeResponseId: string | null = null;
   private isResponseInProgress: boolean = false;
+  private currentRateLimits: any = null;
   
   // Session timeout handling
   private timeoutHandler: SessionTimeoutHandler;
@@ -1164,6 +1165,19 @@ Please continue the conversation naturally from where it left off, maintaining a
           this.activeResponseId = null;
         }
         this.handleRealtimeError(event);
+        break;
+        
+      case 'rate_limits.updated':
+        // This is just informational - don't trigger any connection changes
+        console.log('[WebRTC Voice Agent] Rate limits updated:', {
+          totalTokens: event.rate_limits?.total_tokens,
+          totalTokensLimit: event.rate_limits?.total_token_limit,
+          remainingTokens: event.rate_limits?.total_token_limit - event.rate_limits?.total_tokens
+        });
+        // Store rate limit info but don't disconnect
+        if (event.rate_limits) {
+          this.currentRateLimits = event.rate_limits;
+        }
         break;
         
       default:

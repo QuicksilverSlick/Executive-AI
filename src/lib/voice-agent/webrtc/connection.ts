@@ -273,10 +273,19 @@ export class WebRTCConnection {
           this.emit('connected');
           break;
         case 'disconnected':
-          console.log('[WebRTC Connection] Disconnected - emitting disconnected event');
+          console.log('[WebRTC Connection] Peer connection disconnected');
           this.updateConnectionState('disconnected');
           this.emit('disconnected');
-          this.attemptReconnection();
+          
+          // Only attempt reconnection if ICE has also failed
+          // Otherwise, let ICE handler try to recover first
+          const iceState = this._peerConnection?.iceConnectionState;
+          if (iceState === 'failed' || iceState === 'closed') {
+            console.log('[WebRTC Connection] Both peer and ICE connections failed - attempting full reconnection');
+            this.attemptReconnection();
+          } else {
+            console.log('[WebRTC Connection] Peer disconnected but ICE state is', iceState, '- waiting for ICE recovery');
+          }
           break;
         case 'failed':
           console.log('[WebRTC Connection] Connection failed - emitting failed event');
@@ -296,7 +305,42 @@ export class WebRTCConnection {
 
     this._peerConnection.oniceconnectionstatechange = () => {
       const state = this._peerConnection?.iceConnectionState;
-      console.log('ICE connection state:', state);
+      console.log('[WebRTC Connection] ICE connection state changed to:', state);
+      
+      switch (state) {
+        case 'connected':
+          console.log('[WebRTC Connection] ICE connection established successfully');
+          // Reset any ICE-related error states
+          break;
+          
+        case 'disconnected':
+          // ICE disconnected but peer connection might still be alive
+          // Don't immediately reconnect - wait a bit for ICE to recover
+          console.log('[WebRTC Connection] ICE temporarily disconnected - waiting for automatic recovery');
+          setTimeout(() => {
+            // Check if still disconnected after 3 seconds
+            if (this._peerConnection?.iceConnectionState === 'disconnected') {
+              console.log('[WebRTC Connection] ICE still disconnected after 3s - attempting ICE restart');
+              this.attemptIceRestart();
+            }
+          }, 3000);
+          break;
+          
+        case 'failed':
+          console.log('[WebRTC Connection] ICE connection failed - triggering reconnection');
+          // ICE failure is more serious - attempt full reconnection
+          this.updateConnectionState('failed');
+          this.emit('failed');
+          this.attemptReconnection();
+          break;
+          
+        case 'closed':
+          console.log('[WebRTC Connection] ICE connection closed');
+          break;
+          
+        default:
+          console.log('[WebRTC Connection] ICE state:', state);
+      }
     };
 
     this._peerConnection.ondatachannel = (event) => {
@@ -442,6 +486,39 @@ export class WebRTCConnection {
     }
   }
 
+
+  /**
+   * Attempt ICE restart to recover connection
+   */
+  private async attemptIceRestart(): Promise<void> {
+    if (!this._peerConnection || !this.currentToken) {
+      console.log('[WebRTC Connection] Cannot restart ICE - no peer connection or token');
+      return;
+    }
+    
+    try {
+      console.log('[WebRTC Connection] Attempting ICE restart...');
+      
+      // Create a new offer with iceRestart flag
+      const offer = await this._peerConnection.createOffer({ 
+        iceRestart: true,
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: false
+      });
+      
+      await this._peerConnection.setLocalDescription(offer);
+      
+      // Re-exchange SDP with OpenAI
+      await this.connectToOpenAI(offer, this.currentToken);
+      
+      console.log('[WebRTC Connection] ICE restart initiated successfully');
+      
+    } catch (error) {
+      console.error('[WebRTC Connection] ICE restart failed:', error);
+      // Fall back to full reconnection
+      this.attemptReconnection();
+    }
+  }
 
   /**
    * Attempt reconnection with exponential backoff
