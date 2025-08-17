@@ -194,88 +194,80 @@ async function generateEphemeralToken(apiKey: string): Promise<{ token: string; 
   
   console.log('📤 Creating session with config:', JSON.stringify(requestBody, null, 2));
   
-  const response = await fetch('https://api.openai.com/v1/realtime/sessions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-  });
-  
-  console.log('📥 Session creation response status:', response.status);
-  console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('OpenAI session creation failed:', response.status, errorText);
-    
-    // Provide more specific error messages for common failure cases
-    if (response.status === 403) {
-      throw new Error('Realtime API access forbidden - likely account tier limitation');
-    } else if (response.status === 404) {
-      throw new Error('Realtime API endpoint not found - may not be available in your region');
-    } else if (response.status === 400) {
-      try {
-        const errorData = JSON.parse(errorText);
-        if (errorData.error?.code === 'model_not_found') {
-          throw new Error('Realtime model not available on current tier');
-        } else {
-          throw new Error(`Bad request: ${errorData.error?.message || errorText}`);
-        }
-      } catch {
-        throw new Error(`Bad request: ${errorText}`);
-      }
-    } else if (response.status === 401) {
-      throw new Error('Invalid API key');
-    } else {
-      throw new Error(`Session creation failed: ${response.status} - ${errorText}`);
-    }
-  }
-
-  const responseText = await response.text();
-  console.log('📥 Raw response body:', responseText);
-  
-  let data;
   try {
-    data = JSON.parse(responseText);
-    console.log('📥 Parsed session response:', JSON.stringify(data, null, 2));
-  } catch (e) {
-    console.error('Failed to parse response:', e);
-    throw new Error('Invalid JSON response from OpenAI API');
-  }
-  
-  // Validate response structure according to OpenAI docs
-  if (!data.client_secret?.value || !data.client_secret?.expires_at) {
-    console.error('❌ Invalid response structure:', data);
-    console.error('Expected: { client_secret: { value: string, expires_at: number }, ... }');
-    throw new Error('Invalid session response structure from OpenAI API');
-  }
-  
-  const tokenResult = {
-    token: data.client_secret.value,
-    expiresAt: data.client_secret.expires_at * 1000, // Convert to milliseconds
-    sessionId: data.id || `sess_${Date.now()}`,
-    sessionConfig: {
-      model: data.model,
-      modalities: data.modalities,
-      voice: data.voice,
-      instructions: data.instructions,
-      input_audio_format: data.input_audio_format,
-      output_audio_format: data.output_audio_format,
-      turn_detection: data.turn_detection
+    const response = await fetch('https://api.openai.com/v1/realtime/sessions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+    
+    console.log('📥 Session creation response status:', response.status);
+    console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText,
+        apiKeyLength: apiKey?.length
+      });
+      
+      // Throw a detailed error to be caught by the main handler
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
-  };
-  
-  console.log('✅ Ephemeral session created successfully:', {
-    sessionId: tokenResult.sessionId,
-    expiresAt: new Date(tokenResult.expiresAt).toISOString(),
-    tokenLength: tokenResult.token.length,
-    model: data.model,
-    voice: data.voice
-  });
-  
-  return tokenResult;
+
+    const responseText = await response.text();
+    console.log('📥 Raw response body:', responseText);
+    
+    let data;
+    try {
+      data = JSON.parse(responseText);
+      console.log('📥 Parsed session response:', JSON.stringify(data, null, 2));
+    } catch (e) {
+      console.error('Failed to parse response:', e);
+      throw new Error('Invalid JSON response from OpenAI API');
+    }
+    
+    // Validate response structure according to OpenAI docs
+    if (!data.client_secret?.value || !data.client_secret?.expires_at) {
+      console.error('❌ Invalid response structure:', data);
+      console.error('Expected: { client_secret: { value: string, expires_at: number }, ... }');
+      throw new Error('Invalid session response structure from OpenAI API');
+    }
+    
+    const tokenResult = {
+      token: data.client_secret.value,
+      expiresAt: data.client_secret.expires_at * 1000, // Convert to milliseconds
+      sessionId: data.id || `sess_${Date.now()}`,
+      sessionConfig: {
+        model: data.model,
+        modalities: data.modalities,
+        voice: data.voice,
+        instructions: data.instructions,
+        input_audio_format: data.input_audio_format,
+        output_audio_format: data.output_audio_format,
+        turn_detection: data.turn_detection
+      }
+    };
+    
+    console.log('✅ Ephemeral session created successfully:', {
+      sessionId: tokenResult.sessionId,
+      expiresAt: new Date(tokenResult.expiresAt).toISOString(),
+      tokenLength: tokenResult.token.length,
+      model: data.model,
+      voice: data.voice
+    });
+    
+    return tokenResult;
+  } catch (error) {
+    console.error('Token generation exception:', error);
+    // Re-throw the error to be handled by the POST handler's catch block
+    throw error;
+  }
 }
 
 /**

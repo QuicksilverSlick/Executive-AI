@@ -121,31 +121,20 @@ const SERVICE_CHECK_INTERVAL = 30 * 1000; // 30 seconds
 async function testOpenAIConnection(apiKey: string | undefined): Promise<ServiceStatus> {
   const startTime = Date.now();
   
-  try {
-    // Check if API key is available
-    if (!apiKey) {
-      return {
-        status: 'down',
-        latency: 0,
-        lastCheck: Date.now(),
-        message: 'OpenAI API key not configured'
-      };
-    }
+  // Check if API key is available first
+  if (!apiKey) {
+    return {
+      status: 'down',
+      latency: 0,
+      lastCheck: Date.now(),
+      message: 'OpenAI API key not configured'
+    };
+  }
 
-    // Test with a simple API call to validate the key
-    // Use Promise.race for timeout compatibility
-    const response = await Promise.race([
-      fetch('https://api.openai.com/v1/models', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        }
-      }),
-      new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout')), 5000)
-      )
-    ]);
+  try {
+    const response = await fetch('https://api.openai.com/v1/models', {
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    });
 
     const latency = Date.now() - startTime;
 
@@ -156,6 +145,12 @@ async function testOpenAIConnection(apiKey: string | undefined): Promise<Service
         lastCheck: Date.now()
       };
     } else {
+      // Log detailed error but return a generic status for the health check
+      console.warn('OpenAI API health check failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        apiKeyLength: apiKey.length
+      });
       return {
         status: response.status >= 500 ? 'down' : 'degraded',
         latency,
@@ -165,6 +160,7 @@ async function testOpenAIConnection(apiKey: string | undefined): Promise<Service
     }
   } catch (error) {
     const latency = Date.now() - startTime;
+    console.error('OpenAI API connection test exception:', error);
     return {
       status: 'down',
       latency,
@@ -380,9 +376,10 @@ export const GET: APIRoute = async (context) => {
       status: 'unhealthy',
       timestamp: Date.now(),
       error: 'Health check failed',
+      details: errorMessage,
       processingTime
     }), {
-      status: 503,
+      status: 500,
       headers: {
         'Content-Type': 'application/json',
         'X-Processing-Time': processingTime.toString()
