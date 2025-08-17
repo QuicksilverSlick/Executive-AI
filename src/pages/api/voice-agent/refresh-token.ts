@@ -12,107 +12,49 @@
 import type { APIRoute } from 'astro';
 import type { TokenResponse } from '../../../features/voice-agent/types';
 import { createTokenRateLimiter, createRateLimitMiddleware } from '../../../api/middleware/rateLimiter';
+import { validateSession, updateSession } from './session-manager';
 
 // Disable prerendering for this API endpoint
 export const prerender = false;
 
-// Environment validation
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || [
-  'http://localhost:4321', 
-  'http://localhost:4322',
-  'https://executiveaitraining.com'
-];
-
-if (!OPENAI_API_KEY) {
-  console.error('❌ OPENAI_API_KEY environment variable is required');
+// Environment validation - Cloudflare compatible
+function getEnvVar(key: string, locals?: any): string | undefined {
+  if (locals?.runtime?.env?.[key]) {
+    return locals.runtime.env[key];
+  }
+  if (typeof process !== 'undefined' && process.env?.[key]) {
+    return process.env[key];
+  }
+  if (import.meta.env[key]) {
+    return import.meta.env[key];
+  }
+  return undefined;
 }
 
-// Rate limiter for refresh requests (more restrictive than initial token requests)
-const refreshRateLimiter = createTokenRateLimiter({
-  windowMs: 60 * 1000, // 1 minute window
-  maxRequests: process.env.DEV ? 20 : 5, // More lenient in development
-  onLimitReached: (clientIP: string, attempts: number) => {
-    const isDev = process.env.DEV || process.env.NODE_ENV === 'development';
-    if (isDev) {
-      console.log(`ℹ️ Token refresh rate limit reached for ${clientIP} - Attempts: ${attempts} (Development mode)`);
-    } else {
-      console.warn(`🚫 Token refresh rate limit exceeded for ${clientIP} - Attempts: ${attempts}`);
-    }
-  }
-});
-
-// Session store for tracking active sessions
-const activeSessions = new Map<string, {
-  sessionId: string;
-  clientIP: string;
-  createdAt: number;
-  lastRefresh: number;
-  refreshCount: number;
-}>();
-
-// Cleanup expired sessions every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  const expiredSessions: string[] = [];
+function getEnvConfig(locals?: any) {
+  const OPENAI_API_KEY = getEnvVar('OPENAI_API_KEY', locals);
+  const ALLOWED_ORIGINS_STR = getEnvVar('ALLOWED_ORIGINS', locals);
+  const defaultOrigins = [
+    'http://localhost:4321', 
+    'http://localhost:4322',
+    'https://executiveaitraining.com'
+  ];
+  const ALLOWED_ORIGINS = ALLOWED_ORIGINS_STR 
+    ? [...defaultOrigins, ...ALLOWED_ORIGINS_STR.split(',')]
+    : defaultOrigins;
+  const RATE_LIMIT_MAX = parseInt(getEnvVar('REFRESH_RATE_LIMIT', locals) || '5');
   
-  for (const [sessionId, session] of activeSessions.entries()) {
-    // Remove sessions older than 10 minutes or with excessive refresh attempts
-    if (now - session.createdAt > 10 * 60 * 1000 || session.refreshCount > 20) {
-      expiredSessions.push(sessionId);
-    }
-  }
-  
-  expiredSessions.forEach(sessionId => {
-    activeSessions.delete(sessionId);
-  });
-  
-  if (expiredSessions.length > 0) {
-    console.log(`🧹 Cleaned up ${expiredSessions.length} expired sessions`);
-  }
-}, 5 * 60 * 1000);
-
-/**
- * Validate refresh request
- */
-function validateRefreshRequest(sessionId: string, clientIP: string): {
-  valid: boolean;
-  reason?: string;
-} {
-  if (!sessionId || typeof sessionId !== 'string') {
-    return { valid: false, reason: 'Invalid session ID' };
-  }
-
-  const session = activeSessions.get(sessionId);
-  if (!session) {
-    return { valid: false, reason: 'Session not found or expired' };
-  }
-
-  // Verify client IP matches (basic session hijacking protection)
-  if (session.clientIP !== clientIP) {
-    console.warn(`🚨 Session hijacking attempt: Session ${sessionId} from ${clientIP}, expected ${session.clientIP}`);
-    return { valid: false, reason: 'Session validation failed' };
-  }
-
-  // Check refresh frequency (prevent abuse)
-  const now = Date.now();
-  const minRefreshInterval = 30 * 1000; // Minimum 30 seconds between refreshes
-  
-  if (now - session.lastRefresh < minRefreshInterval) {
-    return { valid: false, reason: 'Refresh too frequent' };
-  }
-
-  return { valid: true };
+  return { OPENAI_API_KEY, ALLOWED_ORIGINS, RATE_LIMIT_MAX };
 }
 
 /**
  * Generate new ephemeral token for OpenAI Realtime API
  */
-async function generateEphemeralToken(): Promise<{ token: string; expiresAt: number; }> {
+async function generateEphemeralToken(apiKey: string): Promise<{ token: string; expiresAt: number; }> {
   const response = await fetch('https://api.openai.com/v1/realtime/sessions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -140,9 +82,11 @@ async function generateEphemeralToken(): Promise<{ token: string; expiresAt: num
  * POST /api/voice-agent/refresh-token
  * Refreshes expired or expiring tokens for active sessions
  */
-export const POST: APIRoute = async ({ request, clientAddress }) => {
+export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
   const startTime = Date.now();
-  // Safe clientAddress handling - fallback to IP from headers if needed
+  const { OPENAI_API_KEY, ALLOWED_ORIGINS, RATE_LIMIT_MAX } = getEnvConfig(locals);
+
+  // Safe clientAddress handling
   const clientIP = clientAddress || request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
   const userAgent = request.headers.get('user-agent') || 'unknown';
   const origin = request.headers.get('origin');
@@ -153,16 +97,17 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     // CORS validation
     if (origin && !ALLOWED_ORIGINS.includes(origin)) {
       console.warn(`❌ Invalid origin for refresh: ${origin} from ${clientIP}`);
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Invalid origin'
-      }), {
+      return new Response(JSON.stringify({ success: false, error: 'Invalid origin' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' }
       });
     }
     
     // Rate limiting
+    const refreshRateLimiter = createTokenRateLimiter({
+      windowMs: 60 * 1000,
+      maxRequests: RATE_LIMIT_MAX,
+    });
     const rateLimitMiddleware = createRateLimitMiddleware(refreshRateLimiter);
     const rateLimitResponse = rateLimitMiddleware(request, clientIP);
     if (rateLimitResponse) {
@@ -172,10 +117,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     // Environment check
     if (!OPENAI_API_KEY) {
       console.error('❌ OpenAI API key not configured for refresh');
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Service temporarily unavailable'
-      }), {
+      return new Response(JSON.stringify({ success: false, error: 'Service temporarily unavailable' }), {
         status: 503,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -186,10 +128,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     try {
       requestBody = await request.json();
     } catch (error) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Invalid request body'
-      }), {
+      return new Response(JSON.stringify({ success: false, error: 'Invalid request body' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -198,25 +137,20 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     const { sessionId } = requestBody;
     
     // Validate refresh request
-    const validation = validateRefreshRequest(sessionId, clientIP);
+    const validation = validateSession(sessionId, clientIP);
     if (!validation.valid) {
       console.warn(`❌ Invalid refresh request from ${clientIP}: ${validation.reason}`);
-      return new Response(JSON.stringify({
-        success: false,
-        error: validation.reason
-      }), {
+      return new Response(JSON.stringify({ success: false, error: validation.reason }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
     
     // Generate new token
-    const { token, expiresAt } = await generateEphemeralToken();
+    const { token, expiresAt } = await generateEphemeralToken(OPENAI_API_KEY);
     
     // Update session tracking
-    const session = activeSessions.get(sessionId)!;
-    session.lastRefresh = Date.now();
-    session.refreshCount++;
+    updateSession(sessionId);
     
     const response: TokenResponse = {
       success: true,
@@ -226,7 +160,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     };
     
     const processingTime = Date.now() - startTime;
-    console.log(`✅ Token refreshed for ${clientIP} - Session: ${sessionId} - Refresh #${session.refreshCount} - Processing: ${processingTime}ms`);
+    console.log(`✅ Token refreshed for ${clientIP} - Session: ${sessionId} - Processing: ${processingTime}ms`);
     
     return new Response(JSON.stringify(response), {
       status: 200,
@@ -234,7 +168,6 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'X-Processing-Time': processingTime.toString(),
-        'X-Refresh-Count': session.refreshCount.toString(),
         ...(origin && ALLOWED_ORIGINS.includes(origin) && {
           'Access-Control-Allow-Origin': origin,
           'Access-Control-Allow-Methods': 'POST',
@@ -247,10 +180,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     const processingTime = Date.now() - startTime;
     console.error(`❌ Token refresh error for ${clientIP}:`, error);
     
-    return new Response(JSON.stringify({
-      success: false,
-      error: 'Token refresh failed'
-    }), {
+    return new Response(JSON.stringify({ success: false, error: 'Token refresh failed' }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
@@ -264,8 +194,9 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
  * OPTIONS /api/voice-agent/refresh-token
  * Handle CORS preflight requests
  */
-export const OPTIONS: APIRoute = async ({ request }) => {
+export const OPTIONS: APIRoute = async ({ request, locals }) => {
   const origin = request.headers.get('origin');
+  const { ALLOWED_ORIGINS } = getEnvConfig(locals);
   
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
     return new Response(null, {
@@ -281,33 +212,3 @@ export const OPTIONS: APIRoute = async ({ request }) => {
   
   return new Response(null, { status: 404 });
 };
-
-/**
- * Export session management functions for use in other endpoints
- */
-export function registerSession(sessionId: string, clientIP: string): void {
-  activeSessions.set(sessionId, {
-    sessionId,
-    clientIP,
-    createdAt: Date.now(),
-    lastRefresh: Date.now(),
-    refreshCount: 0
-  });
-  
-  console.log(`📝 Registered new session: ${sessionId} from ${clientIP}`);
-}
-
-export function getSessionStats(): {
-  activeSessions: number;
-  totalRefreshes: number;
-} {
-  let totalRefreshes = 0;
-  for (const session of activeSessions.values()) {
-    totalRefreshes += session.refreshCount;
-  }
-  
-  return {
-    activeSessions: activeSessions.size,
-    totalRefreshes
-  };
-}

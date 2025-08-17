@@ -15,7 +15,7 @@
 import type { APIRoute } from 'astro';
 import type { TokenResponse } from '../../../features/voice-agent/types';
 import { createTokenRateLimiter, createRateLimitMiddleware } from '../../../api/middleware/rateLimiter';
-import { registerSession } from './refresh-token';
+import { registerSession } from './session-manager';
 
 // Disable prerendering for this API endpoint
 export const prerender = false;

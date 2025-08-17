@@ -12,7 +12,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getSessionStats } from './refresh-token';
+import { getSessionStats } from './session-manager';
 
 // Disable prerendering for this API endpoint
 export const prerender = false;
