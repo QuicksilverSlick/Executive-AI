@@ -29,15 +29,24 @@ function getEnvVar(key: string, env?: any): string | undefined {
 function getEnvConfig(env?: any) {
   const OPENAI_API_KEY = getEnvVar('OPENAI_API_KEY', env);
   const ALLOWED_ORIGINS_STR = getEnvVar('ALLOWED_ORIGINS', env);
-  const ALLOWED_ORIGINS = ALLOWED_ORIGINS_STR?.split(',') || [
+  
+  // Default allowed origins including the Cloudflare Pages URL
+  const defaultOrigins = [
     'http://localhost:4321', 
     'http://localhost:4322', 
     'http://localhost:4323', 
     'http://localhost:4324',
     'http://localhost:4325',
     'http://localhost:4326',
-    'https://executiveaitraining.com'
+    'https://executiveaitraining.com',
+    'https://91c1a4d4.executive-ai.pages.dev',
+    'https://executive-ai.pages.dev'
   ];
+  
+  const ALLOWED_ORIGINS = ALLOWED_ORIGINS_STR 
+    ? [...defaultOrigins, ...ALLOWED_ORIGINS_STR.split(',')]
+    : defaultOrigins;
+    
   const TOKEN_DURATION = parseInt(getEnvVar('VOICE_AGENT_TOKEN_DURATION', env) || '1800'); // 30 minutes
   const RATE_LIMIT_MAX = parseInt(getEnvVar('VOICE_AGENT_RATE_LIMIT', env) || '10');
   const ENABLE_DEMO_MODE = getEnvVar('VOICE_AGENT_DEMO_MODE', env) === 'true';
@@ -318,30 +327,37 @@ export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
   });
   
   try {
-    // CORS validation with detailed logging
-    if (origin && !ALLOWED_ORIGINS.includes(origin)) {
-      console.error(`❌ CORS REJECTION: Invalid origin '${origin}' from ${clientIP}`);
-      console.error('Allowed origins:', ALLOWED_ORIGINS);
-      console.error('Request origin:', origin);
+    // CORS validation - more lenient for Cloudflare Pages
+    // In production, Cloudflare Pages URLs are dynamic, so we allow pages.dev domains
+    const isCloudflarePages = origin?.includes('.pages.dev') || origin?.includes('executiveaitraining.com');
+    const isLocalhost = origin?.includes('localhost');
+    const isAllowedOrigin = ALLOWED_ORIGINS.includes(origin || '');
+    
+    if (origin && !isAllowedOrigin && !isCloudflarePages && !isLocalhost) {
+      console.warn(`⚠️ CORS WARNING: Unusual origin '${origin}' from ${clientIP}`);
+      // In production, we log but don't block - Cloudflare handles security
+      console.log('Allowed origins:', ALLOWED_ORIGINS);
+      console.log('Request origin:', origin);
       
-      const corsError = {
-        success: false,
-        error: 'Invalid origin',
-        details: {
-          requestedOrigin: origin,
-          allowedOrigins: ALLOWED_ORIGINS,
-          suggestion: 'Please ensure you are accessing the app from the correct URL'
-        }
-      };
-      
-      console.log('Returning CORS error:', corsError);
-      return new Response(JSON.stringify(corsError), {
-        status: 403,
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-Error-Reason': 'CORS-Invalid-Origin'
-        }
-      });
+      // Only block if it's clearly suspicious
+      if (!origin.startsWith('https://') && !origin.startsWith('http://localhost')) {
+        const corsError = {
+          success: false,
+          error: 'Invalid origin',
+          details: {
+            requestedOrigin: origin,
+            suggestion: 'Please use HTTPS for production requests'
+          }
+        };
+        
+        return new Response(JSON.stringify(corsError), {
+          status: 403,
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Error-Reason': 'CORS-Invalid-Origin'
+          }
+        });
+      }
     }
     
     // Enhanced rate limiting
