@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev --config astro.config.dev.mjs",
-    "build": "astro build",
+    "build": "astro build && npm run postbuild",
     "build:static": "astro build --config astro.config.static.mjs",
     "build:cloudflare": "astro build && npm run optimize && npm run postbuild",
     "build:vercel": "astro build --config astro.config.vercel.mjs && npm run optimize",

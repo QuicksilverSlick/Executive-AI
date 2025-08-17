@@ -1,9 +1,0 @@
-{
-  "name": "executive-ai-api",
-  "version": "1.0.0",
-  "description": "API functions for Executive AI Training",
-  "main": "index.js",
-  "engines": {
-    "node": "18.x"
-  }
-}

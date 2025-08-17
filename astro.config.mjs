@@ -1,5 +1,5 @@
 import { defineConfig } from 'astro/config';
-import vercel from '@astrojs/vercel';
+import cloudflare from '@astrojs/cloudflare';
 import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
 import icon from 'astro-icon';
@@ -11,5 +11,8 @@ export default defineConfig({
     icon()
   ],
   output: 'server',
-  adapter: vercel()
+  adapter: cloudflare({
+    mode: 'directory',
+    functionPerRoute: false
+  })
 });
