@@ -60,7 +60,12 @@ async function generateEphemeralToken(apiKey: string): Promise<{ token: string; 
     body: JSON.stringify({
       model: 'gpt-4o-realtime-preview',
       voice: 'alloy',
-      expires_at: Math.floor(Date.now() / 1000) + 60, // 60 seconds from now
+      client_secret: {
+        expires_after: {
+          seconds: 60,
+          anchor: 'created_at'
+        }
+      }
     }),
   });
 
@@ -74,7 +79,7 @@ async function generateEphemeralToken(apiKey: string): Promise<{ token: string; 
   
   return {
     token: data.client_secret.value,
-    expiresAt: data.expires_at * 1000 // Convert to milliseconds
+    expiresAt: data.client_secret.expires_at * 1000 // Convert to milliseconds
   };
 }
 

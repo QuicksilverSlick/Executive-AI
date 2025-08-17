@@ -11,27 +11,6 @@ const activeSessions = new Map<string, {
   refreshCount: number;
 }>();
 
-// Cleanup expired sessions every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  const expiredSessions: string[] = [];
-  
-  for (const [sessionId, session] of activeSessions.entries()) {
-    // Remove sessions older than 10 minutes or with excessive refresh attempts
-    if (now - session.createdAt > 10 * 60 * 1000 || session.refreshCount > 20) {
-      expiredSessions.push(sessionId);
-    }
-  }
-  
-  expiredSessions.forEach(sessionId => {
-    activeSessions.delete(sessionId);
-  });
-  
-  if (expiredSessions.length > 0) {
-    console.log(`🧹 Cleaned up ${expiredSessions.length} expired sessions`);
-  }
-}, 5 * 60 * 1000);
-
 export function registerSession(sessionId: string, clientIP: string): void {
   activeSessions.set(sessionId, {
     sessionId,
