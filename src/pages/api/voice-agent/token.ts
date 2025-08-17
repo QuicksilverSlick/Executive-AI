@@ -21,50 +21,33 @@ import { registerSession } from './refresh-token';
 export const prerender = false;
 
 // Environment validation - Cloudflare compatible
-function getEnvVar(key: string, context?: any): string | undefined {
-  // Try Cloudflare Workers/Pages context.env first (primary method for secrets)
-  if (context?.env?.[key]) {
-    console.log(`✅ Found ${key} in context.env`);
-    return context.env[key];
-  }
-  
-  // Try Astro locals.runtime.env (Cloudflare adapter pattern)
-  if (context?.locals?.runtime?.env?.[key]) {
+function getEnvVar(key: string, locals?: any): string | undefined {
+  // Primary method: locals.runtime.env (Cloudflare Pages pattern)
+  if (locals?.runtime?.env?.[key]) {
     console.log(`✅ Found ${key} in locals.runtime.env`);
-    return context.locals.runtime.env[key];
+    return locals.runtime.env[key];
   }
   
-  // Try direct runtime.env
-  if (context?.runtime?.env?.[key]) {
-    console.log(`✅ Found ${key} in runtime.env`);
-    return context.runtime.env[key];
-  }
-  
-  // Try direct env object passed
-  if (context?.[key]) {
-    console.log(`✅ Found ${key} in direct context`);
-    return context[key];
-  }
-  
-  // Build-time environment variables (PUBLIC_ prefixed in Astro)
-  if (import.meta.env[key]) {
-    console.log(`✅ Found ${key} in import.meta.env`);
-    return import.meta.env[key];
-  }
-  
-  // Node.js environment (local development)
+  // Fallback to process.env (available in Cloudflare Pages runtime)
   if (typeof process !== 'undefined' && process.env?.[key]) {
     console.log(`✅ Found ${key} in process.env`);
     return process.env[key];
   }
   
+  // Build-time environment variables (for local dev)
+  if (import.meta.env[key]) {
+    console.log(`✅ Found ${key} in import.meta.env`);
+    return import.meta.env[key];
+  }
+  
   console.log(`❌ ${key} not found in any environment source`);
+  console.log(`Debug - locals structure:`, locals);
   return undefined;
 }
 
-function getEnvConfig(context?: any) {
-  const OPENAI_API_KEY = getEnvVar('OPENAI_API_KEY', context);
-  const ALLOWED_ORIGINS_STR = getEnvVar('ALLOWED_ORIGINS', context);
+function getEnvConfig(locals?: any) {
+  const OPENAI_API_KEY = getEnvVar('OPENAI_API_KEY', locals);
+  const ALLOWED_ORIGINS_STR = getEnvVar('ALLOWED_ORIGINS', locals);
   
   // Default allowed origins including the Cloudflare Pages URL
   const defaultOrigins = [
@@ -84,9 +67,9 @@ function getEnvConfig(context?: any) {
     ? [...defaultOrigins, ...ALLOWED_ORIGINS_STR.split(',')]
     : defaultOrigins;
     
-  const TOKEN_DURATION = parseInt(getEnvVar('VOICE_AGENT_TOKEN_DURATION', context) || '1800'); // 30 minutes
-  const RATE_LIMIT_MAX = parseInt(getEnvVar('VOICE_AGENT_RATE_LIMIT', context) || '10');
-  const ENABLE_DEMO_MODE = getEnvVar('VOICE_AGENT_DEMO_MODE', context) === 'true';
+  const TOKEN_DURATION = parseInt(getEnvVar('VOICE_AGENT_TOKEN_DURATION', locals) || '1800'); // 30 minutes
+  const RATE_LIMIT_MAX = parseInt(getEnvVar('VOICE_AGENT_RATE_LIMIT', locals) || '10');
+  const ENABLE_DEMO_MODE = getEnvVar('VOICE_AGENT_DEMO_MODE', locals) === 'true';
   
   return { OPENAI_API_KEY, ALLOWED_ORIGINS, TOKEN_DURATION, RATE_LIMIT_MAX, ENABLE_DEMO_MODE };
 }
@@ -328,8 +311,8 @@ async function generateDemoToken(tokenDuration: number): Promise<{ token: string
 export const POST: APIRoute = async (context) => {
   const { request, clientAddress, locals } = context;
   
-  // Get environment config - pass the full context which may have env at different levels
-  const { OPENAI_API_KEY, ALLOWED_ORIGINS, TOKEN_DURATION, RATE_LIMIT_MAX, ENABLE_DEMO_MODE } = getEnvConfig(context);
+  // Get environment config - pass locals which contains runtime.env
+  const { OPENAI_API_KEY, ALLOWED_ORIGINS, TOKEN_DURATION, RATE_LIMIT_MAX, ENABLE_DEMO_MODE } = getEnvConfig(locals);
   console.log('===== TOKEN ENDPOINT REQUEST =====');
   console.log('🔍 Token endpoint POST handler started at:', new Date().toISOString());
   const startTime = Date.now();
@@ -612,9 +595,9 @@ export const GET: APIRoute = async () => {
  * Handle CORS preflight requests
  */
 export const OPTIONS: APIRoute = async (context) => {
-  const { request } = context;
+  const { request, locals } = context;
   const origin = request.headers.get('origin');
-  const { ALLOWED_ORIGINS } = getEnvConfig(context);
+  const { ALLOWED_ORIGINS } = getEnvConfig(locals);
   
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
     return new Response(null, {

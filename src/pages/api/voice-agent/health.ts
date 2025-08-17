@@ -18,44 +18,32 @@ import { getSessionStats } from './refresh-token';
 export const prerender = false;
 
 // Environment variable access function - Cloudflare compatible
-function getEnvVar(key: string, context?: any): string | undefined {
-  // Try Cloudflare Workers/Pages context.env first (primary method for secrets)
-  if (context?.env?.[key]) {
-    console.log(`✅ Found ${key} in context.env`);
-    return context.env[key];
-  }
-  
-  // Try Astro locals.runtime.env (Cloudflare adapter pattern)
-  if (context?.locals?.runtime?.env?.[key]) {
+function getEnvVar(key: string, locals?: any): string | undefined {
+  // Primary method: locals.runtime.env (Cloudflare Pages pattern)
+  if (locals?.runtime?.env?.[key]) {
     console.log(`✅ Found ${key} in locals.runtime.env`);
-    return context.locals.runtime.env[key];
+    return locals.runtime.env[key];
   }
   
-  // Try direct runtime.env
-  if (context?.runtime?.env?.[key]) {
-    console.log(`✅ Found ${key} in runtime.env`);
-    return context.runtime.env[key];
-  }
-  
-  // Build-time environment variables
-  if (import.meta.env[key]) {
-    console.log(`✅ Found ${key} in import.meta.env`);
-    return import.meta.env[key];
-  }
-  
-  // Node.js environment (local development)
+  // Fallback to process.env (available in Cloudflare Pages runtime)
   if (typeof process !== 'undefined' && process.env?.[key]) {
     console.log(`✅ Found ${key} in process.env`);
     return process.env[key];
+  }
+  
+  // Build-time environment variables (for local dev)
+  if (import.meta.env[key]) {
+    console.log(`✅ Found ${key} in import.meta.env`);
+    return import.meta.env[key];
   }
   
   console.log(`❌ ${key} not found in any environment source`);
   return undefined;
 }
 
-function getEnvConfig(context?: any) {
-  const OPENAI_API_KEY = getEnvVar('OPENAI_API_KEY', context);
-  const ALLOWED_ORIGINS_STR = getEnvVar('ALLOWED_ORIGINS', context);
+function getEnvConfig(locals?: any) {
+  const OPENAI_API_KEY = getEnvVar('OPENAI_API_KEY', locals);
+  const ALLOWED_ORIGINS_STR = getEnvVar('ALLOWED_ORIGINS', locals);
   
   const defaultOrigins = [
     'http://localhost:4321', 
@@ -287,11 +275,11 @@ function calculateOverallHealth(services: HealthCheckResult['services']): Health
  * Returns comprehensive health check information
  */
 export const GET: APIRoute = async (context) => {
-  const { request, clientAddress } = context;
+  const { request, clientAddress, locals } = context;
   const startTime = Date.now();
   
-  // Get environment config
-  const { OPENAI_API_KEY, ALLOWED_ORIGINS } = getEnvConfig(context);
+  // Get environment config - pass locals
+  const { OPENAI_API_KEY, ALLOWED_ORIGINS } = getEnvConfig(locals);
   
   // Safe clientAddress handling - fallback to IP from headers if needed
   const clientIP = clientAddress || request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
@@ -408,8 +396,8 @@ export const GET: APIRoute = async (context) => {
  * Handle CORS preflight requests
  */
 export const OPTIONS: APIRoute = async (context) => {
-  const { request } = context;
-  const { ALLOWED_ORIGINS } = getEnvConfig(context);
+  const { request, locals } = context;
+  const { ALLOWED_ORIGINS } = getEnvConfig(locals);
   const origin = request.headers.get('origin');
   
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
