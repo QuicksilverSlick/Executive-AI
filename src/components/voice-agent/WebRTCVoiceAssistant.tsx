@@ -16,29 +16,36 @@
  * DREAMFORGE AUDIT TRAIL
  *
  * ---
- * @revision: 2.0.0
+ * @revision: 3.0.0
  * @author: developer-agent
- * @cc-sessionId: cc-unknown-20250817-238
- * @timestamp: 2025-08-18T02:30:00Z
+ * @cc-sessionId: cc-unknown-20250818-466
+ * @timestamp: 2025-08-18T12:30:00Z
  * @reasoning:
- * - **Objective:** Fix critical UI issues including send icon visibility, redundant elements, and icon consistency
- * - **Strategy:** Replace SVG icons with Lucide React, optimize layouts, fix positioning, ensure responsive consistency
- * - **Outcome:** Production-ready voice assistant with consistent UX across all devices and proper icon library usage
+ * - **Objective:** Complete mobile UI redesign to perfectly match desktop version as specified in requirements
+ * - **Strategy:** Unified UI component that renders identically on mobile and desktop, single FAB control for mobile
+ * - **Outcome:** Mobile interface that mirrors desktop exactly with optimized touch controls and single action button
  * 
- * CRITICAL UI FIXES IMPLEMENTED:
- * - FIXED: Desktop and mobile chat input send icon visibility with proper padding-right (pr-12)
- * - REMOVED: Redundant microphone icon from visualizer center, cleaned up interface
- * - OPTIMIZED: Visualizer height reduced from h-32 to h-20 (desktop) and h-32/h-6 to h-20/h-4 (mobile)
- * - REPLACED: All emojis and SVG icons with proper Lucide React icons throughout interface
- * - IMPROVED: Settings overlay positioning with fixed viewport-safe positioning and proper z-index
- * - ENHANCED: Session timer functionality with proper state management across all control states
- * - STANDARDIZED: Mobile UI consistency with rounded-3xl corners throughout, full-width booking button
- * - ADDED: Comprehensive Lucide React icon imports (Settings, X, Mic, Volume, Play, Pause, Square, Send, etc.)
- * - ENSURED: Proper touch targets and responsive behavior across desktop, tablet, and mobile
+ * MOBILE UI REDESIGN IMPLEMENTED:
+ * - UNIFIED: Single component that looks identical on mobile and desktop (same rounded-3xl corners, gradients, styling)
+ * - REMOVED: Microphone icon, settings icon, and small "Book Call" buttons from mobile as required
+ * - IMPLEMENTED: Single floating action button (FAB) that controls start/pause/stop with long-press to end session
+ * - PRESERVED: Full-width "Book Your 15-Minute Discovery Call" button exactly as desktop
+ * - MAINTAINED: Same chat input design with rounded-3xl corners and send icon positioning
+ * - ENHANCED: Smooth minimize/expand animations with proper backdrop blur on mobile
+ * - ADDED: Long press functionality for session control (800ms trigger with haptic feedback)
+ * - OPTIMIZED: Touch targets and responsive behavior for mobile with proper safe area handling
+ * - STANDARDIZED: Identical visual appearance between mobile and desktop (colors, spacing, corners, gradients)
  * 
- * Previous revision (1.9.0):
- * - Mobile voice UI redesign with fixed bottom control bar and always-visible CTA
- * - Minimized visualizations with progressive disclosure and proper safe area support
+ * BEHAVIOR CHANGES:
+ * - Mobile starts minimized with only FAB visible
+ * - FAB tap opens/closes chat interface
+ * - When chat open: FAB shows mic/pause/play icons based on state
+ * - Long press FAB to stop entire session
+ * - Chat interface matches desktop exactly when expanded
+ * 
+ * Previous revision (2.0.0):
+ * - Fixed critical UI issues and standardized icon usage with Lucide React
+ * - Implemented proper responsive design and touch targets
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -138,6 +145,10 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particleCanvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
+  
+  // Long press handling for FAB
+  const longPressTimerRef = useRef<number | NodeJS.Timeout>();
+  const [isLongPressing, setIsLongPressing] = useState(false);
 
   // Get user data from session persistence
   const [userData, setUserData] = useState({
@@ -630,12 +641,42 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
     window.open('https://calendly.com/your-booking-link', '_blank');
     
     // Track analytics
-    if (typeof gtag !== 'undefined') {
-      gtag('event', 'webrtc_voice_assistant_cta_click', {
+    if (typeof window !== 'undefined' && typeof (window as any).gtag !== 'undefined') {
+      (window as any).gtag('event', 'webrtc_voice_assistant_cta_click', {
         event_category: 'engagement',
         event_label: 'discovery_call'
       });
     }
+  }, []);
+
+  // Long press handlers for FAB
+  const handleLongPressStart = useCallback(() => {
+    setIsLongPressing(true);
+    longPressTimerRef.current = setTimeout(() => {
+      // Long press action - stop session on mobile
+      if (isMobile && !isMinimized && (sessionState.state === 'active' || sessionState.state === 'paused')) {
+        sessionState.actions.end();
+        setIsMinimized(true);
+        triggerHapticFeedback('heavy');
+      }
+    }, 800); // 800ms for long press
+  }, [isMobile, isMinimized, sessionState, triggerHapticFeedback]);
+
+  const handleLongPressEnd = useCallback(() => {
+    setIsLongPressing(false);
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = undefined;
+    }
+  }, []);
+
+  // Cleanup long press timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+      }
+    };
   }, []);
 
   const formatTimestamp = (timestamp: string) => {
@@ -741,233 +782,73 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
         role="region"
         aria-label="WebRTC Voice Assistant"
       >
-        {/* Mobile Main Panel */}
-        {isMobile ? (
-          <div 
-            className={`voice-mobile-interface h-full flex flex-col transition-all duration-500 transform-gpu ${
+        {/* Unified Panel - Same for Mobile and Desktop */}
+        <div 
+          className={`voice-panel-container mb-4 w-full max-w-sm md:max-w-md lg:max-w-lg xl:w-96 rounded-3xl shadow-2xl transition-all duration-500 transform-gpu voice-responsive-container ${
+            isMobile ? (
+              isMinimized 
+                ? 'opacity-0 scale-75 translate-y-4 pointer-events-none' 
+                : 'opacity-100 scale-100 translate-y-0 pointer-events-auto fixed inset-4 max-w-none w-auto z-[1001] bg-black/30 backdrop-blur-sm flex items-center justify-center'
+            ) : (
               isMinimized 
                 ? 'opacity-0 scale-75 translate-y-4 pointer-events-none' 
                 : 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
-            }`}
-            role="dialog"
-            aria-labelledby="voice-widget-title"
-          >
-            {/* Main Content Area - Scrollable */}
-            <div 
-              className="flex-1 overflow-y-auto p-4 pt-safe"
-              style={{
-                ...getGlassStyles(),
-                paddingBottom: '140px' // Account for fixed bottom bar
-              }}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6 bg-white/10 dark:bg-black/10 backdrop-blur-sm rounded-2xl p-4">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-4 h-4 rounded-full transition-all duration-300 ${
-                    animationState === 'listening' ? 'bg-voice-connected animate-ping' : 
-                    animationState === 'thinking' ? 'bg-voice-processing animate-bounce' :
-                    animationState === 'speaking' ? 'bg-brand-gold animate-pulse' :
-                    'bg-brand-charcoal/60 dark:bg-dark-text-muted'
-                  }`} />
-                  <div>
-                    <h3 id="voice-widget-title" className="text-lg font-bold text-brand-charcoal dark:text-dark-text">
-                      AI Voice Assistant
-                    </h3>
-                    <p className="text-sm text-brand-charcoal/70 dark:text-dark-text-secondary">
-                      {statusText}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsMinimized(true)}
-                  className="p-2 rounded-xl bg-brand-navy/20 hover:bg-brand-navy/30 dark:bg-dark-gold/20 dark:hover:bg-dark-gold/30 transition-colors text-brand-charcoal dark:text-dark-text voice-touch-target"
-                  aria-label="Minimize"
-                >
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Compact Visualization - Optimized Height */}
-              <div 
-                className={`mb-6 rounded-2xl overflow-hidden bg-brand-navy/10 dark:bg-dark-gold/10 transition-all duration-300 ${
-                  isVisualizationExpanded ? 'h-20' : 'h-4'
-                }`}
-                onClick={() => setIsVisualizationExpanded(!isVisualizationExpanded)}
-              >
-                <WaveformVisualizer
-                  isActive={isListening || isSpeaking}
-                  animationState={animationState}
-                  theme={theme}
-                  accessibilityMode={accessibilityMode}
-                  audioLevel={audioLevel}
-                />
-                {!isVisualizationExpanded && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-xs text-brand-charcoal/60 dark:text-dark-text-muted">
-                      Tap to expand visualization
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Connection Status */}
-              <div className="flex items-center justify-center mb-6">
-                <div className="flex items-center space-x-3 px-4 py-2 rounded-full bg-brand-navy/10 dark:bg-dark-gold/10 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20">
-                  <div className={`w-3 h-3 rounded-full ${
-                    connectionState === 'connected' ? 'bg-voice-connected animate-pulse' : 
-                    connectionState === 'connecting' ? 'bg-voice-connecting animate-pulse' :
-                    'bg-voice-error'
-                  }`} />
-                  <span className="text-sm font-medium text-brand-charcoal dark:text-dark-text">
-                    {isSessionRestored ? (
-                      connectionState === 'connected' ? 'Restored & Connected' : 'Reconnecting...'
-                    ) : (
-                      connectionState === 'connected' ? 'Connected' : 
-                      connectionState === 'connecting' ? 'Connecting...' : 
-                      'Disconnected'
-                    )}
-                  </span>
-                  {isSessionRestored && (
-                    <div className="w-2 h-2 rounded-full bg-brand-gold animate-ping" title="Session restored" />
-                  )}
-                </div>
-              </div>
-
-              {/* Message Transcript */}
-              {showTranscript && (
-                <div className="mb-6">
-                  <div className="h-64 overflow-y-auto space-y-3 voice-transcript-scroll">
-                    {enableAdvancedConversation ? (
-                      <ConversationInterface
-                        messages={messages}
-                        isTyping={isThinking}
-                        showTimestamps={true}
-                        showSpeakerAvatars={true}
-                        enableSearch={true}
-                        enableExport={!!onExportConversation}
-                        onExportConversation={onExportConversation}
-                        theme={theme}
-                        maxDisplayedMessages={50}
+            )
+          } ${
+            !isMinimized && !isMobile ? (
+              animationState === 'listening' ? 'voice-listening-pulse voice-motion-safe' : 
+              animationState === 'thinking' ? 'voice-thinking-bounce voice-motion-safe' :
+              animationState === 'speaking' ? 'voice-speaking-pulse voice-motion-safe' : 
+              'hover:scale-[1.02] voice-motion-safe'
+            ) : ''
+          } ${accessibilityMode === 'high-contrast' ? 'border-4 border-yellow-400' : ''}`}
+          style={{
+            ...getGlassStyles(),
+            transformOrigin: position.includes('bottom') ? 'bottom' : 'top'
+          }}
+          role="dialog"
+          aria-labelledby="voice-widget-title"
+        >
+          {/* Mobile Content Wrapper */}
+          {isMobile && !isMinimized && (
+            <div className="w-full max-w-sm mx-auto rounded-3xl overflow-hidden" style={getGlassStyles()}>
+              <div className="p-6 space-y-6">
+                {/* Header - Identical to Desktop */}
+                <div className="flex items-center justify-between border-b border-brand-navy/20 dark:border-dark-gold/20 pb-6">
+                  <div className="flex items-center space-x-4">
+                    <div className="relative">
+                      <div 
+                        className={`w-6 h-6 rounded-full transition-all duration-300 ${
+                          animationState === 'listening' ? 'bg-voice-connected animate-ping' : 
+                          animationState === 'thinking' ? 'bg-voice-processing animate-bounce' :
+                          animationState === 'speaking' ? 'bg-brand-gold animate-pulse' :
+                          'bg-brand-charcoal/60 dark:bg-dark-text-muted'
+                        }`}
                       />
-                    ) : (
-                      <>
-                        {messages.length === 0 ? (
-                          <div className="text-center py-8 text-brand-charcoal/70 dark:text-dark-text-secondary">
-                            <p className="text-sm">Ready to assist with your learning journey!</p>
-                            <p className="text-xs mt-2">Start speaking or type a message to begin</p>
-                            <p className="text-xs mt-1 opacity-50">Status: {connectionState}</p>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="text-xs text-brand-charcoal/70 dark:text-dark-text-secondary mb-2">
-                              {messages.length} message{messages.length !== 1 ? 's' : ''} • {connectionState}
-                            </div>
-                            {messages.slice(-5).map((message) => (
-                              <div
-                                key={message.id}
-                                className={`
-                                  flex items-start space-x-3 p-3 rounded-2xl transition-all duration-200
-                                  ${message.type === 'user' 
-                                    ? 'bg-brand-navy/20 ml-8 border-l-2 border-brand-navy dark:bg-dark-gold/20 dark:border-dark-gold' 
-                                    : 'bg-brand-gold/20 mr-8 border-l-2 border-brand-gold dark:bg-accent-gold/20 dark:border-accent-gold'
-                                  }
-                                `}
-                              >
-                                <div className={`
-                                  w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
-                                  ${message.type === 'user' ? 'bg-brand-navy dark:bg-dark-gold' : 'bg-brand-gold dark:bg-accent-gold'}
-                                `}>
-                                  {message.type === 'user' ? (
-                                    <User className="w-4 h-4 text-white" />
-                                  ) : (
-                                    <Bot className="w-4 h-4 text-white dark:text-dark-base" />
-                                  )}
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="text-xs font-medium text-brand-charcoal/80 dark:text-dark-text-secondary">
-                                      {message.type === 'user' ? 'You' : 'Assistant'}
-                                    </span>
-                                    <span className="text-xs text-brand-charcoal/60 dark:text-dark-text-muted">
-                                      {formatTimestamp(message.timestamp)}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm text-brand-charcoal dark:text-dark-text leading-relaxed">
-                                    {message.content}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                          </>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Settings Panel */}
-              {showSettings && (
-                <div className="fixed inset-4 z-50 max-h-[80vh] overflow-y-auto mb-6 space-y-4 p-4 rounded-3xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20 shadow-2xl">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-sm font-semibold text-brand-charcoal dark:text-dark-text">Settings</h3>
-                    <button
-                      onClick={() => setShowSettings(false)}
-                      className="p-2 rounded hover:bg-brand-navy/20 dark:hover:bg-dark-gold/20 transition-colors voice-touch-target"
-                      aria-label="Close settings"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  {showPersonalitySelector && (
-                    <VoicePersonalitySelector
-                      currentPersonality={currentPersonality}
-                      onPersonalityChange={handlePersonalityChange}
-                      theme={theme}
-                    />
-                  )}
-                  
-                  <AccessibilityControls
-                    mode={accessibilityMode}
-                    onModeChange={(mode) => {
-                      triggerHapticFeedback('light');
-                      const widget = document.getElementById('webrtc-voice-assistant');
-                      if (widget) {
-                        widget.setAttribute('data-accessibility-mode', mode);
-                      }
-                    }}
-                    onSettingsChange={(settings) => {
-                      triggerHapticFeedback('light');
-                      try {
-                        localStorage.setItem('voice-assistant-accessibility', JSON.stringify(settings));
-                      } catch (error) {
-                        console.warn('Failed to save accessibility settings:', error);
-                      }
-                    }}
-                  />
-
-                  {enableGlassmorphism && (
+                      {animationState !== 'idle' && (
+                        <div className="absolute inset-0 rounded-full border-2 border-current animate-ping opacity-40" />
+                      )}
+                    </div>
                     <div>
-                      <label className="block text-sm font-medium text-brand-charcoal dark:text-dark-text mb-2">
-                        Glass Effect Intensity
-                      </label>
-                      <input
-                        type="range"
-                        min="0.05"
-                        max="0.3"
-                        step="0.05"
-                        value={glassIntensity}
-                        onChange={(e) => setGlassIntensity(parseFloat(e.target.value))}
-                        className="w-full h-2 bg-brand-navy/20 dark:bg-dark-gold/20 rounded-lg appearance-none cursor-pointer"
-                      />
+                      <h3 id="voice-widget-title" className="text-lg font-bold text-brand-charcoal dark:text-dark-text">
+                        AI Voice Assistant
+                      </h3>
+                      <p className="text-sm text-brand-charcoal/70 dark:text-dark-text-secondary">
+                        {statusText}
+                      </p>
                     </div>
-                  )}
+                  </div>
+                  <button
+                    onClick={() => setIsMinimized(true)}
+                    className="p-2 rounded-xl bg-brand-navy/20 hover:bg-brand-navy/30 dark:bg-dark-gold/20 dark:hover:bg-dark-gold/30 transition-colors text-brand-charcoal dark:text-dark-text voice-touch-target"
+                    aria-label="Minimize"
+                  >
+                    <ChevronDown className="w-5 h-5" />
+                  </button>
                 </div>
-              )}
 
-              {/* Session Controls */}
-              {sessionState.state !== 'idle' && sessionState.state !== 'ended' && (
-                <div className="mb-6">
+                {/* Session Controls - Only show when active */}
+                {sessionState.state !== 'idle' && sessionState.state !== 'ended' && (
                   <SessionControls
                     session={sessionState}
                     isVoiceActive={isListening || isSpeaking}
@@ -979,537 +860,645 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
                     }}
                     showTimeoutWarning={true}
                   />
-                </div>
-              )}
-            </div>
+                )}
 
-            {/* Fixed Bottom Control Bar */}
-            <div 
-              className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-lg border-t border-brand-navy/20 dark:border-dark-gold/20"
-              style={{
-                paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
-                paddingLeft: 'max(1rem, env(safe-area-inset-left))',
-                paddingRight: 'max(1rem, env(safe-area-inset-right))'
-              }}
-            >
-              {/* Text Input Row */}
-              <div className="p-4 pb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="flex-1 relative">
-                    <input
-                      type="text"
-                      value={textInput}
-                      onChange={(e) => {
-                        setTextInput(e.target.value);
-                        sessionState.actions.resetActivity();
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          if (sessionState.state === 'idle') {
-                            sessionState.actions.start();
-                          }
-                          handleTextSend();
-                        }
-                      }}
-                      placeholder={
-                        connectionState === 'connected' 
-                          ? "Type a message..." 
-                          : connectionState === 'connecting'
-                          ? "Connecting..."
-                          : "Disconnected"
-                      }
-                      disabled={!isConnected || isSendingText}
-                      className="w-full px-4 py-3 pr-12 bg-brand-pearl/50 dark:bg-dark-surface-2 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20 rounded-3xl text-sm text-brand-charcoal dark:text-dark-text placeholder-brand-charcoal/50 dark:placeholder-dark-text-muted focus:outline-none focus:ring-2 focus:ring-brand-gold/50 focus:border-brand-gold/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 voice-touch-target"
-                      aria-label="Type a message"
-                      style={{ fontSize: '16px' }} // Prevent zoom on iOS
-                    />
-                    
-                    <button
-                      onClick={handleTextSend}
-                      disabled={!textInput.trim() || !isConnected || isSendingText}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-lg bg-brand-gold hover:bg-brand-gold-warm disabled:bg-brand-charcoal/40 disabled:cursor-not-allowed transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-gold/50 voice-touch-target"
-                      aria-label="Send message"
-                    >
-                      {isSendingText ? (
-                        <Loader2 className="w-4 h-4 text-white animate-spin" />
+                {/* Waveform Visualizer */}
+                <div className="relative h-20 rounded-2xl overflow-hidden bg-brand-navy/10 dark:bg-dark-gold/10">
+                  <WaveformVisualizer
+                    isActive={isListening || isSpeaking}
+                    animationState={animationState}
+                    theme={theme}
+                    accessibilityMode={accessibilityMode}
+                    audioLevel={audioLevel}
+                  />
+                </div>
+
+                {/* Connection Status */}
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center space-x-3 px-4 py-2 rounded-full bg-brand-navy/10 dark:bg-dark-gold/10 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20">
+                    <div className={`w-3 h-3 rounded-full ${
+                      connectionState === 'connected' ? 'bg-voice-connected animate-pulse' : 
+                      connectionState === 'connecting' ? 'bg-voice-connecting animate-pulse' :
+                      'bg-voice-error'
+                    }`} />
+                    <span className="text-sm font-medium text-brand-charcoal dark:text-dark-text">
+                      {isSessionRestored ? (
+                        connectionState === 'connected' ? 'Restored & Connected' : 'Reconnecting...'
                       ) : (
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 073.27 20.876L5.999 12zm0 0h7.5" />
-                        </svg>
+                        connectionState === 'connected' ? 'Connected' : 
+                        connectionState === 'connecting' ? 'Connecting...' : 
+                        'Disconnected'
                       )}
-                    </button>
+                    </span>
+                    {isSessionRestored && (
+                      <div className="w-2 h-2 rounded-full bg-brand-gold animate-ping" title="Session restored" />
+                    )}
                   </div>
                 </div>
+
+                {/* Message Transcript */}
+                {showTranscript && (
+                  <div className="h-64 flex flex-col voice-transcript-container">
+                    <div className="flex-1 overflow-y-auto space-y-3 pb-3 voice-transcript-scroll">
+                      {enableAdvancedConversation ? (
+                        <ConversationInterface
+                          messages={messages}
+                          isTyping={isThinking}
+                          showTimestamps={true}
+                          showSpeakerAvatars={true}
+                          enableSearch={true}
+                          enableExport={!!onExportConversation}
+                          onExportConversation={onExportConversation}
+                          theme={theme}
+                          maxDisplayedMessages={50}
+                        />
+                      ) : (
+                        <>
+                          {messages.length === 0 ? (
+                            <div className="text-center py-8 text-brand-charcoal/70 dark:text-dark-text-secondary">
+                              <p className="text-sm">Ready to assist with your learning journey!</p>
+                              <p className="text-xs mt-2">Start speaking or type a message to begin</p>
+                              <p className="text-xs mt-1 opacity-50">Status: {connectionState}</p>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="text-xs text-brand-charcoal/70 dark:text-dark-text-secondary mb-2">
+                                {messages.length} message{messages.length !== 1 ? 's' : ''} • {connectionState}
+                              </div>
+                              {messages.slice(-5).map((message) => (
+                                <div
+                                  key={message.id}
+                                  className={`
+                                    flex items-start space-x-3 p-3 rounded-2xl transition-all duration-200
+                                    ${message.type === 'user' 
+                                      ? 'bg-brand-navy/20 ml-8 border-l-2 border-brand-navy dark:bg-dark-gold/20 dark:border-dark-gold' 
+                                      : 'bg-brand-gold/20 mr-8 border-l-2 border-brand-gold dark:bg-accent-gold/20 dark:border-accent-gold'
+                                    }
+                                  `}
+                                >
+                                  <div className={`
+                                    w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
+                                    ${message.type === 'user' ? 'bg-brand-navy dark:bg-dark-gold' : 'bg-brand-gold dark:bg-accent-gold'}
+                                  `}>
+                                    {message.type === 'user' ? (
+                                      <User className="w-4 h-4 text-white" />
+                                    ) : (
+                                      <Bot className="w-4 h-4 text-white dark:text-dark-base" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <span className="text-xs font-medium text-brand-charcoal/80 dark:text-dark-text-secondary">
+                                        {message.type === 'user' ? 'You' : 'Assistant'}
+                                      </span>
+                                      <span className="text-xs text-brand-charcoal/60 dark:text-dark-text-muted">
+                                        {formatTimestamp(message.timestamp)}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-brand-charcoal dark:text-dark-text leading-relaxed">
+                                      {message.content}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {/* Text Input Area - Same as Desktop */}
+                    <div className="mt-3 pt-3 border-t border-brand-navy/20 dark:border-dark-gold/20">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-1 relative">
+                          <input
+                            type="text"
+                            value={textInput}
+                            onChange={(e) => {
+                              setTextInput(e.target.value);
+                              sessionState.actions.resetActivity();
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                if (sessionState.state === 'idle') {
+                                  sessionState.actions.start();
+                                }
+                                handleTextSend();
+                              }
+                            }}
+                            placeholder={
+                              connectionState === 'connected' 
+                                ? "Type a message or use voice..." 
+                                : connectionState === 'connecting'
+                                ? "Connecting..."
+                                : "Disconnected"
+                            }
+                            disabled={!isConnected || isSendingText}
+                            className="w-full px-4 py-3 pr-12 bg-brand-pearl/50 dark:bg-dark-surface-2 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20 rounded-3xl text-sm text-brand-charcoal dark:text-dark-text placeholder-brand-charcoal/50 dark:placeholder-dark-text-muted focus:outline-none focus:ring-2 focus:ring-brand-gold/50 focus:border-brand-gold/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 voice-touch-target"
+                            aria-label="Type a message"
+                            style={{ fontSize: '16px' }} // Prevent zoom on iOS
+                          />
+                          
+                          <button
+                            onClick={handleTextSend}
+                            disabled={!textInput.trim() || !isConnected || isSendingText}
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-lg bg-brand-gold hover:bg-brand-gold-warm disabled:bg-brand-charcoal/40 disabled:cursor-not-allowed transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-gold/50 voice-touch-target"
+                            aria-label="Send message"
+                          >
+                            {isSendingText ? (
+                              <Loader2 className="w-4 h-4 text-white animate-spin" />
+                            ) : (
+                              <Send className="w-4 h-4 text-white" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Helper text */}
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-xs text-brand-charcoal/60 dark:text-dark-text-muted">
+                          Press Enter to send • {enableKeyboardShortcut ? 'Space to pause/resume • Escape to end session' : 'Click mic for voice'}
+                        </p>
+                        {isSendingText && (
+                          <span className="text-xs text-brand-gold animate-pulse">Sending...</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Settings Panel */}
+                {showSettings && (
+                  <div className="fixed inset-x-4 inset-y-4 z-50 max-w-md mx-auto my-auto max-h-[80vh] overflow-y-auto space-y-4 p-4 rounded-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20 shadow-2xl">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-semibold text-brand-charcoal dark:text-dark-text">Settings</h3>
+                      <button
+                        onClick={() => setShowSettings(false)}
+                        className="p-2 rounded hover:bg-brand-navy/20 dark:hover:bg-dark-gold/20 transition-colors voice-touch-target"
+                        aria-label="Close settings"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {showPersonalitySelector && (
+                      <VoicePersonalitySelector
+                        currentPersonality={currentPersonality}
+                        onPersonalityChange={handlePersonalityChange}
+                        theme={theme}
+                      />
+                    )}
+                    
+                    <AccessibilityControls
+                      mode={accessibilityMode}
+                      onModeChange={(mode) => {
+                        triggerHapticFeedback('light');
+                        const widget = document.getElementById('webrtc-voice-assistant');
+                        if (widget) {
+                          widget.setAttribute('data-accessibility-mode', mode);
+                        }
+                      }}
+                      onSettingsChange={(settings) => {
+                        triggerHapticFeedback('light');
+                        try {
+                          localStorage.setItem('voice-assistant-accessibility', JSON.stringify(settings));
+                        } catch (error) {
+                          console.warn('Failed to save accessibility settings:', error);
+                        }
+                      }}
+                    />
+
+                    {enableGlassmorphism && (
+                      <div>
+                        <label className="block text-sm font-medium text-brand-charcoal dark:text-dark-text mb-2">
+                          Glass Effect Intensity
+                        </label>
+                        <input
+                          type="range"
+                          min="0.05"
+                          max="0.3"
+                          step="0.05"
+                          value={glassIntensity}
+                          onChange={(e) => setGlassIntensity(parseFloat(e.target.value))}
+                          className="w-full h-2 bg-brand-navy/20 dark:bg-dark-gold/20 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Control Bar */}
-              <div className="flex items-center justify-between px-4 pb-2">
-                {/* Left: Voice Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    sessionState.actions.resetActivity();
-                    if (sessionState.state === 'idle') {
-                      sessionState.actions.start();
-                    }
-                    if (isListening) {
-                      stopListening();
-                    } else if (!isMuted && connectionState === 'connected') {
-                      startListening();
-                    }
-                    triggerHapticFeedback('medium');
-                  }}
-                  className={`
-                    w-14 h-14 rounded-full shadow-lg transition-all duration-300 transform-gpu voice-touch-target
-                    ${animationState === 'listening' ? 'scale-110 animate-pulse shadow-voice-connected/50' : 'hover:scale-105'}
-                    ${isMuted ? 'bg-brand-charcoal/60 cursor-not-allowed' : 
-                      connectionState !== 'connected' ? 'bg-brand-charcoal/40 cursor-not-allowed' :
-                      sessionState.state === 'paused' ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' :
-                      isListening ? 'bg-gradient-to-r from-voice-error to-voice-recording' :
-                      'bg-gradient-to-r from-brand-navy to-brand-gold'
-                    }
-                  `}
-                  aria-label={
-                    sessionState.state === 'paused' ? 'Session paused - click to resume' :
-                    isMuted ? 'Microphone muted' :
-                    connectionState !== 'connected' ? 'Not connected' :
-                    isListening ? 'Stop recording' : 'Start recording'
-                  }
-                  disabled={isMuted || connectionState !== 'connected'}
-                >
-                  {sessionState.state === 'paused' ? (
-                    <Play className="w-6 h-6 text-white mx-auto" />
-                  ) : isListening ? (
-                    <Square className="w-6 h-6 text-white mx-auto" />
-                  ) : (
-                    <Mic className="w-6 h-6 text-white mx-auto" />
-                  )}
-                </button>
-
-                {/* Center: Expand/Settings Toggle */}
-                <button
-                  onClick={() => setShowSettings(!showSettings)}
-                  className="p-3 rounded-xl bg-brand-navy/20 hover:bg-brand-navy/30 dark:bg-dark-gold/20 dark:hover:bg-dark-gold/30 transition-colors text-brand-charcoal dark:text-dark-text voice-touch-target"
-                  aria-label="Settings"
-                >
-                  <Settings className="w-5 h-5" />
-                </button>
-
-                {/* Right: CTA Button - ALWAYS VISIBLE */}
+              {/* Footer with Full-width CTA */}
+              <div className="p-4 border-t border-brand-navy/20 dark:border-dark-gold/20 bg-brand-pearl/5 dark:bg-dark-surface/5 rounded-b-3xl backdrop-blur-sm">
                 <button
                   onClick={handleCTAClick}
-                  className="bg-gradient-to-r from-brand-navy to-brand-gold text-white font-semibold py-3 px-4 rounded-3xl hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-brand-gold/30 voice-touch-target"
-                  aria-label="Schedule Discovery Call"
-                >
-                  <span className="text-sm">Book Call</span>
-                </button>
-              </div>
-              
-              {/* Full-width Booking Button - Mobile Only */}
-              <div className="p-4 pt-0">
-                <button
-                  onClick={handleCTAClick}
-                  className="w-full bg-gradient-to-r from-brand-navy to-brand-gold text-white font-semibold py-3 px-4 rounded-3xl hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-brand-gold/30 voice-touch-target"
-                  aria-label="Schedule Discovery Call"
+                  className="w-full bg-gradient-to-r from-brand-navy to-brand-gold text-white font-semibold py-3 px-4 rounded-3xl hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-brand-gold/30"
                 >
                   Book Your 15-Minute Discovery Call
                 </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* Desktop Panel */
-          <div 
-            className={`voice-panel-container mb-4 w-full max-w-sm md:max-w-md lg:max-w-lg xl:w-96 rounded-3xl shadow-2xl transition-all duration-500 transform-gpu voice-responsive-container ${
-              isMinimized 
-                ? 'opacity-0 scale-75 translate-y-4 pointer-events-none' 
-                : 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
-            } ${
-              !isMinimized ? (
-                animationState === 'listening' ? 'voice-listening-pulse voice-motion-safe' : 
-                animationState === 'thinking' ? 'voice-thinking-bounce voice-motion-safe' :
-                animationState === 'speaking' ? 'voice-speaking-pulse voice-motion-safe' : 
-                'hover:scale-[1.02] voice-motion-safe'
-              ) : ''
-            } ${accessibilityMode === 'high-contrast' ? 'border-4 border-yellow-400' : ''}`}
-            style={{
-              ...getGlassStyles(),
-              transformOrigin: position.includes('bottom') ? 'bottom' : 'top'
-            }}
-            role="dialog"
-            aria-labelledby="voice-widget-title"
-          >
-            {/* Particle Canvas Overlay */}
-            {enableParticleEffects && (
-              <canvas
-                ref={particleCanvasRef}
-                className="absolute inset-0 w-full h-full rounded-3xl pointer-events-none"
-                width="400"
-                height="600"
-                aria-hidden="true"
-              />
-            )}
-            {/* Header */}
-            <div className="relative z-10 flex items-center justify-between p-6 border-b border-brand-navy/20 dark:border-dark-gold/20">
-              <div className="flex items-center space-x-4">
-                {/* Breathing Status Indicator */}
-                <div className="relative">
-                  <div 
-                    className={`w-6 h-6 rounded-full transition-all duration-300 ${
-                      animationState === 'listening' ? 'bg-voice-connected animate-ping' : 
-                      animationState === 'thinking' ? 'bg-voice-processing animate-bounce' :
-                      animationState === 'speaking' ? 'bg-brand-gold animate-pulse' :
-                      'bg-brand-charcoal/60 dark:bg-dark-text-muted'
-                    }`}
-                  />
-                  {/* Breathing Ring Effect */}
-                  {animationState !== 'idle' && (
-                    <div className="absolute inset-0 rounded-full border-2 border-current animate-ping opacity-40" />
-                  )}
-                </div>
-                <div>
-                  <h3 id="voice-widget-title" className="text-lg font-bold text-brand-charcoal dark:text-dark-text">
-                    AI Voice Assistant
-                  </h3>
-                  <p className="text-sm text-brand-charcoal/70 dark:text-dark-text-secondary">
-                    {statusText}
-                  </p>
-                </div>
-              </div>
-              {/* Action Buttons */}
-              <div className="flex items-center space-x-2">
-                {/* Settings Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowSettings(!showSettings);
-                    triggerHapticFeedback('light');
-                  }}
-                  className="p-2 rounded-xl bg-brand-navy/20 hover:bg-brand-navy/30 dark:bg-dark-gold/20 dark:hover:bg-dark-gold/30 transition-colors text-brand-charcoal dark:text-dark-text voice-touch-target"
-                  aria-label="Settings"
-                >
-                  <Settings className="w-5 h-5" />
-                </button>
-
-                {/* Mute Button */}
-                <button
-                  onClick={toggleMute}
-                  className="p-2 rounded-xl bg-brand-navy/20 hover:bg-brand-navy/30 dark:bg-dark-gold/20 dark:hover:bg-dark-gold/30 transition-colors text-brand-charcoal dark:text-dark-text voice-touch-target"
-                  aria-label={isMuted ? 'Unmute' : 'Mute'}
-                  title={isMuted ? 'Unmute (Ctrl+M)' : 'Mute (Ctrl+M)'}
-                >
-                  {isMuted ? (
-                    <VolumeX className="w-5 h-5" />
-                  ) : (
-                    <Volume2 className="w-5 h-5" />
-                  )}
-                </button>
-
-                {/* Minimize Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsMinimized(true);
-                    triggerHapticFeedback('light');
-                  }}
-                  className="p-2 rounded-xl bg-brand-navy/20 hover:bg-brand-navy/30 dark:bg-dark-gold/20 dark:hover:bg-dark-gold/30 transition-colors text-brand-charcoal dark:text-dark-text voice-touch-target"
-                  aria-label="Minimize"
-                  title="Minimize (Esc)"
-                >
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Main Content Area */}
-            <div className="relative z-10 p-6 space-y-6 voice-content-area">
-              {/* Session Controls */}
-              {sessionState.state !== 'idle' && sessionState.state !== 'ended' && (
-                <SessionControls
-                  session={sessionState}
-                  isVoiceActive={isListening || isSpeaking}
-                  theme={theme}
-                  accessibilityMode={accessibilityMode}
-                  onSessionEnd={() => {
-                    sessionState.actions.end();
-                    setIsMinimized(true);
-                  }}
-                  showTimeoutWarning={true}
-                />
-              )}
-
-              {/* Waveform Visualizer - Optimized Height */}
-              <div className="relative h-20 rounded-2xl overflow-hidden bg-brand-navy/10 dark:bg-dark-gold/10">
-                <WaveformVisualizer
-                  isActive={isListening || isSpeaking}
-                  animationState={animationState}
-                  theme={theme}
-                  accessibilityMode={accessibilityMode}
-                  audioLevel={audioLevel}
-                />
-              </div>
-
-              {/* Settings Panel */}
-              {showSettings && (
-                <div className="fixed inset-x-4 inset-y-4 z-50 max-w-md mx-auto my-auto max-h-[80vh] overflow-y-auto space-y-4 p-4 rounded-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20 shadow-2xl">
-                  {/* Close Button */}
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-sm font-semibold text-brand-charcoal dark:text-dark-text">Settings</h3>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowSettings(false);
-                      }}
-                      className="p-2 rounded hover:bg-brand-navy/20 dark:hover:bg-dark-gold/20 transition-colors voice-touch-target"
-                      aria-label="Close settings"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  {showPersonalitySelector && (
-                    <VoicePersonalitySelector
-                      currentPersonality={currentPersonality}
-                      onPersonalityChange={handlePersonalityChange}
-                      theme={theme}
-                    />
-                  )}
-                  
-                  <AccessibilityControls
-                    mode={accessibilityMode}
-                    onModeChange={(mode) => {
-                      // Handle accessibility mode change - this should update the parent prop
-                      triggerHapticFeedback('light');
-                      
-                      // Apply immediate visual feedback
-                      const widget = document.getElementById('webrtc-voice-assistant');
-                      if (widget) {
-                        widget.setAttribute('data-accessibility-mode', mode);
-                      }
-                    }}
-                    onSettingsChange={(settings) => {
-                      // Apply settings changes immediately
-                      triggerHapticFeedback('light');
-                      
-                      // Store in localStorage for persistence
-                      try {
-                        localStorage.setItem('voice-assistant-accessibility', JSON.stringify(settings));
-                      } catch (error) {
-                        console.warn('Failed to save accessibility settings:', error);
-                      }
-                    }}
-                  />
-
-                  {/* Glass Intensity Control */}
-                  {enableGlassmorphism && (
-                    <div>
-                      <label className="block text-sm font-medium text-brand-charcoal dark:text-dark-text mb-2">
-                        Glass Effect Intensity
-                      </label>
-                      <input
-                        type="range"
-                        min="0.05"
-                        max="0.3"
-                        step="0.05"
-                        value={glassIntensity}
-                        onChange={(e) => setGlassIntensity(parseFloat(e.target.value))}
-                        className="w-full h-2 bg-brand-navy/20 dark:bg-dark-gold/20 rounded-lg appearance-none cursor-pointer"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Connection Status */}
-              <div className="flex items-center justify-center mb-4">
-                <div className="flex items-center space-x-3 px-4 py-2 rounded-full bg-brand-navy/10 dark:bg-dark-gold/10 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20">
-                  <div className={`w-3 h-3 rounded-full ${
-                    connectionState === 'connected' ? 'bg-voice-connected animate-pulse' : 
-                    connectionState === 'connecting' ? 'bg-voice-connecting animate-pulse' :
-                    'bg-voice-error'
-                  }`} />
-                  <span className="text-sm font-medium text-brand-charcoal dark:text-dark-text">
-                    {isSessionRestored ? (
-                      connectionState === 'connected' ? 'Restored & Connected' : 'Reconnecting...'
-                    ) : (
-                      connectionState === 'connected' ? 'Connected' : 
-                      connectionState === 'connecting' ? 'Connecting...' : 
-                      'Disconnected'
-                    )}
-                  </span>
-                  {isSessionRestored && (
-                    <div className="w-2 h-2 rounded-full bg-brand-gold animate-ping" title="Session restored" />
-                  )}
-                </div>
-              </div>
-
-              {/* Message Transcript or Advanced Conversation Interface */}
-              {showTranscript && (
-                <div className="h-64 flex flex-col voice-transcript-container">
-                  <div className="flex-1 overflow-y-auto space-y-3 pb-3 voice-transcript-scroll">
-                    {enableAdvancedConversation ? (
-                      <ConversationInterface
-                        messages={messages}
-                        isTyping={isThinking}
-                        showTimestamps={true}
-                        showSpeakerAvatars={true}
-                        enableSearch={true}
-                        enableExport={!!onExportConversation}
-                        onExportConversation={onExportConversation}
-                        theme={theme}
-                        maxDisplayedMessages={50}
-                      />
-                    ) : (
-                      <>
-                        {messages.length === 0 ? (
-                          <div className="text-center py-8 text-brand-charcoal/70 dark:text-dark-text-secondary">
-                            <p className="text-sm">Ready to assist with your learning journey!</p>
-                            <p className="text-xs mt-2">Start speaking or type a message to begin</p>
-                            <p className="text-xs mt-1 opacity-50">Status: {connectionState}</p>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="text-xs text-brand-charcoal/70 dark:text-dark-text-secondary mb-2">
-                              {messages.length} message{messages.length !== 1 ? 's' : ''} • {connectionState}
-                            </div>
-                            {messages.slice(-5).map((message) => (
-                              <div
-                                key={message.id}
-                                className={`
-                                  flex items-start space-x-3 p-3 rounded-2xl transition-all duration-200
-                                  ${message.type === 'user' 
-                                    ? 'bg-brand-navy/20 ml-8 border-l-2 border-brand-navy dark:bg-dark-gold/20 dark:border-dark-gold' 
-                                    : 'bg-brand-gold/20 mr-8 border-l-2 border-brand-gold dark:bg-accent-gold/20 dark:border-accent-gold'
-                                  }
-                                `}
-                              >
-                                <div className={`
-                                  w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
-                                  ${message.type === 'user' ? 'bg-brand-navy dark:bg-dark-gold' : 'bg-brand-gold dark:bg-accent-gold'}
-                                `}>
-                                  {message.type === 'user' ? (
-                                    <User className="w-4 h-4 text-white" />
-                                  ) : (
-                                    <Bot className="w-4 h-4 text-white dark:text-dark-base" />
-                                  )}
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="text-xs font-medium text-brand-charcoal/80 dark:text-dark-text-secondary">
-                                      {message.type === 'user' ? 'You' : 'Assistant'}
-                                    </span>
-                                    <span className="text-xs text-brand-charcoal/60 dark:text-dark-text-muted">
-                                      {formatTimestamp(message.timestamp)}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm text-brand-charcoal dark:text-dark-text leading-relaxed">
-                                    {message.content}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                          </>
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  {/* Text Input Area */}
-                  <div className="mt-3 pt-3 border-t border-brand-navy/20 dark:border-dark-gold/20">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-1 relative">
-                        <input
-                          type="text"
-                          value={textInput}
-                          onChange={(e) => {
-                            setTextInput(e.target.value);
-                            // Reset activity timer on typing
-                            sessionState.actions.resetActivity();
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              // Start session if not started
-                              if (sessionState.state === 'idle') {
-                                sessionState.actions.start();
-                              }
-                              handleTextSend();
-                            }
-                          }}
-                          placeholder={
-                            connectionState === 'connected' 
-                              ? "Type a message or use voice..." 
-                              : connectionState === 'connecting'
-                              ? "Connecting..."
-                              : "Disconnected"
-                          }
-                          disabled={!isConnected || isSendingText}
-                          className="w-full px-4 py-3 pr-12 bg-brand-pearl/50 dark:bg-dark-surface-2 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20 rounded-xl text-sm text-brand-charcoal dark:text-dark-text placeholder-brand-charcoal/50 dark:placeholder-dark-text-muted focus:outline-none focus:ring-2 focus:ring-brand-gold/50 focus:border-brand-gold/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 voice-touch-target"
-                          aria-label="Type a message"
-                        />
-                        
-                        {/* Send button */}
-                        <button
-                          onClick={handleTextSend}
-                          disabled={!textInput.trim() || !isConnected || isSendingText}
-                          className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-lg bg-brand-gold hover:bg-brand-gold-warm disabled:bg-brand-charcoal/40 disabled:cursor-not-allowed transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-gold/50 voice-touch-target"
-                          aria-label="Send message"
-                          title={
-                            !textInput.trim() ? 'Type a message to send' :
-                            !isConnected ? 'Not connected' :
-                            'Send message (Enter)'
-                          }
-                        >
-                          {isSendingText ? (
-                            <Loader2 className="w-4 h-4 text-white animate-spin" />
-                          ) : (
-                            <Send className="w-4 h-4 text-white" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    
-                    {/* Helper text */}
-                    <div className="flex items-center justify-between mt-2">
-                      <p className="text-xs text-brand-charcoal/60 dark:text-dark-text-muted">
-                        Press Enter to send • {enableKeyboardShortcut ? 'Space to pause/resume • Escape to end session' : 'Click mic for voice'}
-                      </p>
-                      {isSendingText && (
-                        <span className="text-xs text-brand-gold animate-pulse">Sending...</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Error Display */}
-            {error && (
-              <div className="absolute bottom-4 left-4 right-4 p-3 bg-voice-error/20 border border-voice-error/30 rounded-xl backdrop-blur-sm">
-                <p className="text-sm text-voice-error dark:text-voice-error">
-                  {error.message}
+                <p className="text-xs text-brand-charcoal/60 dark:text-dark-text-muted text-center mt-2">
+                  Powered by OpenAI Realtime • Privacy Protected
                 </p>
               </div>
-            )}
-
-            {/* Footer with CTA */}
-            <div className="relative z-10 p-4 border-t border-brand-navy/20 dark:border-dark-gold/20 bg-brand-pearl/5 dark:bg-dark-surface/5 rounded-b-3xl backdrop-blur-sm">
-              <button
-                onClick={handleCTAClick}
-                className="w-full bg-gradient-to-r from-brand-navy to-brand-gold text-white font-semibold py-3 px-4 rounded-3xl hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-brand-gold/30"
-              >
-                Book Your 15-Minute Discovery Call
-              </button>
-              <p className="text-xs text-brand-charcoal/60 dark:text-dark-text-muted text-center mt-2">
-                Powered by OpenAI Realtime • Privacy Protected
-              </p>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Floating Action Button */}
+          {/* Desktop Content - Only show when not mobile */}
+          {!isMobile && (
+            <>
+              {/* Particle Canvas Overlay */}
+              {enableParticleEffects && (
+                <canvas
+                  ref={particleCanvasRef}
+                  className="absolute inset-0 w-full h-full rounded-3xl pointer-events-none"
+                  width="400"
+                  height="600"
+                  aria-hidden="true"
+                />
+              )}
+              {/* Header */}
+              <div className="relative z-10 flex items-center justify-between p-6 border-b border-brand-navy/20 dark:border-dark-gold/20">
+                <div className="flex items-center space-x-4">
+                  {/* Breathing Status Indicator */}
+                  <div className="relative">
+                    <div 
+                      className={`w-6 h-6 rounded-full transition-all duration-300 ${
+                        animationState === 'listening' ? 'bg-voice-connected animate-ping' : 
+                        animationState === 'thinking' ? 'bg-voice-processing animate-bounce' :
+                        animationState === 'speaking' ? 'bg-brand-gold animate-pulse' :
+                        'bg-brand-charcoal/60 dark:bg-dark-text-muted'
+                      }`}
+                    />
+                    {/* Breathing Ring Effect */}
+                    {animationState !== 'idle' && (
+                      <div className="absolute inset-0 rounded-full border-2 border-current animate-ping opacity-40" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 id="voice-widget-title" className="text-lg font-bold text-brand-charcoal dark:text-dark-text">
+                      AI Voice Assistant
+                    </h3>
+                    <p className="text-sm text-brand-charcoal/70 dark:text-dark-text-secondary">
+                      {statusText}
+                    </p>
+                  </div>
+                </div>
+                {/* Action Buttons - Hide on mobile */}
+                <div className="flex items-center space-x-2">
+                  {/* Mute Button */}
+                  <button
+                    onClick={toggleMute}
+                    className="p-2 rounded-xl bg-brand-navy/20 hover:bg-brand-navy/30 dark:bg-dark-gold/20 dark:hover:bg-dark-gold/30 transition-colors text-brand-charcoal dark:text-dark-text voice-touch-target"
+                    aria-label={isMuted ? 'Unmute' : 'Mute'}
+                    title={isMuted ? 'Unmute (Ctrl+M)' : 'Mute (Ctrl+M)'}
+                  >
+                    {isMuted ? (
+                      <VolumeX className="w-5 h-5" />
+                    ) : (
+                      <Volume2 className="w-5 h-5" />
+                    )}
+                  </button>
+
+                  {/* Minimize Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMinimized(true);
+                      triggerHapticFeedback('light');
+                    }}
+                    className="p-2 rounded-xl bg-brand-navy/20 hover:bg-brand-navy/30 dark:bg-dark-gold/20 dark:hover:bg-dark-gold/30 transition-colors text-brand-charcoal dark:text-dark-text voice-touch-target"
+                    aria-label="Minimize"
+                    title="Minimize (Esc)"
+                  >
+                    <ChevronDown className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Main Content Area */}
+              <div className="relative z-10 p-6 space-y-6 voice-content-area">
+                {/* Session Controls */}
+                {sessionState.state !== 'idle' && sessionState.state !== 'ended' && (
+                  <SessionControls
+                    session={sessionState}
+                    isVoiceActive={isListening || isSpeaking}
+                    theme={theme}
+                    accessibilityMode={accessibilityMode}
+                    onSessionEnd={() => {
+                      sessionState.actions.end();
+                      setIsMinimized(true);
+                    }}
+                    showTimeoutWarning={true}
+                  />
+                )}
+
+                {/* Waveform Visualizer */}
+                <div className="relative h-20 rounded-2xl overflow-hidden bg-brand-navy/10 dark:bg-dark-gold/10">
+                  <WaveformVisualizer
+                    isActive={isListening || isSpeaking}
+                    animationState={animationState}
+                    theme={theme}
+                    accessibilityMode={accessibilityMode}
+                    audioLevel={audioLevel}
+                  />
+                </div>
+
+                {/* Settings Panel */}
+                {showSettings && (
+                  <div className="fixed inset-x-4 inset-y-4 z-50 max-w-md mx-auto my-auto max-h-[80vh] overflow-y-auto space-y-4 p-4 rounded-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20 shadow-2xl">
+                    {/* Close Button */}
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-semibold text-brand-charcoal dark:text-dark-text">Settings</h3>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowSettings(false);
+                        }}
+                        className="p-2 rounded hover:bg-brand-navy/20 dark:hover:bg-dark-gold/20 transition-colors voice-touch-target"
+                        aria-label="Close settings"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {showPersonalitySelector && (
+                      <VoicePersonalitySelector
+                        currentPersonality={currentPersonality}
+                        onPersonalityChange={handlePersonalityChange}
+                        theme={theme}
+                      />
+                    )}
+                    
+                    <AccessibilityControls
+                      mode={accessibilityMode}
+                      onModeChange={(mode) => {
+                        // Handle accessibility mode change - this should update the parent prop
+                        triggerHapticFeedback('light');
+                        
+                        // Apply immediate visual feedback
+                        const widget = document.getElementById('webrtc-voice-assistant');
+                        if (widget) {
+                          widget.setAttribute('data-accessibility-mode', mode);
+                        }
+                      }}
+                      onSettingsChange={(settings) => {
+                        // Apply settings changes immediately
+                        triggerHapticFeedback('light');
+                        
+                        // Store in localStorage for persistence
+                        try {
+                          localStorage.setItem('voice-assistant-accessibility', JSON.stringify(settings));
+                        } catch (error) {
+                          console.warn('Failed to save accessibility settings:', error);
+                        }
+                      }}
+                    />
+
+                    {/* Glass Intensity Control */}
+                    {enableGlassmorphism && (
+                      <div>
+                        <label className="block text-sm font-medium text-brand-charcoal dark:text-dark-text mb-2">
+                          Glass Effect Intensity
+                        </label>
+                        <input
+                          type="range"
+                          min="0.05"
+                          max="0.3"
+                          step="0.05"
+                          value={glassIntensity}
+                          onChange={(e) => setGlassIntensity(parseFloat(e.target.value))}
+                          className="w-full h-2 bg-brand-navy/20 dark:bg-dark-gold/20 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Connection Status */}
+                <div className="flex items-center justify-center mb-4">
+                  <div className="flex items-center space-x-3 px-4 py-2 rounded-full bg-brand-navy/10 dark:bg-dark-gold/10 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20">
+                    <div className={`w-3 h-3 rounded-full ${
+                      connectionState === 'connected' ? 'bg-voice-connected animate-pulse' : 
+                      connectionState === 'connecting' ? 'bg-voice-connecting animate-pulse' :
+                      'bg-voice-error'
+                    }`} />
+                    <span className="text-sm font-medium text-brand-charcoal dark:text-dark-text">
+                      {isSessionRestored ? (
+                        connectionState === 'connected' ? 'Restored & Connected' : 'Reconnecting...'
+                      ) : (
+                        connectionState === 'connected' ? 'Connected' : 
+                        connectionState === 'connecting' ? 'Connecting...' : 
+                        'Disconnected'
+                      )}
+                    </span>
+                    {isSessionRestored && (
+                      <div className="w-2 h-2 rounded-full bg-brand-gold animate-ping" title="Session restored" />
+                    )}
+                  </div>
+                </div>
+
+                {/* Message Transcript or Advanced Conversation Interface */}
+                {showTranscript && (
+                  <div className="h-64 flex flex-col voice-transcript-container">
+                    <div className="flex-1 overflow-y-auto space-y-3 pb-3 voice-transcript-scroll">
+                      {enableAdvancedConversation ? (
+                        <ConversationInterface
+                          messages={messages}
+                          isTyping={isThinking}
+                          showTimestamps={true}
+                          showSpeakerAvatars={true}
+                          enableSearch={true}
+                          enableExport={!!onExportConversation}
+                          onExportConversation={onExportConversation}
+                          theme={theme}
+                          maxDisplayedMessages={50}
+                        />
+                      ) : (
+                        <>
+                          {messages.length === 0 ? (
+                            <div className="text-center py-8 text-brand-charcoal/70 dark:text-dark-text-secondary">
+                              <p className="text-sm">Ready to assist with your learning journey!</p>
+                              <p className="text-xs mt-2">Start speaking or type a message to begin</p>
+                              <p className="text-xs mt-1 opacity-50">Status: {connectionState}</p>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="text-xs text-brand-charcoal/70 dark:text-dark-text-secondary mb-2">
+                                {messages.length} message{messages.length !== 1 ? 's' : ''} • {connectionState}
+                              </div>
+                              {messages.slice(-5).map((message) => (
+                                <div
+                                  key={message.id}
+                                  className={`
+                                    flex items-start space-x-3 p-3 rounded-2xl transition-all duration-200
+                                    ${message.type === 'user' 
+                                      ? 'bg-brand-navy/20 ml-8 border-l-2 border-brand-navy dark:bg-dark-gold/20 dark:border-dark-gold' 
+                                      : 'bg-brand-gold/20 mr-8 border-l-2 border-brand-gold dark:bg-accent-gold/20 dark:border-accent-gold'
+                                    }
+                                  `}
+                                >
+                                  <div className={`
+                                    w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
+                                    ${message.type === 'user' ? 'bg-brand-navy dark:bg-dark-gold' : 'bg-brand-gold dark:bg-accent-gold'}
+                                  `}>
+                                    {message.type === 'user' ? (
+                                      <User className="w-4 h-4 text-white" />
+                                    ) : (
+                                      <Bot className="w-4 h-4 text-white dark:text-dark-base" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <span className="text-xs font-medium text-brand-charcoal/80 dark:text-dark-text-secondary">
+                                        {message.type === 'user' ? 'You' : 'Assistant'}
+                                      </span>
+                                      <span className="text-xs text-brand-charcoal/60 dark:text-dark-text-muted">
+                                        {formatTimestamp(message.timestamp)}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-brand-charcoal dark:text-dark-text leading-relaxed">
+                                      {message.content}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {/* Text Input Area */}
+                    <div className="mt-3 pt-3 border-t border-brand-navy/20 dark:border-dark-gold/20">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-1 relative">
+                          <input
+                            type="text"
+                            value={textInput}
+                            onChange={(e) => {
+                              setTextInput(e.target.value);
+                              // Reset activity timer on typing
+                              sessionState.actions.resetActivity();
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                // Start session if not started
+                                if (sessionState.state === 'idle') {
+                                  sessionState.actions.start();
+                                }
+                                handleTextSend();
+                              }
+                            }}
+                            placeholder={
+                              connectionState === 'connected' 
+                                ? "Type a message or use voice..." 
+                                : connectionState === 'connecting'
+                                ? "Connecting..."
+                                : "Disconnected"
+                            }
+                            disabled={!isConnected || isSendingText}
+                            className="w-full px-4 py-3 pr-12 bg-brand-pearl/50 dark:bg-dark-surface-2 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20 rounded-xl text-sm text-brand-charcoal dark:text-dark-text placeholder-brand-charcoal/50 dark:placeholder-dark-text-muted focus:outline-none focus:ring-2 focus:ring-brand-gold/50 focus:border-brand-gold/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 voice-touch-target"
+                            aria-label="Type a message"
+                          />
+                          
+                          {/* Send button */}
+                          <button
+                            onClick={handleTextSend}
+                            disabled={!textInput.trim() || !isConnected || isSendingText}
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-lg bg-brand-gold hover:bg-brand-gold-warm disabled:bg-brand-charcoal/40 disabled:cursor-not-allowed transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-gold/50 voice-touch-target"
+                            aria-label="Send message"
+                            title={
+                              !textInput.trim() ? 'Type a message to send' :
+                              !isConnected ? 'Not connected' :
+                              'Send message (Enter)'
+                            }
+                          >
+                            {isSendingText ? (
+                              <Loader2 className="w-4 h-4 text-white animate-spin" />
+                            ) : (
+                              <Send className="w-4 h-4 text-white" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Helper text */}
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-xs text-brand-charcoal/60 dark:text-dark-text-muted">
+                          Press Enter to send • {enableKeyboardShortcut ? 'Space to pause/resume • Escape to end session' : 'Click mic for voice'}
+                        </p>
+                        {isSendingText && (
+                          <span className="text-xs text-brand-gold animate-pulse">Sending...</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Error Display */}
+              {error && (
+                <div className="absolute bottom-4 left-4 right-4 p-3 bg-voice-error/20 border border-voice-error/30 rounded-xl backdrop-blur-sm">
+                  <p className="text-sm text-voice-error dark:text-voice-error">
+                    {error.message}
+                  </p>
+                </div>
+              )}
+
+              {/* Footer with CTA */}
+              <div className="relative z-10 p-4 border-t border-brand-navy/20 dark:border-dark-gold/20 bg-brand-pearl/5 dark:bg-dark-surface/5 rounded-b-3xl backdrop-blur-sm">
+                <button
+                  onClick={handleCTAClick}
+                  className="w-full bg-gradient-to-r from-brand-navy to-brand-gold text-white font-semibold py-3 px-4 rounded-3xl hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-brand-gold/30"
+                >
+                  Book Your 15-Minute Discovery Call
+                </button>
+                <p className="text-xs text-brand-charcoal/60 dark:text-dark-text-muted text-center mt-2">
+                  Powered by OpenAI Realtime • Privacy Protected
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Floating Action Button - Multi-functional */}
         <button
-          onClick={handleTogglePanel}
+          onClick={(e) => {
+            e.stopPropagation();
+            
+            // Prevent click if long pressing
+            if (isLongPressing) {
+              return;
+            }
+            
+            if (isMobile) {
+              // Mobile behavior: control voice functions
+              if (isMinimized) {
+                // Open panel
+                handleTogglePanel();
+              } else {
+                // Voice control: start/pause/stop
+                sessionState.actions.resetActivity();
+                if (sessionState.state === 'idle') {
+                  sessionState.actions.start();
+                }
+                if (isListening) {
+                  stopListening();
+                } else if (!isMuted && connectionState === 'connected') {
+                  startListening();
+                }
+                triggerHapticFeedback('medium');
+              }
+            } else {
+              // Desktop behavior: just toggle panel
+              handleTogglePanel();
+            }
+          }}
+          onMouseDown={handleLongPressStart}
+          onMouseUp={handleLongPressEnd}
+          onMouseLeave={handleLongPressEnd}
+          onTouchStart={handleLongPressStart}
+          onTouchEnd={handleLongPressEnd}
           className={`
             w-16 h-16 rounded-full shadow-2xl transition-all duration-500 transform-gpu voice-touch-target
             focus:outline-none focus:ring-4 focus:ring-brand-gold/30 flex items-center justify-center relative group voice-gpu-accelerated
@@ -1525,10 +1514,34 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
               error ? 'voice-status-error voice-motion-safe' :
               'hover:scale-110 voice-motion-safe'
             }
+            ${
+              // Mobile-specific styling when not minimized
+              isMobile && !isMinimized ? (
+                isListening ? 'scale-110 animate-pulse shadow-voice-connected/50' :
+                sessionState.state === 'paused' ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' :
+                'bg-gradient-to-r from-brand-navy to-brand-gold'
+              ) : ''
+            }
           `}
           style={enableGlassmorphism ? getGlassStyles() : {}}
-          aria-label={isMinimized ? 'Open voice assistant' : 'Close voice assistant'}
-          title={isMinimized ? 'Open voice assistant' : 'Close voice assistant'}
+          aria-label={
+            isMobile && !isMinimized ? (
+              sessionState.state === 'paused' ? 'Session paused - tap to resume, long press to end' :
+              isListening ? 'Stop recording - long press to end session' : 
+              'Start recording - long press to end session'
+            ) : (
+              isMinimized ? 'Open voice assistant' : 'Close voice assistant'
+            )
+          }
+          title={
+            isMobile && !isMinimized ? (
+              sessionState.state === 'paused' ? 'Tap: Resume • Long press: End' :
+              isListening ? 'Tap: Stop • Long press: End' : 
+              'Tap: Start • Long press: End'
+            ) : (
+              isMinimized ? 'Open voice assistant' : 'Close voice assistant'
+            )
+          }
         >
           {/* Notification Badge */}
           <div className={`absolute -top-1 -right-1 w-4 h-4 bg-voice-error text-white text-xs rounded-full flex items-center justify-center transition-all duration-300 ${
@@ -1542,8 +1555,20 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
             <div className="absolute inset-0 rounded-full border-2 border-brand-gold/50 animate-ping" />
           )}
           
-          {/* Main Icon */}
-          <Mic className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
+          {/* Dynamic Icon based on state and device */}
+          {isMobile && !isMinimized ? (
+            // Mobile voice control icon
+            sessionState.state === 'paused' ? (
+              <Play className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
+            ) : isListening ? (
+              <Square className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
+            ) : (
+              <Mic className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
+            )
+          ) : (
+            // Desktop or mobile minimized - standard mic icon
+            <Mic className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
+          )}
         </button>
       </div>
 
