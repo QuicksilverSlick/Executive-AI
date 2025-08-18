@@ -108,24 +108,6 @@
     z-index: 1002;
   }
   
-  /* Mobile panel modal behavior */
-  .voicePanel:not(.panelMinimized) {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    width: calc(100vw - 32px) !important;
-    max-width: calc(100vw - 32px) !important;
-    max-height: calc(100vh - 80px) !important;
-    margin: 0 !important;
-    z-index: 1001;
-    
-    /* Add backdrop effect */
-    box-shadow: 
-      0 25px 50px -12px rgba(0, 0, 0, 0.4),
-      0 0 0 100vmax rgba(0, 0, 0, 0.4);
-  }
-  
   /* Container adjustments for mobile */
   .voiceAssistantContainer {
     bottom: max(20px, env(safe-area-inset-bottom, 20px)) !important;
