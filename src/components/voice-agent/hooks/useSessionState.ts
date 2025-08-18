@@ -62,6 +62,7 @@ export interface SessionControls {
     resume: () => void;
     end: () => void;
     resetActivity: () => void;
+    extendSession: (additionalMinutes?: number) => void;
   };
 }
 
@@ -147,6 +148,13 @@ export const useSessionState = (config: SessionStateConfig = {}): SessionControl
     }
   }, [sessionState, timeout]);
 
+  // Extend session
+  const extendSession = useCallback((additionalMinutes?: number) => {
+    if (sessionState === 'active' || sessionState === 'paused') {
+      timeout.extendSession(additionalMinutes);
+    }
+  }, [sessionState, timeout]);
+
   // Auto-start if configured
   useEffect(() => {
     if (autoStart && sessionState === 'idle') {
@@ -180,7 +188,8 @@ export const useSessionState = (config: SessionStateConfig = {}): SessionControl
       pause,
       resume,
       end: handleEnd,
-      resetActivity
+      resetActivity,
+      extendSession
     }
   };
 };
@@ -189,6 +198,16 @@ export const useSessionState = (config: SessionStateConfig = {}): SessionControl
  * DREAMFORGE AUDIT TRAIL
  *
  * ---
+ * @revision: 2.0.0
+ * @author: developer-agent
+ * @cc-sessionId: cc-dev-20250818-timeout
+ * @timestamp: 2025-08-18T20:50:00Z
+ * @reasoning:
+ * - **Objective:** Add session extension functionality to prevent timeout
+ * - **Strategy:** Expose timeout extension method through session actions
+ * - **Outcome:** Users can extend sessions to prevent unexpected termination
+ * 
+ * Previous revision:
  * @revision: 1.0.0
  * @author: developer-agent
  * @cc-sessionId: cc-dev-20250817-001

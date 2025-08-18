@@ -2,14 +2,14 @@
  * DREAMFORGE HIVE-MIND CHAIN OF CUSTODY
  *
  * @file-purpose: Hook for auto-timeout detection and session inactivity management
- * @version: 1.0.0
+ * @version: 2.0.0
  * @init-author: developer-agent
  * @init-cc-sessionId: cc-dev-20250817-001
  * @init-timestamp: 2025-08-17T21:35:00Z
  * @reasoning:
- * - **Objective:** Implement auto-timeout functionality for voice sessions
- * - **Strategy:** Track user activity and automatically end sessions after inactivity
- * - **Outcome:** Configurable timeout with warnings and graceful session termination
+ * - **Objective:** Implement comprehensive auto-timeout functionality for voice sessions
+ * - **Strategy:** Track user activity with enhanced timeout warnings and session extension
+ * - **Outcome:** Robust timeout system with user-friendly warnings and extension capabilities
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -43,6 +43,8 @@ export interface AutoTimeoutActions {
   stop: () => void;
   /** Manually trigger timeout */
   triggerTimeout: () => void;
+  /** Extend the session by the specified minutes */
+  extendSession: (additionalMinutes?: number) => void;
 }
 
 export interface AutoTimeoutCallbacks {
@@ -152,6 +154,20 @@ export const useAutoTimeout = (
     onTimeout?.();
   }, [onTimeout, clearTimers]);
 
+  // Extend session by additional time
+  const extendSession = useCallback((additionalMinutes: number = 5) => {
+    const additionalMs = additionalMinutes * 60 * 1000;
+    const newTimeRemaining = timeRemaining + additionalMs;
+    
+    lastActivityRef.current = Date.now() - (finalConfig.timeoutMs - newTimeRemaining);
+    setTimeRemaining(newTimeRemaining);
+    setShowWarning(false);
+    setHasTimedOut(false);
+    warningTriggeredRef.current = false;
+    
+    console.log(`[AutoTimeout] Session extended by ${additionalMinutes} minutes`);
+  }, [timeRemaining, finalConfig.timeoutMs]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -167,7 +183,8 @@ export const useAutoTimeout = (
     resetTimer,
     start,
     stop,
-    triggerTimeout
+    triggerTimeout,
+    extendSession
   };
 };
 
@@ -175,6 +192,16 @@ export const useAutoTimeout = (
  * DREAMFORGE AUDIT TRAIL
  *
  * ---
+ * @revision: 2.0.0
+ * @author: developer-agent
+ * @cc-sessionId: cc-dev-20250818-timeout
+ * @timestamp: 2025-08-18T20:45:00Z
+ * @reasoning:
+ * - **Objective:** Add session extension functionality to prevent timeout
+ * - **Strategy:** Implement extendSession method that adds time and resets warning state
+ * - **Outcome:** Users can extend sessions on demand to prevent runaway API costs
+ * 
+ * Previous revision:
  * @revision: 1.0.0
  * @author: developer-agent
  * @cc-sessionId: cc-dev-20250817-001

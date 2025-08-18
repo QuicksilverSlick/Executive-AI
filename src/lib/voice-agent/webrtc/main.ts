@@ -120,6 +120,10 @@ export class WebRTCVoiceAgent extends EventEmitter<WebRTCVoiceAgentEvents> {
   // Session timeout handling
   private timeoutHandler: SessionTimeoutHandler;
   
+  // Activity tracking for user interaction detection
+  private lastUserActivityTime: number = 0;
+  private activityResetCallbacks: Set<() => void> = new Set();
+  
   // Token management
   private tokenManager: {
     token: string | null;
@@ -577,6 +581,9 @@ Please continue the conversation naturally from where it left off, maintaining a
     // Resume audio context on user interaction
     await this.audioProcessor.ensureAudioContext(true);
     
+    // Track user activity
+    this.trackUserActivity();
+    
     // In continuous mode, recording is already active
     // Just update UI state
     console.log('[WebRTC Voice Agent] Start listening called but already in continuous mode');
@@ -603,6 +610,9 @@ Please continue the conversation naturally from where it left off, maintaining a
     }
     
     console.log('[WebRTC Voice Agent] Sending text message:', text);
+    
+    // Track user activity
+    this.trackUserActivity();
     
     // Track message send time for latency measurement
     const sendTime = performance.now();
@@ -1060,6 +1070,7 @@ Please continue the conversation naturally from where it left off, maintaining a
         
       case 'input_audio_buffer.speech_started':
         console.log('User started speaking');
+        this.trackUserActivity(); // Reset timeout on user speech
         this.emit('speechStarted');
         break;
         
@@ -2440,6 +2451,43 @@ Please continue the conversation naturally from where it left off, maintaining a
   }
 
   /**
+   * Track user activity (reset timeout timers)
+   */
+  private trackUserActivity(): void {
+    this.lastUserActivityTime = Date.now();
+    
+    // Notify all registered activity reset callbacks
+    this.activityResetCallbacks.forEach(callback => {
+      try {
+        callback();
+      } catch (error) {
+        console.warn('[WebRTC Voice Agent] Error in activity reset callback:', error);
+      }
+    });
+    
+    console.log('[WebRTC Voice Agent] User activity tracked');
+  }
+
+  /**
+   * Register callback to be called when user activity is detected
+   */
+  onActivityReset(callback: () => void): () => void {
+    this.activityResetCallbacks.add(callback);
+    
+    // Return unsubscribe function
+    return () => {
+      this.activityResetCallbacks.delete(callback);
+    };
+  }
+
+  /**
+   * Get last user activity time
+   */
+  getLastActivityTime(): number {
+    return this.lastUserActivityTime;
+  }
+
+  /**
    * Clean up everything (complete reset)
    */
   async cleanup(): Promise<void> {
@@ -2447,6 +2495,9 @@ Please continue the conversation naturally from where it left off, maintaining a
     
     // Clean up timeout handler
     this.timeoutHandler.destroy();
+    
+    // Clear activity callbacks
+    this.activityResetCallbacks.clear();
     
     await this.disconnect();
     if (this.sessionManager) {
@@ -2473,7 +2524,35 @@ if (typeof window !== 'undefined') {
  * DREAMFORGE AUDIT TRAIL
  *
  * ---
- * @revision: 12.0.0
+ * @revision: 13.0.0
+ * @author: developer-agent
+ * @cc-sessionId: cc-dev-20250818-timeout
+ * @timestamp: 2025-08-18T21:15:00Z
+ * @reasoning:
+ * - **Objective:** Implement comprehensive session timeout and activity tracking to prevent runaway API costs
+ * - **Strategy:** Add activity detection for user interactions, speech, and messages with timeout integration
+ * - **Outcome:** Robust cost control system with user-friendly timeout warnings and session extension
+ * 
+ * New features implemented:
+ * - Activity tracking system with callback registration for external timeout managers
+ * - trackUserActivity() method called on speech events and message sending
+ * - onActivityReset() callback registration system for timeout hooks integration
+ * - Enhanced user activity detection to reset inactivity timers automatically
+ * - Proper cleanup of activity callbacks on disconnect/cleanup
+ * 
+ * Integration points:
+ * - WebRTC hook now accepts onActivityReset callback for timeout hook integration
+ * - Activity tracked on: startListening(), sendMessage(), speech_started events
+ * - Callback system allows external components to reset their timeout timers
+ * - Clean separation between core voice agent and timeout management
+ * 
+ * Cost control benefits:
+ * - Prevents sessions from running indefinitely without user interaction
+ * - Automatic detection of user engagement to maintain active sessions
+ * - Configurable timeout duration with warning system
+ * - One-click session extension when user is still engaged
+ * 
+ * Previous revision (12.0.0):
  * @author: engineer-agent  
  * @cc-sessionId: cc-eng-20250817-pause-fix
  * @timestamp: 2025-08-17T14:00:00Z
@@ -2481,31 +2560,4 @@ if (typeof window !== 'undefined') {
  * - **Objective:** Fix critical WebRTC pause/resume data channel disconnection issue
  * - **Strategy:** Conditional event sending based on active response state + proper OpenAI protocol compliance
  * - **Outcome:** Pause/resume now works without breaking WebRTC connection or triggering auto-recovery
- * 
- * Critical fixes implemented:
- * - Fixed pauseSession() to only send response.cancel + output_audio_buffer.clear when there's an active response
- * - Added response_id parameter to response.cancel events as per OpenAI documentation
- * - Enhanced resumeSession() with session.update to restore OpenAI responsiveness
- * - Fixed method naming conflict (isSessionPaused -> getSessionPausedState)
- * - Added proper response tracking for output_audio_buffer.cleared events
- * 
- * Root cause analysis:
- * - OpenAI Realtime API treats response.cancel/output_audio_buffer.clear as errors when no response is active
- * - This causes immediate data channel closure and connection termination
- * - Previous implementation always sent these events regardless of response state
- * 
- * Technical implementation:
- * - Response state validation: Only send cancel/clear if this.isResponseInProgress && this.activeResponseId
- * - Proper event sequence: response.cancel with response_id, then output_audio_buffer.clear
- * - Session restoration: session.update event on resume to ensure OpenAI knows we're ready
- * - Enhanced logging for debugging pause/resume behavior
- * 
- * Compliance with OpenAI documentation:
- * - "This event should be preceded by a response.cancel client event" - now properly implemented
- * - No events sent when no response is active - prevents data channel errors
- * - Maintains WebRTC connection during pause - only stops local audio processing
- * 
- * Previous revision (11.0.0):
- * - Voice-aware session timeout handling
- * - Improved timeout warnings and reconnection messages
  */

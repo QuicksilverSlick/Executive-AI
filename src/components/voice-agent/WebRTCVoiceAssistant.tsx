@@ -79,6 +79,7 @@ import { VoicePersonalitySelector } from './VoicePersonalitySelector';
 import { AccessibilityControls } from './AccessibilityControls';
 import { ConversationInterface } from './ConversationInterface';
 import { SessionControls } from './SessionControls';
+import SessionTimeoutWarning from './SessionTimeoutWarning';
 import { templatizeInstructions } from '../../lib/voice-agent/utils';
 import { DEFAULT_SESSION_CONFIG } from '../../features/voice-agent/types';
 import type { VoiceStatus, VoiceMessage, VoiceAssistantConfig, VoicePersonality, ConnectionState } from './types';
@@ -236,7 +237,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
     resumeSession,
     endSession,
     isSessionPaused
-  } = useWebRTCVoiceAssistant(config, { onMessage, onStatusChange, onError });
+  } = useWebRTCVoiceAssistant(config, { onMessage, onStatusChange, onError }, sessionState.actions.resetActivity);
 
   // Session state management
   const sessionState = useSessionState({
@@ -244,7 +245,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
     timeout: {
       enabled: true,
       timeoutMs: 5 * 60 * 1000, // 5 minutes
-      warningMs: 1 * 60 * 1000   // 1 minute warning
+      warningMs: 30 * 1000   // 30 second warning
     },
     callbacks: {
       onSessionStart: () => {
@@ -269,11 +270,11 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
       },
       onTimeoutWarning: (timeRemaining) => {
         console.log('[Voice Assistant] Session timeout warning:', timeRemaining);
-        // The voice agent handles timeout warnings internally
+        triggerHapticFeedback('medium');
       },
       onTimeout: () => {
         console.log('[Voice Assistant] Session timed out');
-        // The voice agent handles timeout internally
+        triggerHapticFeedback('heavy');
       }
     }
   });
@@ -763,6 +764,22 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
     }
   }, [handleTextSend]);
 
+  // Timeout warning handlers
+  const handleExtendSession = useCallback(() => {
+    sessionState.actions.extendSession(5); // Extend by 5 minutes
+    triggerHapticFeedback('light');
+  }, [sessionState, triggerHapticFeedback]);
+
+  const handleDismissTimeout = useCallback(() => {
+    // Dismissing is the same as extending the session
+    handleExtendSession();
+  }, [handleExtendSession]);
+
+  const handleTimeoutExpired = useCallback(() => {
+    console.log('[Voice Assistant] Timeout expired - ending session');
+    sessionState.actions.end();
+  }, [sessionState]);
+
   // Don't render until client hydration is complete to prevent SSR/hydration issues
   if (!isClient) {
     return null;
@@ -770,6 +787,18 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
 
   return (
     <>
+      {/* Session Timeout Warning */}
+      <SessionTimeoutWarning
+        isVisible={sessionState.timeout.showWarning}
+        timeRemaining={sessionState.timeout.timeRemaining}
+        onExtendSession={handleExtendSession}
+        onDismiss={handleDismissTimeout}
+        onTimeout={handleTimeoutExpired}
+        enableAudio={enableHapticFeedback} // Use same setting as haptic feedback
+        theme={theme}
+        extensionMinutes={5}
+      />
+
       {/* Voice Assistant Widget Container */}
       <div 
         id="webrtc-voice-assistant"

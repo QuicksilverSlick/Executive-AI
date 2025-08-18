@@ -46,7 +46,8 @@ import type { ConnectionState, ConversationState, ErrorInfo } from '../../../fea
 
 export const useWebRTCVoiceAssistant = (
   config: Partial<VoiceAssistantConfig> = {},
-  events: VoiceAssistantEvents = {}
+  events: VoiceAssistantEvents = {},
+  onActivityReset?: () => void // New parameter for activity tracking
 ): UseVoiceAssistantReturn & { 
   sessionStats: any;
   isSessionRestored: boolean;
@@ -183,6 +184,14 @@ export const useWebRTCVoiceAssistant = (
         agent.on('reconnected', handleReconnected);
 
         voiceAgentRef.current = agent;
+        
+        // Register activity reset callback if provided
+        if (onActivityReset) {
+          const unsubscribe = agent.onActivityReset(onActivityReset);
+          
+          // Store unsubscribe function for cleanup
+          (agent as any)._activityUnsubscribe = unsubscribe;
+        }
         
         // Initialize the connection
         await agent.initialize();
