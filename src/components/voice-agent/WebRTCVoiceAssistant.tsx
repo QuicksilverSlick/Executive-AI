@@ -1314,7 +1314,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
 
         {/* Floating Action Button - Multi-functional */}
         <button
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
             
             // Prevent click if long pressing
@@ -1322,34 +1322,66 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
               return;
             }
             
-            if (isMobile) {
-              // Mobile behavior: control voice functions
-              if (isMinimized) {
-                // Open panel
-                handleTogglePanel();
-              } else {
-                // Implement proper control flow: Mic (Start) → Stop
-                if (sessionState.state === 'idle') {
-                  // Start session and begin listening (Mic button)
-                  sessionState.actions.start();
-                  if (connectionState === 'connected') {
-                    startListening();
-                  } else {
-                    // Initialize if needed
-                    initializeManually().catch(console.error);
+            // If minimized, open panel AND start session immediately (both mobile and desktop)
+            if (isMinimized) {
+              console.log('[WebRTC Voice] Opening panel and starting session...');
+              setIsMinimized(false);
+              
+              // Start session immediately if not already active
+              if (sessionState.state === 'idle') {
+                sessionState.actions.start();
+                
+                // Initialize and start listening
+                try {
+                  if (!isConnected) {
+                    // Initialize voice agent if needed
+                    console.log('[WebRTC Voice] Initializing voice agent...');
+                    await initializeManually();
                   }
-                  triggerHapticFeedback('medium');
-                } else if (sessionState.state === 'active') {
+                  
+                  // Small delay to ensure initialization completes
+                  setTimeout(() => {
+                    console.log('[WebRTC Voice] Starting listening...');
+                    startListening();
+                  }, 200);
+                } catch (error) {
+                  console.error('[WebRTC Voice] Failed to initialize:', error);
+                }
+                
+                triggerHapticFeedback('medium');
+              }
+            } else {
+              // Panel is already open - handle based on device type
+              if (isMobile) {
+                // Mobile: control voice session
+                if (sessionState.state === 'active') {
                   // Stop the session (Stop button)
                   sessionState.actions.end();
                   endSession();
                   setIsMinimized(true);
                   triggerHapticFeedback('heavy');
+                } else if (sessionState.state === 'idle') {
+                  // Start session if idle
+                  sessionState.actions.start();
+                  
+                  try {
+                    if (!isConnected) {
+                      await initializeManually();
+                    }
+                    
+                    setTimeout(() => {
+                      startListening();
+                    }, 200);
+                  } catch (error) {
+                    console.error('[WebRTC Voice] Failed to initialize:', error);
+                  }
+                  
+                  triggerHapticFeedback('medium');
                 }
+              } else {
+                // Desktop: just minimize the panel
+                setIsMinimized(true);
               }
-            } else {
-              // Desktop behavior: just toggle panel
-              handleTogglePanel();
             }
           }}
           onMouseDown={handleLongPressStart}
@@ -1414,10 +1446,12 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
             {messages.length > 9 ? '9+' : messages.length}
           </div>
           
-          {/* Status Ring */}
-          {(isListening || isSpeaking) && (
-            <div className="absolute inset-0 rounded-full border-2 border-brand-gold/50 animate-ping" />
-          )}
+          {/* Animated Rings - Always show to attract attention */}
+          <div className="absolute inset-0 rounded-full">
+            <div className="absolute inset-0 rounded-full border-2 border-brand-gold/30 animate-ping" />
+            <div className="absolute inset-0 rounded-full border-2 border-brand-gold/20 animate-ping animation-delay-200" />
+            <div className="absolute inset-0 rounded-full border-2 border-brand-gold/10 animate-ping animation-delay-400" />
+          </div>
           
           {/* Dynamic Icon based on state and device */}
           {isMobile && !isMinimized ? (
