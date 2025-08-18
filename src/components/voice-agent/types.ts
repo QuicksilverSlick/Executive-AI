@@ -12,29 +12,20 @@
  * - **Outcome:** Type-safe voice assistant with excellent IDE support
  */
 
-// Voice Status Types
-export type VoiceStatus = 'idle' | 'listening' | 'thinking' | 'speaking' | 'error';
+// Re-export core types to avoid duplication
+export type { 
+  VoiceStatus, 
+  VoiceMessage, 
+  VoiceAssistantError,
+  VoicePersonality,
+  SessionState,
+  ConnectionState,
+  VoiceAssistantConfig,
+  VoiceAssistantEvents
+} from './types/core';
 
-// Message Types
-export interface VoiceMessage {
-  id: string;
-  type: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: string;
-  metadata?: {
-    confidence?: number;
-    duration?: number;
-    audioUrl?: string;
-    isInterim?: boolean;
-  };
-}
-
-// Configuration Types
-export interface VoiceAssistantConfig {
-  apiEndpoint: string;
-  showTranscript: boolean;
-  enableKeyboard: boolean;
-  autoMinimize: boolean;
+// Extended Configuration Types (builds on core types)
+export interface ExtendedVoiceAssistantConfig extends VoiceAssistantConfig {
   waveformColors?: {
     idle: string;
     listening: string;
@@ -111,20 +102,8 @@ export interface AudioContextState {
 // Type alias for better compatibility
 export type TAudioContextState = AudioContextState;
 
-// Error Types
-export interface VoiceAssistantError {
-  code: string;
-  message: string;
-  type: 'permission' | 'network' | 'api' | 'speech' | 'audio' | 'unknown';
-  recoverable: boolean;
-  details?: any;
-}
-
-// Event Types
-export interface VoiceAssistantEvents {
-  onStatusChange?: (status: VoiceStatus) => void;
-  onMessage?: (message: VoiceMessage) => void;
-  onError?: (error: VoiceAssistantError) => void;
+// Extended Event Types (builds on core types)
+export interface ExtendedVoiceAssistantEvents extends VoiceAssistantEvents {
   onAudioData?: (data: AudioVisualizationData) => void;
   onPermissionChange?: (granted: boolean) => void;
   onSessionStart?: (sessionId: string) => void;
@@ -319,8 +298,7 @@ export const STATUS_MESSAGES = {
   error: 'Something went wrong'
 } as const;
 
-// Voice Personality Types
-export type VoicePersonality = 'sage' | 'mentor' | 'friend' | 'expert' | 'enthusiast';
+// Voice Personality Types (already exported from core)
 
 // WebRTC Types
 export interface WebRTCConfig {
@@ -338,8 +316,7 @@ export interface EnhancedVoiceAssistantConfig extends VoiceAssistantConfig {
   webrtcConfig?: WebRTCConfig;
 }
 
-// Connection State
-export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'failed';
+// Connection State (already exported from core)
 
 // Enhanced Hook Return Types
 export interface UseWebRTCVoiceAssistantReturn extends UseVoiceAssistantReturn {

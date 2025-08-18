@@ -15,9 +15,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useSessionTimer } from './useSessionTimer';
 import { useAutoTimeout } from './useAutoTimeout';
-import type { VoiceStatus } from '../types';
+import type { VoiceStatus, SessionState } from '../types/core';
 
-export type SessionState = 'idle' | 'active' | 'paused' | 'ending' | 'ended';
+// Remove duplicate type definition - now imported from core.ts
 
 export interface SessionStateConfig {
   /** Auto-start the session */

@@ -59,17 +59,19 @@ import type {
   VoiceAssistantConfig,
   VoiceAssistantError,
   VoiceAssistantEvents,
-  UseVoiceAssistantReturn
-} from '../types';
-import type { ConnectionState, ConversationState, ErrorInfo } from '../../../features/voice-agent/types';
+  ConnectionState
+} from '../types/core';
+import type { UseVoiceAssistantReturn } from '../types';
+import type { ConversationState, ErrorInfo } from '../../../features/voice-agent/types';
 
 export const useWebRTCVoiceAssistant = (
   config: Partial<VoiceAssistantConfig> = {},
-  events: VoiceAssistantEvents = {},
-  onActivityReset?: () => void // New parameter for activity tracking
+  events: VoiceAssistantEvents = {}
 ): UseVoiceAssistantReturn & { 
   sessionStats: any;
   isSessionRestored: boolean;
+  // Add explicit initialization method
+  initializeManually: () => Promise<void>;
 } => {
   // State
   const [isListening, setIsListening] = useState(false);
@@ -208,14 +210,6 @@ export const useWebRTCVoiceAssistant = (
         agent.on('reconnected', handleReconnected);
 
         voiceAgentRef.current = agent;
-        
-        // Register activity reset callback if provided
-        if (onActivityReset) {
-          const unsubscribe = agent.onActivityReset(onActivityReset);
-          
-          // Store unsubscribe function for cleanup
-          (agent as any)._activityUnsubscribe = unsubscribe;
-        }
         
         // Initialize the connection
         await agent.initialize();
@@ -530,7 +524,7 @@ export const useWebRTCVoiceAssistant = (
         recoverable: true
       });
     }
-  }, [isConnected, isListening, isMuted, handleError, initializeVoiceAgentManually]);
+  }, [isConnected, isListening, isMuted, handleError]);
 
   const stopListening = useCallback(() => {
     if (!voiceAgentRef.current || !isListening) return;
@@ -595,7 +589,7 @@ export const useWebRTCVoiceAssistant = (
     } catch (error) {
       console.error('[Hook] Failed to send message:', error);
     }
-  }, [isConnected, events, messages.length, initializeVoiceAgentManually]);
+  }, [isConnected, events, messages.length]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
@@ -818,12 +812,6 @@ export const useWebRTCVoiceAssistant = (
 
       voiceAgentRef.current = agent;
       
-      // Register activity reset callback if provided
-      if (onActivityReset) {
-        const unsubscribe = agent.onActivityReset(onActivityReset);
-        (agent as any)._activityUnsubscribe = unsubscribe;
-      }
-      
       // Initialize the connection
       await agent.initialize();
       
@@ -854,7 +842,7 @@ export const useWebRTCVoiceAssistant = (
     } finally {
       isInitializingRef.current = false;
     }
-  }, [isSessionLoaded, handleConnectionStateChange, handleConversationStateChange, handleUserTranscript, handleAssistantTranscript, handleSpeechStarted, handlePlaybackStarted, handlePlaybackFinished, handleError, handleVoiceActivity, handleAudioLevel, handleSessionRestored, handleSessionExpired, handleReconnecting, handleReconnected, onActivityReset, config.apiEndpoint]);
+  }, [isSessionLoaded, config.apiEndpoint]);
 
   return {
     // State
@@ -884,7 +872,7 @@ export const useWebRTCVoiceAssistant = (
     resetSession,
     
     // Manual initialization (CRITICAL FIX for auto-start issue)
-    initializeVoiceAgentManually,
+    initializeManually: initializeVoiceAgentManually,
     
     // Session control actions
     muteSession,

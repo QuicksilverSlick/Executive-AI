@@ -118,7 +118,7 @@ import { DEFAULT_SESSION_CONFIG } from '../../features/voice-agent/types';
 // Lazy import session modules to completely avoid circular dependency
 import type { VoicePreferencesManager, VoiceSessionPersistence } from '../../lib/voice-agent/session-persistence';
 import type { SessionRestoration as SessionRestorationType } from '../../lib/voice-agent/session-restoration';
-import type { VoiceStatus, VoiceMessage, VoiceAssistantConfig, VoicePersonality, ConnectionState } from './types';
+import type { VoiceStatus, VoiceMessage, VoiceAssistantConfig, VoicePersonality, ConnectionState } from './types/core';
 import './voice-assistant.css';
 
 interface WebRTCVoiceAssistantProps {
@@ -331,8 +331,9 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
     muteSession,
     unmuteSession,
     endSession,
-    isSessionMuted
-  } = useWebRTCVoiceAssistant(config, { onMessage, onStatusChange, onError }, sessionState.actions.resetActivity);
+    isSessionMuted,
+    initializeManually
+  } = useWebRTCVoiceAssistant(config, { onMessage, onStatusChange, onError });
 
   // Update session state callbacks with the actual hook functions after initialization
   useEffect(() => {
@@ -584,6 +585,9 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
           if (isConnected) {
             startListening();
             setShowKeyboardHint(true);
+          } else {
+            // Initialize if needed
+            initializeManually().catch(console.error);
           }
         }
       }
@@ -1330,6 +1334,9 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
                   sessionState.actions.start();
                   if (connectionState === 'connected') {
                     startListening();
+                  } else {
+                    // Initialize if needed
+                    initializeManually().catch(console.error);
                   }
                   triggerHapticFeedback('medium');
                 } else if (sessionState.state === 'active') {
