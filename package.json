@@ -96,6 +96,7 @@
     "astro-icon": "^1.1.5",
     "framer-motion": "^12.23.0",
     "lightningcss": "^1.30.1",
+    "lucide-react": "^0.539.0",
     "openai": "^4.67.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

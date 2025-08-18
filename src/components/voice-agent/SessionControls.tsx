@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import { Play, Pause, Square, Loader2 } from 'lucide-react';
 import type { SessionControls } from './hooks/useSessionState';
 
 interface SessionControlsProps {
@@ -126,13 +127,9 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
           title={isPaused ? 'Resume session (Space)' : 'Pause session (Space)'}
         >
           {isPaused ? (
-            <svg className="w-4 h-4 text-brand-charcoal dark:text-dark-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
-            </svg>
+            <Play className="w-4 h-4 text-brand-charcoal dark:text-dark-text" />
           ) : (
-            <svg className="w-4 h-4 text-brand-charcoal dark:text-dark-text" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
-            </svg>
+            <Pause className="w-4 h-4 text-brand-charcoal dark:text-dark-text" />
           )}
         </button>
 
@@ -152,13 +149,9 @@ export const SessionControls: React.FC<SessionControlsProps> = ({
           title="End session (Escape)"
         >
           {isEnding ? (
-            <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-            </svg>
+            <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 7.5A2.25 2.25 0 017.5 5.25h9a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25v-9z" />
-            </svg>
+            <Square className="w-4 h-4" />
           )}
         </button>
       </div>

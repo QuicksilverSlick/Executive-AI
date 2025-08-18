@@ -1152,10 +1152,6 @@ Please continue the conversation naturally from where it left off, maintaining a
         }
         break;
         
-      case 'output_audio_buffer.cleared':
-        // Clear response tracking when audio buffer is cleared
-        console.log('[WebRTC Voice Agent] Audio buffer cleared - response should be cancelled');
-        break;
         
       case 'error':
         // Reset response tracking on errors
