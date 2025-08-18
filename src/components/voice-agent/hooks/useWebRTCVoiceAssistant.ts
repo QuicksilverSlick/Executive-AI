@@ -16,11 +16,23 @@
  * DREAMFORGE AUDIT TRAIL
  *
  * ---
- * @revision: 1.1.0
+ * @revision: 2.0.0
  * @author: developer-agent
- * @cc-sessionId: cc-unknown-20250803-812
- * @timestamp: 2025-08-03T22:06:00Z
+ * @cc-sessionId: cc-unknown-20250818-599
+ * @timestamp: 2025-08-18T22:00:00Z
  * @reasoning:
+ * - **Objective:** Update hook interface to support API-compliant mute/unmute instead of pause/resume
+ * - **Strategy:** Add new muteSession/unmuteSession methods while keeping legacy methods for compatibility
+ * - **Outcome:** Hook now provides both new API-compliant methods and backward-compatible legacy methods
+ * 
+ * INTERFACE UPDATES:
+ * - ADDED: muteSession() - stops sending audio but keeps connection alive
+ * - ADDED: unmuteSession() - resumes sending audio
+ * - ADDED: isSessionMuted() - checks if microphone is muted
+ * - MAINTAINED: pauseSession/resumeSession/isSessionPaused with deprecation warnings
+ * - UPDATED: Mute state integration with new backend methods
+ * 
+ * Previous revision (1.1.0):
  * - **Objective:** Fix duplicate React keys error in message rendering
  * - **Strategy:** Implement unique key generation with counter and timestamp
  * - **Outcome:** Eliminated duplicate key errors by ensuring uniqueness across rapid message generation
@@ -565,15 +577,17 @@ export const useWebRTCVoiceAssistant = (
   }, [clearMessages]);
 
   // Session control methods
-  const pauseSession = useCallback(() => {
+  const muteSession = useCallback(() => {
     if (voiceAgentRef.current && isConnected) {
-      voiceAgentRef.current.pauseSession();
+      voiceAgentRef.current.muteSession();
+      setIsMuted(true);
     }
   }, [isConnected]);
 
-  const resumeSession = useCallback(() => {
+  const unmuteSession = useCallback(() => {
     if (voiceAgentRef.current && isConnected) {
-      voiceAgentRef.current.resumeSession();
+      voiceAgentRef.current.unmuteSession();
+      setIsMuted(false);
     }
   }, [isConnected]);
 
@@ -583,9 +597,25 @@ export const useWebRTCVoiceAssistant = (
     }
   }, []);
 
-  const isSessionPaused = useCallback(() => {
-    return voiceAgentRef.current ? voiceAgentRef.current.isSessionPaused() : false;
+  const isSessionMuted = useCallback(() => {
+    return voiceAgentRef.current ? voiceAgentRef.current.getSessionMutedState() : false;
   }, []);
+
+  // Legacy methods for backward compatibility
+  const pauseSession = useCallback(() => {
+    console.warn('pauseSession is deprecated, use muteSession instead');
+    muteSession();
+  }, [muteSession]);
+
+  const resumeSession = useCallback(() => {
+    console.warn('resumeSession is deprecated, use unmuteSession instead');
+    unmuteSession();
+  }, [unmuteSession]);
+
+  const isSessionPaused = useCallback(() => {
+    console.warn('isSessionPaused is deprecated, use isSessionMuted instead');
+    return isSessionMuted();
+  }, [isSessionMuted]);
 
   // Enhanced voice controls
   const changeVoice = useCallback((voice: string) => {
@@ -707,9 +737,14 @@ export const useWebRTCVoiceAssistant = (
     resetSession,
     
     // Session control actions
+    muteSession,
+    unmuteSession,
+    endSession,
+    isSessionMuted,
+    
+    // Legacy session control actions (deprecated)
     pauseSession,
     resumeSession,
-    endSession,
     isSessionPaused,
     
     // Enhanced controls

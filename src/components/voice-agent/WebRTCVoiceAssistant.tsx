@@ -16,11 +16,24 @@
  * DREAMFORGE AUDIT TRAIL
  *
  * ---
- * @revision: 3.1.0
+ * @revision: 4.0.0
  * @author: developer-agent
- * @cc-sessionId: cc-unknown-20250818-685
- * @timestamp: 2025-08-18T12:40:00Z
+ * @cc-sessionId: cc-unknown-20250818-599
+ * @timestamp: 2025-08-18T22:00:00Z
  * @reasoning:
+ * - **Objective:** Implement OpenAI Realtime API compliant control flow by removing unsupported pause/resume
+ * - **Strategy:** Replace pause/resume with proper start/stop/mute controls as per API documentation
+ * - **Outcome:** Simplified control flow that matches OpenAI API capabilities: Mic → Stop, with mute/unmute functionality
+ * 
+ * CONTROL FLOW CHANGES:
+ * - REMOVED: Pause/resume functionality (not supported by OpenAI Realtime API)
+ * - IMPLEMENTED: Start session (Mic button) → Stop session (Stop button)
+ * - ADDED: Mute/unmute microphone functionality (stops sending audio to API but keeps connection)
+ * - UPDATED: All UI controls, keyboard shortcuts, and state management to use new flow
+ * - SIMPLIFIED: Mobile FAB now shows Mic icon → Square (stop) icon
+ * - KEYBOARD: Space = start/stop session, Ctrl+M = mute/unmute, Esc = stop session
+ * 
+ * Previous revision (3.1.0):
  * - **Objective:** Fix critical production runtime error "Cannot access 'M' before initialization"
  * - **Strategy:** Replace dynamic imports with static imports to resolve circular dependency
  * - **Outcome:** Eliminated circular dependency between session-persistence module and WebRTCVoiceAssistant
@@ -305,10 +318,10 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
     audioLevel,
     sessionStats,
     isSessionRestored,
-    pauseSession,
-    resumeSession,
+    muteSession,
+    unmuteSession,
     endSession,
-    isSessionPaused
+    isSessionMuted
   } = useWebRTCVoiceAssistant(config, { onMessage, onStatusChange, onError }, sessionState.actions.resetActivity);
 
   // Update session state callbacks with the actual hook functions after initialization
@@ -318,16 +331,6 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
       onSessionStart: () => {
         console.log('[Voice Assistant] Session started');
         triggerHapticFeedback('medium');
-      },
-      onSessionPause: () => {
-        console.log('[Voice Assistant] Session paused');
-        pauseSession();
-        triggerHapticFeedback('light');
-      },
-      onSessionResume: () => {
-        console.log('[Voice Assistant] Session resumed');
-        resumeSession();
-        triggerHapticFeedback('light');
       },
       onSessionEnd: () => {
         console.log('[Voice Assistant] Session ended');
@@ -348,7 +351,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
     
     // Note: In a real implementation, we would need to update the sessionState callbacks
     // For now, we'll use the functions directly in the event handlers
-  }, [pauseSession, resumeSession, endSession, triggerHapticFeedback]);
+  }, [endSession, triggerHapticFeedback]);
 
   // Derive connection state from existing state with better logging
   let connectionState: 'connected' | 'connecting' | 'disconnected' = 
@@ -552,16 +555,16 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
     if (!enableKeyboardShortcut) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Space bar for push-to-talk toggle or pause/resume (but not when typing in text input)
+      // Space bar for start/stop session (but not when typing in text input)
       if (event.code === 'Space' && !event.target?.matches?.('input, textarea, [contenteditable]')) {
         event.preventDefault();
         
-        // If session is active, handle pause/resume
+        // If session is active, stop it
         if (sessionState.state === 'active') {
-          sessionState.actions.pause();
-        } else if (sessionState.state === 'paused') {
-          sessionState.actions.resume();
-        } else if (!isMuted && sessionState.state === 'idle') {
+          sessionState.actions.end();
+          endSession();
+          setIsMinimized(true);
+        } else if (sessionState.state === 'idle') {
           // Start session and listening if idle
           sessionState.actions.start();
           if (isConnected) {
@@ -574,8 +577,10 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
       // Escape to end session or minimize
       if (event.code === 'Escape') {
         event.preventDefault();
-        if (sessionState.state === 'active' || sessionState.state === 'paused') {
+        if (sessionState.state === 'active') {
           sessionState.actions.end();
+          endSession();
+          setIsMinimized(true);
         } else if (!isMinimized) {
           setIsMinimized(true);
         }
@@ -584,7 +589,13 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
       // Ctrl/Cmd + M to toggle mute
       if ((event.ctrlKey || event.metaKey) && event.code === 'KeyM') {
         event.preventDefault();
-        toggleMute();
+        if (sessionState.state === 'active') {
+          if (isMuted) {
+            unmuteSession();
+          } else {
+            muteSession();
+          }
+        }
       }
     };
 
@@ -593,7 +604,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [enableKeyboardShortcut, sessionState, isListening, isMuted, isMinimized, isConnected, startListening, stopListening, toggleMute]);
+  }, [enableKeyboardShortcut, sessionState, isListening, isMuted, isMinimized, isConnected, startListening, stopListening, muteSession, unmuteSession, endSession]);
 
   // Handle click outside to close
   useEffect(() => {
@@ -726,7 +737,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
     setIsLongPressing(true);
     longPressTimerRef.current = setTimeout(() => {
       // Long press action - stop session on mobile
-      if (isMobile && !isMinimized && (sessionState.state === 'active' || sessionState.state === 'paused')) {
+      if (isMobile && !isMinimized && sessionState.state === 'active') {
         // End session and close panel
         sessionState.actions.end();
         endSession();
@@ -981,29 +992,41 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
                   </div>
                 </div>
 
-                {/* Session Controls - Show Resume/Stop when paused */}
-                {sessionState.state === 'paused' && (
+                {/* Session Controls - Show when session is active */}
+                {sessionState.state === 'active' && (
                   <div className={`flex items-center justify-center space-x-3 p-3 rounded-xl bg-brand-navy/10 dark:bg-dark-gold/10 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20 ${
                     isMobile ? 'flex-col space-y-2 space-x-0' : ''
                   }`}>
                     <span className="text-sm font-medium text-brand-charcoal dark:text-dark-text">
-                      {isMobile ? 'Session Paused' : 'Session Paused'}
+                      {isMobile ? 'Session Active' : 'Session Active'}
                     </span>
                     <div className={`flex items-center space-x-2 ${isMobile ? 'w-full' : ''}`}>
                       <button
                         onClick={() => {
-                          sessionState.actions.resume();
-                          resumeSession();
+                          if (isMuted) {
+                            unmuteSession();
+                          } else {
+                            muteSession();
+                          }
                         }}
                         className={`${
                           isMobile 
                             ? 'flex-1 py-2 px-4 rounded-lg bg-brand-gold hover:bg-brand-gold-warm text-white font-medium' 
                             : 'px-3 py-1 rounded-lg bg-brand-gold/20 text-brand-gold hover:bg-brand-gold/30 transition-colors duration-200 text-sm font-medium'
                         }`}
-                        aria-label="Resume session"
+                        aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
                       >
-                        <Play className={`${isMobile ? 'w-4 h-4 mr-2' : 'w-3 h-3 mr-1'} inline`} />
-                        Resume
+                        {isMuted ? (
+                          <>
+                            <VolumeX className={`${isMobile ? 'w-4 h-4 mr-2' : 'w-3 h-3 mr-1'} inline`} />
+                            Unmute
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 className={`${isMobile ? 'w-4 h-4 mr-2' : 'w-3 h-3 mr-1'} inline`} />
+                            Mute
+                          </>
+                        )}
                       </button>
                       <button
                         onClick={() => {
@@ -1181,7 +1204,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
                       {/* Helper text */}
                       <div className="flex items-center justify-between mt-2">
                         <p className="text-xs text-brand-charcoal/60 dark:text-dark-text-muted">
-                          Press Enter to send • {enableKeyboardShortcut ? 'Space to pause/resume • Escape to end session' : 'Click mic for voice'}
+                          Press Enter to send • {enableKeyboardShortcut ? 'Space to start/stop • Ctrl+M to mute' : 'Click mic for voice'}
                         </p>
                         {isSendingText && (
                           <span className="text-xs text-brand-gold animate-pulse">Sending...</span>
@@ -1283,7 +1306,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
                 // Open panel
                 handleTogglePanel();
               } else {
-                // Implement proper control flow: Mic → Pause → Resume/Stop
+                // Implement proper control flow: Mic (Start) → Stop
                 if (sessionState.state === 'idle') {
                   // Start session and begin listening (Mic button)
                   sessionState.actions.start();
@@ -1292,15 +1315,11 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
                   }
                   triggerHapticFeedback('medium');
                 } else if (sessionState.state === 'active') {
-                  // Pause the session (Pause button)
-                  sessionState.actions.pause();
-                  pauseSession();
-                  triggerHapticFeedback('light');
-                } else if (sessionState.state === 'paused') {
-                  // Resume the session (Resume button) 
-                  sessionState.actions.resume();
-                  resumeSession();
-                  triggerHapticFeedback('light');
+                  // Stop the session (Stop button)
+                  sessionState.actions.end();
+                  endSession();
+                  setIsMinimized(true);
+                  triggerHapticFeedback('heavy');
                 }
               }
             } else {
@@ -1346,18 +1365,16 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
           }}
           aria-label={
             isMobile && !isMinimized ? (
-              sessionState.state === 'paused' ? 'Resume session - long press to end' :
-              sessionState.state === 'active' ? 'Pause session - long press to end' : 
-              'Start voice session - long press to end'
+              sessionState.state === 'active' ? 'Stop voice session' : 
+              'Start voice session'
             ) : (
               isMinimized ? 'Open voice assistant' : 'Close voice assistant'
             )
           }
           title={
             isMobile && !isMinimized ? (
-              sessionState.state === 'paused' ? 'Tap: Resume • Long press: End' :
-              sessionState.state === 'active' ? 'Tap: Pause • Long press: End' : 
-              'Tap: Start • Long press: End'
+              sessionState.state === 'active' ? 'Tap: Stop • Long press: Stop' : 
+              'Tap: Start • Long press: Stop (if active)'
             ) : (
               isMinimized ? 'Open voice assistant' : 'Close voice assistant'
             )
@@ -1377,11 +1394,9 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
           
           {/* Dynamic Icon based on state and device */}
           {isMobile && !isMinimized ? (
-            // Mobile voice control icon - proper state machine
-            sessionState.state === 'paused' ? (
-              <Play className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
-            ) : sessionState.state === 'active' ? (
-              <Pause className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
+            // Mobile voice control icon - simplified state machine
+            sessionState.state === 'active' ? (
+              <Square className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
             ) : (
               <Mic className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
             )
@@ -1400,11 +1415,9 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
           role="tooltip"
         >
           {sessionState.state === 'active' ? (
-            <>Press <kbd className="px-1 py-0.5 bg-brand-navy dark:bg-dark-surface-3 rounded text-xs">Space</kbd> to pause • <kbd className="px-1 py-0.5 bg-brand-navy dark:bg-dark-surface-3 rounded text-xs">Esc</kbd> to end</>
-          ) : sessionState.state === 'paused' ? (
-            <>Press <kbd className="px-1 py-0.5 bg-brand-navy dark:bg-dark-surface-3 rounded text-xs">Space</kbd> to resume • <kbd className="px-1 py-0.5 bg-brand-navy dark:bg-dark-surface-3 rounded text-xs">Esc</kbd> to end</>
+            <>Press <kbd className="px-1 py-0.5 bg-brand-navy dark:bg-dark-surface-3 rounded text-xs">Space</kbd> to stop • <kbd className="px-1 py-0.5 bg-brand-navy dark:bg-dark-surface-3 rounded text-xs">Ctrl+M</kbd> to {isMuted ? 'unmute' : 'mute'}</>
           ) : (
-            <>Press <kbd className="px-1 py-0.5 bg-brand-navy dark:bg-dark-surface-3 rounded text-xs">Space</kbd> to {isListening ? 'stop' : 'start'} talking</>
+            <>Press <kbd className="px-1 py-0.5 bg-brand-navy dark:bg-dark-surface-3 rounded text-xs">Space</kbd> to start session</>
           )}
         </div>
       )}
