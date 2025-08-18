@@ -269,7 +269,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
       },
       onSessionEnd: () => {
         console.log('[Voice Assistant] Session ended');
-        // endSession(); // Move this to after hook initialization
+        // endSession(); // This will be handled after hook initialization
         setIsMinimized(true);
         triggerHapticFeedback('heavy');
       },
@@ -340,7 +340,8 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
         triggerHapticFeedback('medium');
       },
       onTimeout: () => {
-        console.log('[Voice Assistant] Session timed out');
+        console.log('[Voice Assistant] Session timed out - calling endSession()');
+        endSession();
         triggerHapticFeedback('heavy');
       }
     };
@@ -726,12 +727,14 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
     longPressTimerRef.current = setTimeout(() => {
       // Long press action - stop session on mobile
       if (isMobile && !isMinimized && (sessionState.state === 'active' || sessionState.state === 'paused')) {
+        // End session and close panel
         sessionState.actions.end();
+        endSession();
         setIsMinimized(true);
         triggerHapticFeedback('heavy');
       }
     }, 800); // 800ms for long press
-  }, [isMobile, isMinimized, sessionState, triggerHapticFeedback]);
+  }, [isMobile, isMinimized, sessionState, endSession, triggerHapticFeedback]);
 
   const handleLongPressEnd = useCallback(() => {
     setIsLongPressing(false);
@@ -978,19 +981,48 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
                   </div>
                 </div>
 
-                {/* Session Controls - Only show when active */}
-                {sessionState.state !== 'idle' && sessionState.state !== 'ended' && (
-                  <SessionControls
-                    session={sessionState}
-                    isVoiceActive={isListening || isSpeaking}
-                    theme={theme}
-                    accessibilityMode={accessibilityMode}
-                    onSessionEnd={() => {
-                      sessionState.actions.end();
-                      setIsMinimized(true);
-                    }}
-                    showTimeoutWarning={true}
-                  />
+                {/* Session Controls - Show Resume/Stop when paused */}
+                {sessionState.state === 'paused' && (
+                  <div className={`flex items-center justify-center space-x-3 p-3 rounded-xl bg-brand-navy/10 dark:bg-dark-gold/10 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20 ${
+                    isMobile ? 'flex-col space-y-2 space-x-0' : ''
+                  }`}>
+                    <span className="text-sm font-medium text-brand-charcoal dark:text-dark-text">
+                      {isMobile ? 'Session Paused' : 'Session Paused'}
+                    </span>
+                    <div className={`flex items-center space-x-2 ${isMobile ? 'w-full' : ''}`}>
+                      <button
+                        onClick={() => {
+                          sessionState.actions.resume();
+                          resumeSession();
+                        }}
+                        className={`${
+                          isMobile 
+                            ? 'flex-1 py-2 px-4 rounded-lg bg-brand-gold hover:bg-brand-gold-warm text-white font-medium' 
+                            : 'px-3 py-1 rounded-lg bg-brand-gold/20 text-brand-gold hover:bg-brand-gold/30 transition-colors duration-200 text-sm font-medium'
+                        }`}
+                        aria-label="Resume session"
+                      >
+                        <Play className={`${isMobile ? 'w-4 h-4 mr-2' : 'w-3 h-3 mr-1'} inline`} />
+                        Resume
+                      </button>
+                      <button
+                        onClick={() => {
+                          sessionState.actions.end();
+                          endSession();
+                          setIsMinimized(true);
+                        }}
+                        className={`${
+                          isMobile 
+                            ? 'flex-1 py-2 px-4 rounded-lg bg-voice-error hover:bg-red-600 text-white font-medium' 
+                            : 'px-3 py-1 rounded-lg bg-voice-error/20 text-voice-error hover:bg-voice-error/30 transition-colors duration-200 text-sm font-medium'
+                        }`}
+                        aria-label="Stop session"
+                      >
+                        <Square className={`${isMobile ? 'w-4 h-4 mr-2' : 'w-3 h-3 mr-1'} inline`} />
+                        Stop
+                      </button>
+                    </div>
+                  </div>
                 )}
 
                 {/* Waveform Visualizer */}
@@ -1251,17 +1283,25 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
                 // Open panel
                 handleTogglePanel();
               } else {
-                // Voice control: start/pause/stop
-                sessionState.actions.resetActivity();
+                // Implement proper control flow: Mic → Pause → Resume/Stop
                 if (sessionState.state === 'idle') {
+                  // Start session and begin listening (Mic button)
                   sessionState.actions.start();
+                  if (connectionState === 'connected') {
+                    startListening();
+                  }
+                  triggerHapticFeedback('medium');
+                } else if (sessionState.state === 'active') {
+                  // Pause the session (Pause button)
+                  sessionState.actions.pause();
+                  pauseSession();
+                  triggerHapticFeedback('light');
+                } else if (sessionState.state === 'paused') {
+                  // Resume the session (Resume button) 
+                  sessionState.actions.resume();
+                  resumeSession();
+                  triggerHapticFeedback('light');
                 }
-                if (isListening) {
-                  stopListening();
-                } else if (!isMuted && connectionState === 'connected') {
-                  startListening();
-                }
-                triggerHapticFeedback('medium');
               }
             } else {
               // Desktop behavior: just toggle panel
@@ -1306,9 +1346,9 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
           }}
           aria-label={
             isMobile && !isMinimized ? (
-              sessionState.state === 'paused' ? 'Session paused - tap to resume, long press to end' :
-              isListening ? 'Stop recording - long press to end session' : 
-              'Start recording - long press to end session'
+              sessionState.state === 'paused' ? 'Resume session - long press to end' :
+              sessionState.state === 'active' ? 'Pause session - long press to end' : 
+              'Start voice session - long press to end'
             ) : (
               isMinimized ? 'Open voice assistant' : 'Close voice assistant'
             )
@@ -1316,7 +1356,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
           title={
             isMobile && !isMinimized ? (
               sessionState.state === 'paused' ? 'Tap: Resume • Long press: End' :
-              isListening ? 'Tap: Stop • Long press: End' : 
+              sessionState.state === 'active' ? 'Tap: Pause • Long press: End' : 
               'Tap: Start • Long press: End'
             ) : (
               isMinimized ? 'Open voice assistant' : 'Close voice assistant'
@@ -1337,11 +1377,11 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
           
           {/* Dynamic Icon based on state and device */}
           {isMobile && !isMinimized ? (
-            // Mobile voice control icon
+            // Mobile voice control icon - proper state machine
             sessionState.state === 'paused' ? (
               <Play className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
-            ) : isListening ? (
-              <Square className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
+            ) : sessionState.state === 'active' ? (
+              <Pause className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
             ) : (
               <Mic className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
             )
