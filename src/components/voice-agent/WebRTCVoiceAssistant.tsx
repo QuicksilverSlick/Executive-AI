@@ -784,11 +784,11 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
       >
         {/* Unified Panel - Same for Mobile and Desktop */}
         <div 
-          className={`voice-panel-container mb-4 w-full max-w-sm md:max-w-md lg:max-w-lg xl:w-96 rounded-3xl shadow-2xl transition-all duration-500 transform-gpu voice-responsive-container ${
+          className={`voice-panel-container mb-4 w-full max-w-sm md:max-w-md lg:max-w-lg xl:w-96 rounded-xl shadow-2xl transition-all duration-500 transform-gpu voice-responsive-container ${
             isMobile ? (
               isMinimized 
                 ? 'opacity-0 scale-75 translate-y-4 pointer-events-none' 
-                : 'opacity-100 scale-100 translate-y-0 pointer-events-auto fixed inset-4 max-w-none w-auto z-[1001] bg-black/30 backdrop-blur-sm flex items-center justify-center'
+                : 'opacity-100 scale-100 translate-y-0 pointer-events-auto fixed inset-0 max-w-none w-full h-full z-[1001] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4'
             ) : (
               isMinimized 
                 ? 'opacity-0 scale-75 translate-y-4 pointer-events-none' 
@@ -811,7 +811,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
         >
           {/* Mobile Content Wrapper */}
           {isMobile && !isMinimized && (
-            <div className="w-full max-w-sm mx-auto rounded-3xl overflow-hidden" style={getGlassStyles()}>
+            <div className="w-full max-w-sm mx-auto rounded-xl overflow-hidden" style={getGlassStyles()}>
               <div className="p-6 space-y-6">
                 {/* Header - Identical to Desktop */}
                 <div className="flex items-center justify-between border-b border-brand-navy/20 dark:border-dark-gold/20 pb-6">
@@ -995,7 +995,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
                                 : "Disconnected"
                             }
                             disabled={!isConnected || isSendingText}
-                            className="w-full px-4 py-3 pr-12 bg-brand-pearl/50 dark:bg-dark-surface-2 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20 rounded-3xl text-sm text-brand-charcoal dark:text-dark-text placeholder-brand-charcoal/50 dark:placeholder-dark-text-muted focus:outline-none focus:ring-2 focus:ring-brand-gold/50 focus:border-brand-gold/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 voice-touch-target"
+                            className="w-full px-4 py-3 pr-12 bg-brand-pearl/50 dark:bg-dark-surface-2 backdrop-blur-sm border border-brand-navy/20 dark:border-dark-gold/20 rounded-xl text-sm text-brand-charcoal dark:text-dark-text placeholder-brand-charcoal/50 dark:placeholder-dark-text-muted focus:outline-none focus:ring-2 focus:ring-brand-gold/50 focus:border-brand-gold/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 voice-touch-target"
                             aria-label="Type a message"
                             style={{ fontSize: '16px' }} // Prevent zoom on iOS
                           />
@@ -1089,10 +1089,10 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
               </div>
 
               {/* Footer with Full-width CTA */}
-              <div className="p-4 border-t border-brand-navy/20 dark:border-dark-gold/20 bg-brand-pearl/5 dark:bg-dark-surface/5 rounded-b-3xl backdrop-blur-sm">
+              <div className="p-4 border-t border-brand-navy/20 dark:border-dark-gold/20 bg-brand-pearl/5 dark:bg-dark-surface/5 rounded-b-xl backdrop-blur-sm">
                 <button
                   onClick={handleCTAClick}
-                  className="w-full bg-gradient-to-r from-brand-navy to-brand-gold text-white font-semibold py-3 px-4 rounded-3xl hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-brand-gold/30"
+                  className="w-full bg-gradient-to-r from-brand-navy to-brand-gold text-white font-semibold py-3 px-4 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-brand-gold/30"
                 >
                   Book Your 15-Minute Discovery Call
                 </button>
@@ -1446,10 +1446,10 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
               )}
 
               {/* Footer with CTA */}
-              <div className="relative z-10 p-4 border-t border-brand-navy/20 dark:border-dark-gold/20 bg-brand-pearl/5 dark:bg-dark-surface/5 rounded-b-3xl backdrop-blur-sm">
+              <div className="relative z-10 p-4 border-t border-brand-navy/20 dark:border-dark-gold/20 bg-brand-pearl/5 dark:bg-dark-surface/5 rounded-b-xl backdrop-blur-sm">
                 <button
                   onClick={handleCTAClick}
-                  className="w-full bg-gradient-to-r from-brand-navy to-brand-gold text-white font-semibold py-3 px-4 rounded-3xl hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-brand-gold/30"
+                  className="w-full bg-gradient-to-r from-brand-navy to-brand-gold text-white font-semibold py-3 px-4 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-brand-gold/30"
                 >
                   Book Your 15-Minute Discovery Call
                 </button>

@@ -438,6 +438,8 @@
     right: max(20px, env(safe-area-inset-right, 20px)) !important;
     left: auto !important;
     top: auto !important;
+    /* Ensure it's positioned correctly for mobile */
+    transform: translateZ(0);
   }
   
   /* Mobile touch targets */
@@ -815,7 +817,7 @@
     z-index: 1001 !important;
     
     /* Full screen backdrop with blur */
-    background: rgba(0, 0, 0, 0.3) !important;
+    background: rgba(0, 0, 0, 0.4) !important;
     backdrop-filter: blur(4px) !important;
     
     /* Center the content */
@@ -823,6 +825,9 @@
     align-items: center !important;
     justify-content: center !important;
     padding: 1rem !important;
+    
+    /* Ensure proper centering */
+    box-sizing: border-box;
   }
   
   /* The actual panel content */
@@ -831,7 +836,10 @@
     max-width: 400px !important;
     max-height: calc(100vh - 2rem) !important;
     overflow-y: auto !important;
-    border-radius: 1.5rem !important;
+    border-radius: 0.75rem !important;
+    /* Ensure it's centered and properly sized */
+    flex-shrink: 1;
+    min-height: 0;
   }
 
   .voice-mobile-modal {

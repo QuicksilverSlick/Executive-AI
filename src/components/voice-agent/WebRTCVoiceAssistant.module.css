@@ -123,7 +123,7 @@
     /* Add backdrop effect */
     box-shadow: 
       0 25px 50px -12px rgba(0, 0, 0, 0.4),
-      0 0 0 9999px rgba(0, 0, 0, 0.3);
+      0 0 0 100vmax rgba(0, 0, 0, 0.4);
   }
   
   /* Container adjustments for mobile */
