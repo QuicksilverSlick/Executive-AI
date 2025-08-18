@@ -16,11 +16,22 @@
  * DREAMFORGE AUDIT TRAIL
  *
  * ---
- * @revision: 3.0.0
+ * @revision: 3.1.0
  * @author: developer-agent
- * @cc-sessionId: cc-unknown-20250818-466
- * @timestamp: 2025-08-18T12:30:00Z
+ * @cc-sessionId: cc-unknown-20250818-685
+ * @timestamp: 2025-08-18T12:40:00Z
  * @reasoning:
+ * - **Objective:** Fix critical production runtime error "Cannot access 'M' before initialization"
+ * - **Strategy:** Replace dynamic imports with static imports to resolve circular dependency
+ * - **Outcome:** Eliminated circular dependency between session-persistence module and WebRTCVoiceAssistant
+ * 
+ * CRITICAL BUG FIX:
+ * - FIXED: Runtime error "Cannot access 'M' before initialization" in production build
+ * - IDENTIFIED: Circular dependency caused by mixing dynamic and static imports of session-persistence
+ * - RESOLVED: Changed dynamic import() to static import at module level
+ * - VERIFIED: Production build completes without warnings, dev server works correctly
+ * 
+ * Previous revision (3.0.0):
  * - **Objective:** Complete mobile UI redesign to perfectly match desktop version as specified in requirements
  * - **Strategy:** Unified UI component that renders identically on mobile and desktop, single FAB control for mobile
  * - **Outcome:** Mobile interface that mirrors desktop exactly with optimized touch controls and single action button
@@ -82,6 +93,9 @@ import { SessionControls } from './SessionControls';
 import SessionTimeoutWarning from './SessionTimeoutWarning';
 import { templatizeInstructions } from '../../lib/voice-agent/utils';
 import { DEFAULT_SESSION_CONFIG } from '../../features/voice-agent/types';
+// Import session modules statically to avoid circular dependency with dynamic imports
+import { VoicePreferencesManager, sessionPersistence } from '../../lib/voice-agent/session-persistence';
+import { SessionRestoration } from '../../lib/voice-agent/session-restoration';
 import type { VoiceStatus, VoiceMessage, VoiceAssistantConfig, VoicePersonality, ConnectionState } from './types';
 import './voice-assistant.css';
 
@@ -158,23 +172,21 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
     businessIndustry: 'your industry'
   });
 
-  // Load browser-only modules after hydration
+  // Initialize session modules after hydration - using static imports to avoid circular dependency
   useEffect(() => {
     if (isClient && !modules) {
-      Promise.all([
-        import('../../lib/voice-agent/session-persistence'),
-        import('../../lib/voice-agent/session-restoration')
-      ]).then(([persistenceModule, restorationModule]) => {
-        const loadedModules = {
-          VoicePreferencesManager: persistenceModule.VoicePreferencesManager,
-          sessionPersistence: persistenceModule.sessionPersistence,
-          SessionRestoration: restorationModule.SessionRestoration
-        };
-        setModules(loadedModules);
-        
-        // Load user data from session persistence
-        if (loadedModules.sessionPersistence) {
-          const storedData = loadedModules.sessionPersistence.getUserData() || {};
+      // Use the statically imported modules - no dynamic imports needed
+      const loadedModules = {
+        VoicePreferencesManager,
+        sessionPersistence,
+        SessionRestoration
+      };
+      setModules(loadedModules);
+      
+      // Load user data from session persistence
+      if (sessionPersistence) {
+        try {
+          const storedData = sessionPersistence.getUserData() || {};
           if (storedData) {
             setUserData({
               ownerfirstName: storedData.name || 'Valued Customer',
@@ -182,10 +194,10 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
               businessIndustry: storedData.industry || 'your industry'
             });
           }
+        } catch (err) {
+          console.error('[WebRTC Voice] Failed to load user data:', err);
         }
-      }).catch(err => {
-        console.error('[WebRTC Voice] Failed to load session modules:', err);
-      });
+      }
     }
   }, [isClient, modules]);
 
