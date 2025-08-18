@@ -16,14 +16,22 @@
  * DREAMFORGE AUDIT TRAIL
  *
  * ---
- * @revision: 2.0.0
+ * @revision: 3.0.0
  * @author: developer-agent
- * @cc-sessionId: cc-unknown-20250818-599
- * @timestamp: 2025-08-18T22:00:00Z
+ * @cc-sessionId: cc-unknown-20250818-919
+ * @timestamp: 2025-08-18T23:30:00Z
  * @reasoning:
- * - **Objective:** Update hook interface to support API-compliant mute/unmute instead of pause/resume
- * - **Strategy:** Add new muteSession/unmuteSession methods while keeping legacy methods for compatibility
- * - **Outcome:** Hook now provides both new API-compliant methods and backward-compatible legacy methods
+ * - **Objective:** CRITICAL FIX: Prevent auto-start API usage by moving WebRTC initialization to manual user interaction
+ * - **Strategy:** Disable automatic initialization in useEffect and add manual initializeVoiceAgentManually method
+ * - **Outcome:** WebRTC agent only initializes when user explicitly starts voice interaction, preventing unnecessary API costs
+ * 
+ * CRITICAL FIXES IMPLEMENTED:
+ * - DISABLED: Automatic WebRTC agent initialization in useEffect to prevent auto-start
+ * - ADDED: Manual initialization method initializeVoiceAgentManually() called on first user interaction
+ * - UPDATED: startListening() and sendMessage() to trigger manual initialization when needed
+ * - SECURED: No WebSocket connections or API calls until user explicitly uses voice features
+ * 
+ * Previous revision (2.0.0):
  * 
  * INTERFACE UPDATES:
  * - ADDED: muteSession() - stops sending audio but keeps connection alive
@@ -120,8 +128,13 @@ export const useWebRTCVoiceAssistant = (
   }, [isConnected]);
 
   // Initialize WebRTC Voice Agent (wait for session to load first)
+  // CRITICAL FIX: Only initialize when user explicitly starts - no auto-connection
   useEffect(() => {
     const initializeVoiceAgent = async () => {
+      // FIXED: Only initialize on user interaction, not automatically
+      console.log('[WebRTC Hook] WebRTC agent initialization moved to user interaction - preventing auto-start');
+      return;
+
       // Wait for session to be loaded first
       if (!isSessionLoaded) {
         console.log('[WebRTC Hook] Waiting for session to load before initializing voice agent');
@@ -483,6 +496,18 @@ export const useWebRTCVoiceAssistant = (
 
   // Public API
   const startListening = useCallback(async () => {
+    // CRITICAL FIX: Initialize voice agent first if needed (on first use)
+    if (!voiceAgentRef.current && !isInitializingRef.current) {
+      console.log('[WebRTC Hook] Initializing voice agent on first use');
+      await initializeVoiceAgentManually();
+      
+      // Wait a moment for initialization to complete
+      if (!voiceAgentRef.current) {
+        console.warn('[WebRTC Hook] Voice agent initialization failed, cannot start listening');
+        return;
+      }
+    }
+    
     if (!voiceAgentRef.current || !isConnected || isListening || isMuted) {
       console.warn('Cannot start listening:', { 
         hasAgent: !!voiceAgentRef.current, 
@@ -505,7 +530,7 @@ export const useWebRTCVoiceAssistant = (
         recoverable: true
       });
     }
-  }, [isConnected, isListening, isMuted, handleError]);
+  }, [isConnected, isListening, isMuted, handleError, initializeVoiceAgentManually]);
 
   const stopListening = useCallback(() => {
     if (!voiceAgentRef.current || !isListening) return;
@@ -544,6 +569,18 @@ export const useWebRTCVoiceAssistant = (
       currentMessages: messages.length
     });
     
+    // CRITICAL FIX: Initialize voice agent first if needed (on first message send)
+    if (!voiceAgentRef.current && !isInitializingRef.current) {
+      console.log('[WebRTC Hook] Initializing voice agent on first message send');
+      await initializeVoiceAgentManually();
+      
+      // Wait a moment for initialization to complete
+      if (!voiceAgentRef.current) {
+        console.warn('[WebRTC Hook] Voice agent initialization failed, cannot send message');
+        return;
+      }
+    }
+    
     if (!voiceAgentRef.current || !isConnected) {
       console.warn('[Hook] Cannot send message - no agent or not connected');
       return;
@@ -558,7 +595,7 @@ export const useWebRTCVoiceAssistant = (
     } catch (error) {
       console.error('[Hook] Failed to send message:', error);
     }
-  }, [isConnected, events, messages.length]);
+  }, [isConnected, events, messages.length, initializeVoiceAgentManually]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
@@ -709,6 +746,116 @@ export const useWebRTCVoiceAssistant = (
     }, 2000);
   }, []);
 
+  // CRITICAL FIX: Manual initialization method - only when user wants to use voice
+  const initializeVoiceAgentManually = useCallback(async () => {
+    // Skip if already initialized or initializing
+    if (isInitializingRef.current || isInitializedRef.current || voiceAgentRef.current) {
+      console.log('[WebRTC Hook] Voice agent already initialized or initializing');
+      return;
+    }
+    
+    // Wait for session to be loaded first
+    if (!isSessionLoaded) {
+      console.log('[WebRTC Hook] Waiting for session to load before manual initialization');
+      return;
+    }
+    
+    // Prevent infinite recursion with max attempts
+    if (initializationAttempts.current >= 3) {
+      console.error('[WebRTC Hook] Max initialization attempts reached, stopping');
+      setError({
+        code: 'MAX_INIT_ATTEMPTS',
+        message: 'Failed to initialize after 3 attempts',
+        type: 'connection',
+        recoverable: false,
+        details: 'Maximum initialization attempts exceeded'
+      });
+      return;
+    }
+    
+    isInitializingRef.current = true;
+    initializationAttempts.current++;
+    
+    try {
+      console.log(`[WebRTC Hook] Manually initializing WebRTC Voice Agent (attempt ${initializationAttempts.current})...`);
+      
+      // Create the voice agent instance
+      const apiEndpoint = (() => {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          return `${window.location.protocol}//${window.location.host}/api/voice-agent`;
+        }
+        return config.apiEndpoint || '/api/voice-agent';
+      })();
+      
+      const agent = createWebRTCVoiceAgent({
+        apiEndpoint,
+        maxReconnectAttempts: 3,
+        reconnectDelay: 1000,
+        audioConstraints: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+
+      // Set up event handlers before initialization
+      agent.on('connectionStateChanged', handleConnectionStateChange);
+      agent.on('conversationStateChanged', handleConversationStateChange);
+      agent.on('userTranscript', handleUserTranscript);
+      agent.on('assistantTranscript', handleAssistantTranscript);
+      agent.on('speechStarted', handleSpeechStarted);
+      agent.on('playbackStarted', handlePlaybackStarted);
+      agent.on('playbackFinished', handlePlaybackFinished);
+      agent.on('error', handleError);
+      agent.on('voiceActivityDetected', handleVoiceActivity);
+      agent.on('audioLevel', handleAudioLevel);
+      
+      // Session restoration event handlers
+      agent.on('sessionRestored', handleSessionRestored);
+      agent.on('sessionExpired', handleSessionExpired);
+      agent.on('reconnecting', handleReconnecting);
+      agent.on('reconnected', handleReconnected);
+
+      voiceAgentRef.current = agent;
+      
+      // Register activity reset callback if provided
+      if (onActivityReset) {
+        const unsubscribe = agent.onActivityReset(onActivityReset);
+        (agent as any)._activityUnsubscribe = unsubscribe;
+      }
+      
+      // Initialize the connection
+      await agent.initialize();
+      
+      // Mark as successfully initialized only after connection is established
+      isInitializedRef.current = true;
+      console.log('[WebRTC Hook] WebRTC Voice Agent initialized successfully on user request');
+      
+    } catch (initError) {
+      console.error('[WebRTC Hook] Failed to manually initialize WebRTC Voice Agent:', initError);
+      
+      // Clean up failed instance
+      if (voiceAgentRef.current) {
+        try {
+          await voiceAgentRef.current.disconnect();
+        } catch (disconnectError) {
+          console.error('[WebRTC Hook] Error during cleanup:', disconnectError);
+        }
+        voiceAgentRef.current = null;
+      }
+      
+      setError({
+        code: 'INITIALIZATION_ERROR',
+        message: 'Failed to initialize voice assistant',
+        type: 'connection',
+        recoverable: initializationAttempts.current < 3,
+        details: initError
+      });
+    } finally {
+      isInitializingRef.current = false;
+    }
+  }, [isSessionLoaded, handleConnectionStateChange, handleConversationStateChange, handleUserTranscript, handleAssistantTranscript, handleSpeechStarted, handlePlaybackStarted, handlePlaybackFinished, handleError, handleVoiceActivity, handleAudioLevel, handleSessionRestored, handleSessionExpired, handleReconnecting, handleReconnected, onActivityReset, config.apiEndpoint]);
+
   return {
     // State
     isListening,
@@ -735,6 +882,9 @@ export const useWebRTCVoiceAssistant = (
     sendMessage,
     clearMessages,
     resetSession,
+    
+    // Manual initialization (CRITICAL FIX for auto-start issue)
+    initializeVoiceAgentManually,
     
     // Session control actions
     muteSession,
