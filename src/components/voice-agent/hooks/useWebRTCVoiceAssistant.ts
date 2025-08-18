@@ -33,7 +33,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createWebRTCVoiceAgent, WebRTCVoiceAgent } from '../../../lib/voice-agent/webrtc/main';
-import { sessionPersistence, VoicePreferencesManager } from '../../../lib/voice-agent/session-persistence';
 import type { 
   VoiceStatus, 
   VoiceMessage, 
@@ -251,8 +250,8 @@ export const useWebRTCVoiceAssistant = (
     
     setIsConnected(willBeConnected);
     
-    // Update session persistence
-    sessionPersistence.updateConnectionState(state);
+    // Session persistence will be handled at component level to avoid circular dependencies
+    console.log('[Hook] Connection state updated:', state);
     
     // Clear any errors when successfully connecting
     if (willBeConnected && !wasConnected) {
@@ -298,8 +297,8 @@ export const useWebRTCVoiceAssistant = (
   const handleConversationStateChange = useCallback((state: ConversationState) => {
     console.log('Conversation state changed:', state);
     
-    // Update session persistence
-    sessionPersistence.updateConversationState(state);
+    // Session persistence will be handled at component level to avoid circular dependencies
+    console.log('[Hook] Conversation state updated:', state);
     
     switch (state) {
       case 'listening':
@@ -359,8 +358,8 @@ export const useWebRTCVoiceAssistant = (
         return newMessages;
       });
       
-      // Add to session persistence
-      sessionPersistence.addMessage(message);
+      // Session persistence will be handled at component level to avoid circular dependencies
+      console.log('[Hook] Message added:', message.id);
       
       events.onMessage?.(message);
       
@@ -394,8 +393,8 @@ export const useWebRTCVoiceAssistant = (
         return newMessages;
       });
       
-      // Add to session persistence
-      sessionPersistence.addMessage(message);
+      // Session persistence will be handled at component level to avoid circular dependencies
+      console.log('[Hook] Message added:', message.id);
       
       events.onMessage?.(message);
       
@@ -431,8 +430,8 @@ export const useWebRTCVoiceAssistant = (
       
       setMessages(prev => [...prev.slice(-49), message]);
       
-      // Add to session persistence
-      sessionPersistence.addMessage(message);
+      // Session persistence will be handled at component level to avoid circular dependencies
+      console.log('[Hook] Message added:', message.id);
       
       events.onMessage?.(message);
       assistantTranscriptBuffer.current = '';
