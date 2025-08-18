@@ -461,10 +461,10 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
   }, [enableGlassmorphism, isDarkMode, glassIntensity, theme]);
 
   const positionClasses = {
-    'bottom-right': 'voice-viewport-safe',
-    'bottom-left': 'bottom-6 left-6 md:bottom-6 md:left-6',
-    'top-right': 'top-6 right-6 md:top-6 md:right-6',
-    'top-left': 'top-6 left-6 md:top-6 md:left-6'
+    'bottom-right': 'voice-viewport-safe fixed',
+    'bottom-left': 'fixed bottom-6 left-6 md:bottom-6 md:left-6',
+    'top-right': 'fixed top-6 right-6 md:top-6 md:right-6',
+    'top-left': 'fixed top-6 left-6 md:top-6 md:left-6'
   };
 
   const statusIndicatorClasses = {
@@ -777,7 +777,7 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
         className={`font-sans ${
           isMobile && !isMinimized 
             ? 'fixed inset-0 z-[1000] bg-black/30 backdrop-blur-sm flex items-center justify-center p-4' // Full screen overlay on mobile
-            : `fixed z-[1000] ${positionClasses[position]}`
+            : `z-[1000] ${positionClasses[position]}`
         }`}
         role="region"
         aria-label="WebRTC Voice Assistant"
@@ -1175,8 +1175,8 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
           onTouchStart={handleLongPressStart}
           onTouchEnd={handleLongPressEnd}
           className={`
-            w-16 h-16 rounded-full shadow-2xl transition-all duration-500 transform-gpu voice-touch-target
-            focus:outline-none focus:ring-4 focus:ring-brand-gold/30 flex items-center justify-center relative group voice-gpu-accelerated
+            fixed bottom-6 right-6 w-16 h-16 rounded-full shadow-2xl transition-all duration-500 transform-gpu voice-touch-target
+            focus:outline-none focus:ring-4 focus:ring-brand-gold/30 flex items-center justify-center group voice-gpu-accelerated z-[1001]
             ${enableGlassmorphism 
               ? 'backdrop-blur-lg bg-brand-navy/20 dark:bg-dark-gold/20 border border-brand-navy/30 dark:border-dark-gold/30' 
               : 'bg-gradient-to-r from-brand-navy to-brand-gold'
@@ -1198,7 +1198,13 @@ const WebRTCVoiceAssistant: React.FC<WebRTCVoiceAssistantProps> = ({
               ) : ''
             }
           `}
-          style={enableGlassmorphism ? getGlassStyles() : {}}
+          style={{
+            position: 'fixed',
+            bottom: 'max(1.5rem, env(safe-area-inset-bottom, 1.5rem))',
+            right: 'max(1.5rem, env(safe-area-inset-right, 1.5rem))',
+            zIndex: 1001,
+            ...(enableGlassmorphism ? getGlassStyles() : {})
+          }}
           aria-label={
             isMobile && !isMinimized ? (
               sessionState.state === 'paused' ? 'Session paused - tap to resume, long press to end' :

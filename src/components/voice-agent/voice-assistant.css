@@ -395,6 +395,16 @@
     z-index: 1000 !important;
   }
   
+  /* CRITICAL FIX: Force FAB button to bottom-right on mobile */
+  #webrtc-voice-assistant button[class*="fixed"] {
+    position: fixed !important;
+    bottom: max(24px, env(safe-area-inset-bottom, 24px)) !important;
+    right: max(24px, env(safe-area-inset-right, 24px)) !important;
+    left: auto !important;
+    top: auto !important;
+    z-index: 1001 !important;
+  }
+  
   /* Mobile panel sizing - Modal-like behavior */
   #webrtc-voice-assistant .voice-panel-container {
     width: calc(100vw - 32px) !important;
@@ -433,11 +443,14 @@
   }
   
   /* FAB positioning - Fixed with proper safe area handling */
+  #webrtc-voice-assistant.voice-viewport-safe,
   #webrtc-voice-assistant.fixed {
+    position: fixed !important;
     bottom: max(20px, env(safe-area-inset-bottom, 20px)) !important;
     right: max(20px, env(safe-area-inset-right, 20px)) !important;
     left: auto !important;
     top: auto !important;
+    z-index: 1000 !important;
     /* Ensure it's positioned correctly for mobile */
     transform: translateZ(0);
   }
@@ -728,27 +741,30 @@
 
 /* Viewport-aware positioning */
 .voice-viewport-safe {
-  position: fixed;
-  bottom: max(1.5rem, env(safe-area-inset-bottom, 1.5rem));
-  right: max(1.5rem, env(safe-area-inset-right, 1.5rem));
-  left: auto;
-  top: auto;
+  position: fixed !important;
+  bottom: max(1.5rem, env(safe-area-inset-bottom, 1.5rem)) !important;
+  right: max(1.5rem, env(safe-area-inset-right, 1.5rem)) !important;
+  left: auto !important;
+  top: auto !important;
+  z-index: 1000 !important;
 }
 
 /* Mobile-specific viewport positioning */
 @media (max-width: 768px) {
   .voice-viewport-safe {
+    position: fixed !important;
     bottom: max(20px, env(safe-area-inset-bottom, 20px)) !important;
     right: max(20px, env(safe-area-inset-right, 20px)) !important;
     left: auto !important;
     top: auto !important;
+    z-index: 1000 !important;
     
     /* Ensure the expanded panel is properly centered */
     transform-origin: bottom right;
   }
   
-  /* Mobile panel centering */
-  .voice-viewport-safe .voice-panel-container {
+  /* Mobile panel centering - only when expanded */
+  .voice-viewport-safe .voice-panel-container:not(.opacity-0) {
     position: fixed !important;
     top: 50% !important;
     left: 50% !important;
@@ -758,7 +774,7 @@
     margin: 0 !important;
   }
   
-  /* When minimized, reset positioning for FAB */
+  /* When minimized, reset positioning for FAB to stay in bottom-right */
   .voice-viewport-safe .voice-panel-container.opacity-0 {
     position: static !important;
     top: auto !important;
