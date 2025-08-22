@@ -1,0 +1,197 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Button from '../components/Button.astro';
+import HeroSection from '../components/HeroSection.astro';
+import CredibilityBar from '../components/CredibilityBar.astro';
+import AnimatedSection from '../components/AnimatedSection.astro';
+import ResourceCTA from '../components/ResourceCTA.astro';
+import Icon from '../components/Icon.astro';
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  "name": "Executive AI Training",
+  "description": "Transform from overwhelmed observer to Master of Synthetic Intelligence™ with our private custom AI masterclass for executives.",
+  "url": "https://executiveaitraining.com",
+  "telephone": "+1-XXX-XXX-XXXX",
+  "address": {
+    "@type": "PostalAddress",
+    "addressCountry": "US"
+  },
+  "priceRange": "$$$",
+  "offers": [
+    {
+      "@type": "Offer",
+      "name": "Executive AI Masterclass",
+      "price": "15000",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock",
+      "validFrom": "2024-01-01"
+    }
+  ],
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "5",
+    "reviewCount": "47"
+  }
+};
+---
+
+<Layout 
+  title="Stop Falling Behind. Start Dominating."
+  schema={schema}
+>
+  <!-- Hero Section -->
+  <HeroSection />
+
+  <!-- Credibility Bar -->
+  <CredibilityBar />
+
+  <!-- Problem Agitation -->
+  <section class="section-padding">
+    <div class="container-narrow">
+      <AnimatedSection animate="slide">
+        <div class="max-w-3xl mx-auto text-center">
+          <h2 class="text-3xl md:text-4xl font-bold text-brand-charcoal dark:text-dark-text mb-6 px-4 sm:px-0">
+            The Cost of Waiting is Irrelevance.
+          </h2>
+          <p class="text-lg text-gray-700 dark:text-dark-text-secondary leading-relaxed px-4 sm:px-0">
+            Every day you delay, your competitors are getting faster. They're leveraging AI to capture 
+            market share that should be yours, making their teams orders of magnitude more productive 
+            while you're stuck in meetings. This isn't just a technology gap—it's an existential threat.
+          </p>
+        </div>
+      </AnimatedSection>
+    </div>
+  </section>
+
+  <!-- Value Proposition -->
+  <section class="section-padding bg-gray-50 dark:bg-dark-surface">
+    <div class="container-narrow">
+      <div class="max-w-4xl mx-auto">
+        <h2 class="text-3xl md:text-4xl font-bold text-brand-charcoal dark:text-dark-text mb-12 text-center px-4 sm:px-0">
+          The AI Dominance Blueprint: Your Path to Mastery.
+        </h2>
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="bg-white dark:bg-dark-surface-2 p-8 rounded-lg shadow-sm dark:shadow-black/20 border border-gray-100 dark:border-dark-border">
+            <div class="text-5xl font-bold text-brand-gold dark:text-accent-gold mb-4">1</div>
+            <h3 class="text-xl font-semibold mb-3 text-brand-charcoal dark:text-dark-text">Schedule Your AI Strategy Call</h3>
+            <p class="text-gray-700 dark:text-dark-text-tertiary">
+              A no-risk, deep-dive into your specific business challenges and opportunities.
+            </p>
+          </div>
+          <div class="bg-white dark:bg-dark-surface-2 p-8 rounded-lg shadow-sm dark:shadow-black/20 border border-gray-100 dark:border-dark-border">
+            <div class="text-5xl font-bold text-brand-gold dark:text-accent-gold mb-4">2</div>
+            <h3 class="text-xl font-semibold mb-3 text-brand-charcoal dark:text-dark-text">Attend Your Custom AI Masterclass</h3>
+            <p class="text-gray-700 dark:text-dark-text-tertiary">
+              A personalized education—no generic fluff—focused entirely on your objectives.
+            </p>
+          </div>
+          <div class="bg-white dark:bg-dark-surface-2 p-8 rounded-lg shadow-sm dark:shadow-black/20 border border-gray-100 dark:border-dark-border">
+            <div class="text-5xl font-bold text-brand-gold dark:text-accent-gold mb-4">3</div>
+            <h3 class="text-xl font-semibold mb-3 text-brand-charcoal dark:text-dark-text">Dominate Your Market</h3>
+            <p class="text-gray-700 dark:text-dark-text-tertiary">
+              Implement your new strategy with confidence and watch your productivity and profitability soar.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- The Guide -->
+  <section class="section-padding">
+    <div class="container-narrow">
+      <div class="max-w-4xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 class="text-3xl md:text-4xl font-bold text-brand-charcoal dark:text-dark-text mb-6 px-4 md:px-0">
+              You Don't Need Another Course. You Need a Guide.
+            </h2>
+            <p class="text-lg text-gray-700 dark:text-dark-text-secondary mb-6 leading-relaxed px-4 md:px-0">
+              I understand the feeling of being a successful leader, yet feeling completely overwhelmed 
+              by the AI curve. For nearly a decade, I've personally guided executives like you, 
+              translating complex AI capabilities into tangible business results. We've been in the 
+              trenches, and we'll equip you for victory.
+            </p>
+          </div>
+          <div class="bg-brand-navy dark:bg-dark-surface-3 text-white p-8 rounded-lg border border-transparent dark:border-dark-border">
+            <div class="mb-4">
+              <Icon name="lucide:quote" class="w-12 h-12 text-brand-gold dark:text-accent-gold" />
+            </div>
+            <p class="text-lg italic mb-4">
+              "In six weeks, we went from AI confusion to deploying a strategy that put us two years 
+              ahead of our competition. Russell doesn't just teach; he delivers a decisive edge."
+            </p>
+            <p class="font-semibold">
+              – Jane Doe, CTO, Innovate Dynamics
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Transitional CTA -->
+  <section id="audit" class="section-padding bg-gray-50 dark:bg-dark-surface">
+    <div class="container-narrow">
+      <div class="max-w-3xl mx-auto text-center">
+        <h2 class="text-3xl md:text-4xl font-bold text-brand-charcoal dark:text-dark-text mb-6 px-4 sm:px-0">
+          Discover Your #1 AI Opportunity—In 2 Minutes.
+        </h2>
+        <p class="text-lg text-gray-700 dark:text-dark-text-secondary mb-8 px-4 sm:px-0">
+          Not ready for a full strategy session? Take our complimentary AI Opportunity Audit. 
+          Answer a few strategic questions and instantly receive a personalized brief highlighting 
+          the most profitable area to deploy AI in your business first.
+        </p>
+        <Button href="/ai-audit" size="lg" variant="secondary" class="w-full sm:w-auto">
+          Access the AI Opportunity Audit
+        </Button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Resource CTA -->
+  <ResourceCTA />
+
+  <!-- Closing CTA -->
+  <section id="schedule" class="section-padding bg-brand-charcoal dark:bg-dark-surface-2 text-white">
+    <div class="container-narrow">
+      <div class="max-w-3xl mx-auto text-center">
+        <h2 class="text-3xl md:text-4xl font-bold mb-6 px-4 sm:px-0">
+          The Future is Being Built Now. Will You Lead or Follow?
+        </h2>
+        <p class="text-xl mb-8 text-gray-300 dark:text-dark-text-secondary px-4 sm:px-0">
+          The window of opportunity to gain a massive AI advantage is closing. 
+          Secure your position as an industry leader.
+        </p>
+        <Button href="#" size="lg" class="calendly-trigger w-full sm:w-auto">
+          <span class="hidden sm:inline">Schedule Your Custom Strategy Session</span>
+          <span class="sm:hidden">Schedule Strategy Session</span>
+        </Button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Calendly Script -->
+  <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+  <script>
+    // Initialize Calendly on button clicks
+    document.addEventListener('DOMContentLoaded', function() {
+      const calendlyButtons = document.querySelectorAll('.calendly-trigger');
+      calendlyButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+          e.preventDefault();
+          Calendly.initPopupWidget({
+            url: 'https://calendly.com/your-link-here',
+            text: 'Schedule Your Custom Strategy Session',
+            color: '#B48628',
+            textColor: '#ffffff',
+            branding: false
+          });
+          return false;
+        });
+      });
+    });
+  </script>
+</Layout>

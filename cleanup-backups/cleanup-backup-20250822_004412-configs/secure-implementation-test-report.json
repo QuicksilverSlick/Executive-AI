@@ -1,0 +1,151 @@
+{
+  "timestamp": "2025-08-06T21:16:22.524Z",
+  "summary": {
+    "passed": 20,
+    "failed": 1,
+    "warnings": 2,
+    "details": [
+      {
+        "name": "API Key Format",
+        "status": "PASS",
+        "details": "Valid OpenAI API key format",
+        "timestamp": 1754514975012
+      },
+      {
+        "name": "API Key Protection",
+        "status": "PASS",
+        "details": "Key properly stored in .env.local (not in public .env)",
+        "timestamp": 1754514975012
+      },
+      {
+        "name": "Encryption Secret",
+        "status": "PASS",
+        "details": "Encryption secret properly configured",
+        "timestamp": 1754514975012
+      },
+      {
+        "name": "Key management with encryption",
+        "status": "PASS",
+        "details": "Implementation exists (16KB)",
+        "timestamp": 1754514975012
+      },
+      {
+        "name": "Key management with encryption - Security Features",
+        "status": "PASS",
+        "details": "Features: encryption, audit, rate-limit",
+        "timestamp": 1754514975012
+      },
+      {
+        "name": "Environment variable validation",
+        "status": "PASS",
+        "details": "Implementation exists (20KB)",
+        "timestamp": 1754514975012
+      },
+      {
+        "name": "Environment variable validation - Security Features",
+        "status": "PASS",
+        "details": "Features: encryption, audit, rate-limit",
+        "timestamp": 1754514975012
+      },
+      {
+        "name": "Secure API proxy implementation",
+        "status": "PASS",
+        "details": "Implementation exists (13KB)",
+        "timestamp": 1754514975012
+      },
+      {
+        "name": "Secure API proxy implementation - Security Features",
+        "status": "PASS",
+        "details": "Features: encryption, audit, rate-limit",
+        "timestamp": 1754514975012
+      },
+      {
+        "name": "Client-side security wrapper",
+        "status": "PASS",
+        "details": "Implementation exists (13KB)",
+        "timestamp": 1754514975012
+      },
+      {
+        "name": "Client-side security wrapper - Security Features",
+        "status": "PASS",
+        "details": "Features: audit, rate-limit",
+        "timestamp": 1754514975013
+      },
+      {
+        "name": "Secure token generation endpoint",
+        "status": "PASS",
+        "details": "Implementation exists (14KB)",
+        "timestamp": 1754514975013
+      },
+      {
+        "name": "Secure token generation endpoint - Security Features",
+        "status": "PASS",
+        "details": "Features: audit, rate-limit",
+        "timestamp": 1754514975013
+      },
+      {
+        "name": "Security configuration management",
+        "status": "PASS",
+        "details": "Implementation exists (10KB)",
+        "timestamp": 1754514975013
+      },
+      {
+        "name": "Security configuration management - Security Features",
+        "status": "PASS",
+        "details": "Features: audit, rate-limit",
+        "timestamp": 1754514975013
+      },
+      {
+        "name": "Server Availability",
+        "status": "PASS",
+        "details": "Server responding (200)",
+        "timestamp": 1754514976321
+      },
+      {
+        "name": "Secure Token Endpoint",
+        "status": "PASS",
+        "details": "Endpoint exists and properly rejects GET method",
+        "timestamp": 1754514976367
+      },
+      {
+        "name": "Legacy Token Security",
+        "status": "FAIL",
+        "details": "Old endpoint still exposes raw API keys",
+        "timestamp": 1754514982439
+      },
+      {
+        "name": "Voice Agent Functionality",
+        "status": "WARN",
+        "details": "Voice agent endpoint status: 404",
+        "timestamp": 1754514982508
+      },
+      {
+        "name": "Security Headers",
+        "status": "WARN",
+        "details": "Some security headers may be missing",
+        "timestamp": 1754514982510
+      },
+      {
+        "name": "CORS Configuration",
+        "status": "PASS",
+        "details": "CORS headers properly configured",
+        "timestamp": 1754514982510
+      },
+      {
+        "name": "Rate Limiting",
+        "status": "PASS",
+        "details": "Some protection active (10 requests failed)",
+        "timestamp": 1754514982523
+      },
+      {
+        "name": "Input Validation",
+        "status": "PASS",
+        "details": "Invalid requests properly rejected",
+        "timestamp": 1754514982524
+      }
+    ]
+  },
+  "securityFeatures": 14,
+  "securityIssues": 1,
+  "conclusion": "acceptable"
+}

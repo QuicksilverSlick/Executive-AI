@@ -1,0 +1,118 @@
+DREAMFORGE CLEANUP BACKUP INVENTORY
+===================================
+Backup Created: Fri Aug 22 00:44:12 CDT 2025
+Project: executive-ai-training
+Backup Location: /home/dreamforge/ai_masterclass/executive-ai-training/cleanup-backups/cleanup-backup-20250822_004412*
+
+FULL ARCHIVE:
+cleanup-backup-20250822_004412-full.tar.gz - Complete project archive (excluding .git, node_modules)
+
+CATEGORIZED BACKUPS:
+cleanup-backup-20250822_004412-docs/ - All .md documentation files (98 files)
+cleanup-backup-20250822_004412-scripts/ - All script files .js/.sh/.bat (33 files)
+cleanup-backup-20250822_004412-configs/ - All config files .json/.mjs/.toml/.tsx/.css (16 files)
+cleanup-backup-20250822_004412-artifacts/ - Large build artifacts (36M)
+cleanup-backup-20250822_004412-hidden/ - Hidden files and deployment triggers
+
+FILES TO BE DELETED IN CLEANUP:
+Documentation (47 files):
+CLOUDFLARE_SETUP.md
+CLOUDFLARE_DEPLOYMENT.md
+CLOUDFLARE_FIX.md
+WORKERS_DEPLOYMENT_GUIDE.md
+WORKERS_DEPLOYMENT.md
+WORKERS_DEPLOYMENT_FIXES.md
+PAGES_DEPLOYMENT.md
+DEPLOY_NOW.md
+DEPLOYMENT_FIX.md
+DEPLOYMENT_FIXES_SUMMARY.md
+DEPLOY_INSTRUCTIONS.md
+FIXES_SUMMARY.md
+VOICE_ASSISTANT_FIXES.md
+VOICE_ASSISTANT_FIXES_SUMMARY.md
+VOICE_AGENT_FIXES.md
+VOICE_AGENT_CRITICAL_FIXES.md
+VOICE_AGENT_DEBUG_REPORT.md
+VOICE_AGENT_IMPROVEMENTS.md
+WEBRTC_FIXES_SUMMARY.md
+WEBRTC_CONTINUOUS_MODE_READY.md
+REACT_HOOKS_FIX_SUMMARY.md
+MOBILE_UI_REDESIGN_SUMMARY.md
+UI_FIXES_SUMMARY.md
+CSS_FIXES_SUMMARY.md
+THEME_FIXES_IMPLEMENTED.md
+MOBILE_LAYOUT_FIXES.md
+CHAT_INPUT_FIX.md
+CIRCULAR_DEPENDENCY_FIX.md
+CONNECTION_STATE_FIX.md
+PORT_CONFIGURATION_FIX.md
+FIX_VOICE_AGENT_PORT.md
+VOICE_AGENT_INTEGRATION_COMPLETE.md
+VOICE_SEARCH_IMPLEMENTATION_COMPLETE.md
+VOICE_SEARCH_READY.md
+FINAL_STEPS_VOICE_SEARCH.md
+VOICE_SEARCH_ACKNOWLEDGMENT_IMPLEMENTATION.md
+CONVERSATION_HISTORY_RESTORATION.md
+FUNCTION_CALLING_IMPLEMENTATION.md
+RESPONSES_API_IMPLEMENTATION.md
+DESIGN_SYSTEM_IMPLEMENTATION.md
+SETUP_COMPLETE.md
+MIGRATION_COMPLETE.md
+SEARCH_FIX_SUMMARY.md
+SEARCH_API_FIX.md
+README-TESTING.md
+TEST_SUITE_RESULTS.md
+WEB_SEARCH_TEST_RESULTS.md
+DEBUG_VOICE_AGENT.md
+
+Scripts (21 files):
+test-api-key-availability.js
+test-api-local.js
+test-drip-city-query.js
+test-function-call-integration.js
+test-function-calling.js
+test-openai-responses-direct.js
+test-responses-api-diagnostic.js
+test-responses-api-fix.js
+test-responses-api-simple.js
+test-responses-api.js
+test-search-implementation.js
+test-secure-implementation.js
+test-voice-agent-security.js
+test-voice-search-e2e.js
+test-web-search-comprehensive.js
+verify-server-restart.js
+deploy-latest-to-vercel.sh
+deploy-windows.bat
+force-redeploy.sh
+migrate-to-cloudflare.sh
+fix-worker-imports.sh
+
+Configs/Artifacts (15 files):
+deployment-package/ (directory)
+.vercel-force-sync
+.vercel-build-trigger
+deploy-commands.txt
+mobile-voice-assistant-css.css
+minimized-visualizer-component.tsx
+collapsible-transcript-component.tsx
+mobile-bottom-control-bar-component.tsx
+VOICE_CONTROL_FLOW_UPDATE.md
+TIMEOUT_IMPLEMENTATION_SUMMARY.md
+VOICE_AGENT_PAUSE_RESUME_HANDOFF.md
+dev-handoff-report.md
+SETUP_OPENAI_API_KEY.md
+RESTART_SERVER_INSTRUCTIONS.md
+SESSION_PERSISTENCE_FIXES.md
+
+RECOVERY INSTRUCTIONS:
+1. Full restore: tar -xzf cleanup-backup-20250822_004412-full.tar.gz
+2. Selective restore: Copy specific files from categorized backups
+3. Git restore: git reset --hard HEAD~1 (if changes committed)
+
+VERIFICATION:
+Backup size: 44M
+Archive integrity: ✅ Archive created
+Documentation backup: ✅ Docs backed up
+Scripts backup: ✅ Scripts backed up
+Configs backup: ✅ Configs backed up

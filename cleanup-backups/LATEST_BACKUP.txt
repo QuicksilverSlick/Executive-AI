@@ -1,0 +1,4 @@
+Backup created: Fri Aug 22 00:44:13 CDT 2025
+Name: cleanup-backup-20250822_004412
+Location: /home/dreamforge/ai_masterclass/executive-ai-training/cleanup-backups/
+Size: 44M

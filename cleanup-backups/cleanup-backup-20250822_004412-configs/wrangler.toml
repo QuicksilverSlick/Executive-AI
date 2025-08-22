@@ -1,0 +1,144 @@
+# DREAMFORGE
+#  DREAMFORGE HIVE-MIND CHAIN OF CUSTODY
+# 
+#  @file-purpose: Cloudflare Pages configuration for Executive AI Training voice agent
+#  @version: 4.0.0
+#  @init-author: developer-agent
+#  @init-cc-sessionId: cc-unknown-20250816-590
+#  @init-timestamp: 2025-08-16T12:00:00Z
+#  @reasoning:
+#  - **Objective:** Fix Pages deployment with proper bundling and directory mode
+#  - **Strategy:** Configure for Pages deployment with pages_build_output_dir and proper function bundling
+#  - **Outcome:** Working Pages deployment that bundles dependencies correctly
+# /
+
+name = "executive-ai-training"
+compatibility_date = "2025-08-15"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages configuration - output directory for Pages Functions
+pages_build_output_dir = "dist"
+
+# Pages deployment does not use routes - managed by Pages project
+
+# Environment variables (non-sensitive)
+[vars]
+ENVIRONMENT = "production"
+API_VERSION = "v1"
+VOICE_AGENT_VERSION = "2.0"
+MAX_CONCURRENT_SESSIONS = "100"
+SESSION_TIMEOUT_MINUTES = "30"
+RATE_LIMIT_WINDOW_SECONDS = "60"
+RATE_LIMIT_MAX_REQUESTS = "10"
+WORKERS_ASSETS_MODE = "true"
+
+# KV Namespaces for session management and rate limiting
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "e2ff2f3f2a9d4bc0bcaaad7758d28417" # Replace with actual KV namespace ID
+preview_id = "your-sessions-preview-kv-id" # Replace with preview namespace ID
+
+[[kv_namespaces]]
+binding = "RATE_LIMITS"
+id = "4008f45ba4894fb29109f6dfcd006e97" # Replace with actual KV namespace ID
+preview_id = "your-rate-limits-preview-kv-id" # Replace with preview namespace ID
+
+[[kv_namespaces]]
+binding = "VOICE_TOKENS"
+id = "bb09da2325bf4b4aaff80cc0a2e47878" # Replace with actual KV namespace ID
+preview_id = "your-voice-tokens-preview-kv-id" # Replace with preview namespace ID
+
+[[kv_namespaces]]
+binding = "PERFORMANCE_LOGS"
+id = "0a078b9d691744a5ab0fa06a2668f880" # Replace with actual KV namespace ID
+preview_id = "your-performance-preview-kv-id" # Replace with preview namespace ID
+
+# Secrets (configure via: wrangler secret put SECRET_NAME)
+# OPENAI_API_KEY - OpenAI API key for voice agent
+# ALLOWED_ORIGINS - Comma-separated list of allowed origins for CORS
+# JWT_SECRET - Secret for signing JWT tokens
+
+# Resource limits for voice processing
+[limits]
+cpu_ms = 50000 # 50 seconds for complex voice operations
+
+# Preview environment configuration (for branch deployments)
+[env.preview]
+name = "executive-ai-training-preview"
+compatibility_date = "2025-08-15"
+pages_build_output_dir = "dist"
+
+# More lenient rate limits for preview
+[env.preview.vars]
+ENVIRONMENT = "preview"
+MAX_CONCURRENT_SESSIONS = "10"
+RATE_LIMIT_MAX_REQUESTS = "50"
+WORKERS_ASSETS_MODE = "true"
+
+[[env.preview.kv_namespaces]]
+binding = "SESSIONS"
+id = "5d893875ea784fb9aa63d2fd6cd88128"
+preview_id = "your-dev-sessions-preview-kv-id"
+
+[[env.preview.kv_namespaces]]
+binding = "RATE_LIMITS"
+id = "0432cff93f904b17bee4f5fe36181a84"
+preview_id = "your-dev-rate-limits-preview-kv-id"
+
+[[env.preview.kv_namespaces]]
+binding = "VOICE_TOKENS"
+id = "6628386925064903b42cd0d425cecfc9"
+preview_id = "your-dev-voice-tokens-preview-kv-id"
+
+[[env.preview.kv_namespaces]]
+binding = "PERFORMANCE_LOGS"
+id = "44dae235584e4324bb89b5872f9d21ff"
+preview_id = "your-dev-performance-preview-kv-id"
+
+# Production environment configuration
+[env.production]
+name = "executive-ai-training-production"
+compatibility_date = "2025-08-15"
+pages_build_output_dir = "dist"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+API_VERSION = "v1"
+VOICE_AGENT_VERSION = "2.0"
+MAX_CONCURRENT_SESSIONS = "100"
+SESSION_TIMEOUT_MINUTES = "30"
+RATE_LIMIT_WINDOW_SECONDS = "60"
+RATE_LIMIT_MAX_REQUESTS = "10"
+WORKERS_ASSETS_MODE = "true"
+
+[[env.production.kv_namespaces]]
+binding = "SESSIONS"
+id = "e2ff2f3f2a9d4bc0bcaaad7758d28417"
+
+[[env.production.kv_namespaces]]
+binding = "RATE_LIMITS"
+id = "4008f45ba4894fb29109f6dfcd006e97"
+
+[[env.production.kv_namespaces]]
+binding = "VOICE_TOKENS"
+id = "bb09da2325bf4b4aaff80cc0a2e47878"
+
+[[env.production.kv_namespaces]]
+binding = "PERFORMANCE_LOGS"
+id = "0a078b9d691744a5ab0fa06a2668f880"
+
+# Routes handled by Pages project configuration
+
+# DREAMFORGE
+#  DREAMFORGE AUDIT TRAIL
+# 
+#  ---
+#  @revision: 4.0.0
+#  @author: developer-agent
+#  @cc-sessionId: cc-unknown-20250816-590
+#  @timestamp: 2025-08-16T12:00:00Z
+#  @reasoning:
+#  - **Objective:** Convert from Workers to Pages deployment configuration
+#  - **Strategy:** Use pages_build_output_dir and remove Workers-specific routing and assets
+#  - **Outcome:** Clean Pages configuration that will properly bundle dependencies
+# /
