@@ -2,7 +2,7 @@
 import '../styles/global.css';
 import GoogleAnalytics from '../components/GoogleAnalytics.astro';
 import AnalyticsInit from '../components/AnalyticsInit.astro';
-import CalendlyTracking from '../components/CalendlyTracking.astro';
+import BookingModal from '../components/BookingModal.astro';
 import FontPreload from '../components/FontPreload.astro';
 import SEO from '../components/SEO.astro';
 import PerformanceMonitor from '../components/PerformanceMonitor.astro';
@@ -150,7 +150,7 @@ const GA_MEASUREMENT_ID = import.meta.env.PUBLIC_GA_MEASUREMENT_ID || 'G-XXXXXXX
     
     <!-- Analytics Initialization -->
     <AnalyticsInit />
-    <CalendlyTracking />
+    <BookingModal />
     <PerformanceMonitor />
     
     <!-- WebRTC Voice Assistant Widget -->

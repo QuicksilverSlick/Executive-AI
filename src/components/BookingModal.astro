@@ -1,0 +1,217 @@
+---
+/**
+ * BookingModal — branded on-site booking experience for Executive AI Training.
+ *
+ * Replaces the (dead, placeholder) Calendly integration. Presents the five
+ * MarketSimple/GHL services in a custom-branded selector, then opens the GHL
+ * native booking widget (iframe) for the chosen service — which handles slot
+ * availability, timezones, Stripe payment on paid sessions, lead capture, and
+ * fires the subaccount's automations.
+ *
+ * Triggers: any element with class `.calendly-trigger`, `.book-session`, or a
+ * `[data-booking]` attribute opens the modal. Deep-link a specific service with
+ * `data-booking-service="discovery|assessment|consulting|tech|automation"`.
+ *
+ * GHL location: j4vaC7dWTbtRCFQPsdWf (Executive AI Training).
+ */
+const WIDGET_BASE = 'https://api.leadconnectorhq.com/widget/booking';
+
+const services = [
+  { key: 'discovery',  name: 'Discovery Call',                 duration: '15 min', price: 'Free',
+    calendarId: 'bB47yVS5RrgtKvLZXGA2',
+    blurb: 'A quick call to pinpoint where you are with AI — learning, exploring, or ready to implement — and point you the right way.' },
+  { key: 'assessment', name: 'AI Readiness Assessment',        duration: '30 min', price: '$997',
+    calendarId: 'lAi7UVZLT0WVxqbV31dL',
+    blurb: 'A comprehensive Q&A that produces your custom AI implementation roadmap and cost analysis.' },
+  { key: 'consulting', name: 'Consulting Session',             duration: '60 min', price: '$297', priceNote: 'reg. $497',
+    calendarId: 'O3zcgACnkFdJ5BxMQBsq',
+    blurb: 'One-on-one strategic consulting on your AI initiatives, priorities, and rollout.' },
+  { key: 'tech',       name: 'Technical Support',              duration: '60 min', price: '$197',
+    calendarId: 'Tqkvu29AlbmSvSsrDWTM',
+    blurb: 'Hands-on technical help implementing and troubleshooting your AI tools.' },
+  { key: 'automation', name: 'Business Automation Consulting', duration: '60 min', price: '$497',
+    calendarId: 'vORaBvBYOivfCbhZ9jPM',
+    blurb: 'Design and automate your business workflows end-to-end with AI.' },
+];
+---
+
+<div id="booking-modal" class="bk-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Book a session">
+  <div class="bk-panel">
+    <button class="bk-close" aria-label="Close">&times;</button>
+
+    <!-- Step 1: service selector -->
+    <div class="bk-view bk-select" data-view="select">
+      <header class="bk-head">
+        <h2>Book Your Session</h2>
+        <p>Choose the conversation that fits where you are with AI.</p>
+      </header>
+      <div class="bk-grid">
+        {services.map((s) => (
+          <button class="bk-card" data-service={s.key} data-calendar={s.calendarId} data-name={s.name} data-price={s.price}>
+            <div class="bk-card-top">
+              <span class="bk-name">{s.name}</span>
+              <span class={`bk-price ${s.price === 'Free' ? 'is-free' : ''}`}>{s.price}</span>
+            </div>
+            <span class="bk-dur">{s.duration}{s.priceNote ? ` · ${s.priceNote}` : ''}</span>
+            <p class="bk-blurb">{s.blurb}</p>
+            <span class="bk-go">Select →</span>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <!-- Step 2: GHL booking widget -->
+    <div class="bk-view bk-book" data-view="book" hidden>
+      <div class="bk-book-head">
+        <button class="bk-back" aria-label="Back to services">← All sessions</button>
+        <span class="bk-book-title"></span>
+      </div>
+      <div class="bk-frame-wrap">
+        <div class="bk-loading">Loading availability…</div>
+        <iframe class="bk-frame" title="Booking calendar" allow="payment" loading="lazy"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .bk-overlay {
+    position: fixed; inset: 0; z-index: 9999; display: none;
+    align-items: center; justify-content: center; padding: 1rem;
+    background: rgba(6, 6, 10, 0.78); backdrop-filter: blur(4px);
+  }
+  .bk-overlay.is-open { display: flex; }
+  .bk-panel {
+    position: relative; width: 100%; max-width: 940px; max-height: 92vh; overflow: hidden;
+    display: flex; flex-direction: column;
+    background: #12121a; color: #f4f4f6; border: 1px solid #2a2a38; border-radius: 18px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+    font-family: Inter, system-ui, sans-serif;
+  }
+  .bk-close {
+    position: absolute; top: 12px; right: 16px; z-index: 2;
+    background: none; border: none; color: #a0a0ad; font-size: 30px; line-height: 1; cursor: pointer;
+  }
+  .bk-close:hover { color: #f4f4f6; }
+  .bk-view { overflow-y: auto; }
+  .bk-head { padding: 34px 34px 8px; }
+  .bk-head h2 { margin: 0 0 6px; font-size: 1.7rem; font-weight: 800; }
+  .bk-head h2 { background: linear-gradient(90deg,#f4f4f6, #e8c47a); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .bk-head p { margin: 0; color: #a0a0ad; font-size: .98rem; }
+  .bk-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; padding: 22px 34px 34px; }
+  .bk-card {
+    text-align: left; cursor: pointer; padding: 18px; border-radius: 14px;
+    background: #1b1b26; border: 1px solid #2a2a38; color: inherit;
+    transition: border-color .15s, transform .15s, background .15s;
+  }
+  .bk-card:hover { border-color: #d4a24e; transform: translateY(-2px); background: #20202d; }
+  .bk-card-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .bk-name { font-weight: 700; font-size: 1.05rem; }
+  .bk-price { font-weight: 800; color: #d4a24e; white-space: nowrap; }
+  .bk-price.is-free { color: #37ca8b; }
+  .bk-dur { display: block; margin-top: 2px; font-size: .8rem; color: #8a8a97; text-transform: uppercase; letter-spacing: .04em; }
+  .bk-blurb { margin: 10px 0 12px; font-size: .9rem; color: #c3c3cf; line-height: 1.45; }
+  .bk-go { font-size: .85rem; font-weight: 600; color: #d4a24e; }
+  .bk-book { display: flex; flex-direction: column; height: 88vh; max-height: 860px; }
+  .bk-book-head { display: flex; align-items: center; gap: 14px; padding: 18px 34px; border-bottom: 1px solid #2a2a38; }
+  .bk-back { background: none; border: 1px solid #2a2a38; color: #c3c3cf; padding: 7px 12px; border-radius: 9px; cursor: pointer; font-size: .85rem; }
+  .bk-back:hover { border-color: #d4a24e; color: #f4f4f6; }
+  .bk-book-title { font-weight: 700; }
+  .bk-frame-wrap { position: relative; flex: 1; background: #fff; }
+  .bk-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #6a6a77; font-size: .95rem; }
+  .bk-frame { width: 100%; height: 100%; border: 0; display: block; position: relative; z-index: 1; }
+  @media (max-width: 640px) {
+    .bk-grid { grid-template-columns: 1fr; padding: 18px; }
+    .bk-head { padding: 26px 20px 4px; }
+    .bk-book-head { padding: 14px 18px; }
+  }
+</style>
+
+<script define:vars={{ WIDGET_BASE }}>
+  (() => {
+    const modal = document.getElementById('booking-modal');
+    if (!modal) return;
+    const panel = modal.querySelector('.bk-panel');
+    const viewSelect = modal.querySelector('[data-view="select"]');
+    const viewBook = modal.querySelector('[data-view="book"]');
+    const frame = modal.querySelector('.bk-frame');
+    const loading = modal.querySelector('.bk-loading');
+    const bookTitle = modal.querySelector('.bk-book-title');
+    let lastFocus = null;
+
+    const show = (el, on) => { el.hidden = !on; };
+
+    function openModal() {
+      lastFocus = document.activeElement;
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      frame.src = 'about:blank';
+      show(viewBook, false); show(viewSelect, true);
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+    function openService(calendarId, name, price) {
+      bookTitle.textContent = name;
+      loading.style.display = 'flex';
+      frame.src = `${WIDGET_BASE}/${calendarId}`;
+      show(viewSelect, false); show(viewBook, true);
+      if (window.gtag) window.gtag('event', 'begin_checkout', { items: [{ item_name: name }], value: price });
+    }
+
+    frame.addEventListener('load', () => { if (frame.src !== 'about:blank') loading.style.display = 'none'; });
+
+    // Service card selection
+    modal.querySelectorAll('.bk-card').forEach((card) => {
+      card.addEventListener('click', () => openService(card.dataset.calendar, card.dataset.name, card.dataset.price));
+    });
+
+    // Back / close
+    modal.querySelector('.bk-back').addEventListener('click', () => { frame.src = 'about:blank'; show(viewBook, false); show(viewSelect, true); });
+    modal.querySelector('.bk-close').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('is-open')) closeModal(); });
+
+    // Map deep-link keys to calendar ids
+    const SERVICE = {
+      discovery: 'bB47yVS5RrgtKvLZXGA2', assessment: 'lAi7UVZLT0WVxqbV31dL',
+      consulting: 'O3zcgACnkFdJ5BxMQBsq', tech: 'Tqkvu29AlbmSvSsrDWTM', automation: 'vORaBvBYOivfCbhZ9jPM',
+    };
+
+    // Intercept existing CTAs across the site
+    function bindTriggers(root) {
+      root.querySelectorAll('.calendly-trigger, .book-session, [data-booking]').forEach((el) => {
+        if (el.dataset.bkBound) return;
+        el.dataset.bkBound = '1';
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          const key = el.getAttribute('data-booking-service');
+          if (key && SERVICE[key]) {
+            const card = modal.querySelector(`.bk-card[data-service="${key}"]`);
+            openModal();
+            openService(SERVICE[key], card?.dataset.name || 'Session', card?.dataset.price || '');
+          } else {
+            openModal();
+          }
+          if (window.gtag) window.gtag('event', 'cta_click', { cta_name: 'Book a Session', cta_location: (el.closest('section')?.id || 'page') });
+        });
+      });
+    }
+    bindTriggers(document);
+    // Re-bind if content is injected later
+    new MutationObserver(() => bindTriggers(document)).observe(document.body, { childList: true, subtree: true });
+
+    // Booking conversion (GHL widget posts a message on completion)
+    window.addEventListener('message', (e) => {
+      if (typeof e.origin === 'string' && !e.origin.includes('leadconnectorhq.com')) return;
+      const t = JSON.stringify(e.data || '').toLowerCase();
+      if (t.includes('appointment') && (t.includes('booked') || t.includes('scheduled') || t.includes('success'))) {
+        if (window.gtag) window.gtag('event', 'generate_lead', { event_category: 'booking', event_label: bookTitle.textContent });
+      }
+    });
+  })();
+</script>
