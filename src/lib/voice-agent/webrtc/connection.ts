@@ -34,6 +34,7 @@ import type {
   ErrorInfo,
   SessionConfig
 } from '../../../features/voice-agent/types/index';
+import { OPENAI_CALLS_URL } from '../realtime-config';
 
 /**
  * WebRTC Connection Manager for OpenAI Realtime API
@@ -179,24 +180,14 @@ export class WebRTCConnection {
         mode: token.mode
       });
       
-      // Following the official OpenAI documentation for WebRTC connection
-      // The WebRTC endpoint uses the ephemeral token for authentication
-      const baseUrl = "https://api.openai.com/v1/realtime";
-      const model = "gpt-4o-realtime-preview-2025-06-03";
-      
-      // Check if we're in fallback mode
-      if (token.mode === 'fallback' || token.mode === 'demo') {
-        console.warn(`[WebRTC Connection] Token is in ${token.mode} mode - WebRTC may not be available`);
-        throw new Error(`WebRTC not available in ${token.mode} mode - please use a different connection method`);
-      }
-      
-      console.log(`[WebRTC Connection] Initiating WebRTC SDP exchange`);
-      console.log(`[WebRTC Connection] Endpoint: ${baseUrl}?model=${model}`);
+      // GA Realtime interface: the SDP offer is POSTed to /v1/realtime/calls using the
+      // ephemeral client secret. The model and full session config are baked into the
+      // ephemeral key server-side (at client_secrets creation), so there is NO ?model=
+      // query param here — unlike the removed beta interface (/v1/realtime?model=...).
+      console.log(`[WebRTC Connection] Initiating WebRTC SDP exchange with ${OPENAI_CALLS_URL}`);
       console.log(`[WebRTC Connection] Using ephemeral token (expires: ${new Date(token.expiresAt).toISOString()})`);
-      
-      // Send the SDP offer to OpenAI's WebRTC endpoint
-      // This follows the exact pattern from the OpenAI documentation
-      const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
+
+      const sdpResponse = await fetch(OPENAI_CALLS_URL, {
         method: "POST",
         body: offer.sdp,
         headers: {
@@ -402,51 +393,13 @@ export class WebRTCConnection {
 
     dataChannel.onopen = () => {
       console.log('Data channel opened - ready to send/receive Realtime API events');
+      // GA Realtime: the full session (model, voice, audio formats, turn detection,
+      // tools, instructions) is configured server-side when the ephemeral client secret
+      // is minted (POST /v1/realtime/client_secrets). We therefore do NOT send a
+      // `session.update` here — the legacy flat-shape update is invalid under the GA
+      // schema (audio is nested under audio.input/audio.output). To tweak the session at
+      // runtime, send a GA-shaped session.update via sendEvent().
       this.emit('dataChannelOpen');
-      
-      // Send initial session configuration using the provided session config
-      // The sessionConfig should be set from the connect() call
-      if (!this.sessionConfig) {
-        console.error('[WebRTCConnection] No session config provided - this should not happen');
-        // Use minimal fallback if somehow no config was provided
-        this.sessionConfig = {
-          modalities: ['text', 'audio'],
-          instructions: 'You are a helpful AI assistant.',
-          voice: 'shimmer',
-          input_audio_format: 'pcm16',
-          output_audio_format: 'pcm16',
-          input_audio_transcription: {
-            model: 'whisper-1'
-          },
-          turn_detection: {
-            type: 'server_vad',
-            threshold: 0.5,
-            prefix_padding_ms: 300,
-            silence_duration_ms: 600
-          },
-          tools: [],
-          tool_choice: 'auto',
-          temperature: 0.8,
-          max_response_output_tokens: 'inf'
-        };
-      }
-      
-      // Send the session configuration
-      const sessionUpdate = {
-        type: 'session.update',
-        session: this.sessionConfig
-      };
-      
-      // Log what instructions are being sent
-      console.log('[WebRTCConnection] Sending session update with instructions:', {
-        instructionsLength: this.sessionConfig.instructions?.length,
-        instructionsPreview: this.sessionConfig.instructions?.substring(0, 200) + '...',
-        voice: this.sessionConfig.voice,
-        tools: this.sessionConfig.tools?.map(t => t.name)
-      });
-      
-      dataChannel.send(JSON.stringify(sessionUpdate));
-      console.log('[WebRTCConnection] Session configuration sent successfully');
     };
 
     dataChannel.onmessage = (event) => {
