@@ -122,7 +122,10 @@ const services = [
   </div>
 </div>
 
-<style>
+<style is:global>
+  /* Global (not scoped): the calendar day + time-slot cells are created in JS at runtime,
+     so Astro's scoped-style attribute isn't on them — scoped rules (e.g. the gold .is-sel
+     highlight) would never match. All selectors are bk-* namespaced, so global is safe. */
   .bk-overlay { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center; padding: 1rem; background: rgba(6,6,10,.78); backdrop-filter: blur(4px); }
   .bk-overlay.is-open { display: flex; }
   #booking-modal [hidden] { display: none !important; }
