@@ -87,8 +87,44 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
     if (!appt.ok) throw new Error(`appointment ${appt.status}: ${(await appt.text()).slice(0, 200)}`);
     const aj: any = await appt.json();
+    const appointmentId = (aj.appointment || aj).id;
 
-    return jsonResponse({ success: true, appointmentId: (aj.appointment || aj).id, startTime: iso, service: service.key, price: service.price });
+    // 3) Paid session → create + send a GHL invoice (Stripe-backed via the connected gateway)
+    //    and return its hosted payment URL so the browser redirects to secure checkout.
+    let paymentUrl: string | undefined;
+    if (service.price > 0) {
+      try {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const dueStr = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
+        const invRes = await fetch(`${GHL_BASE}/invoices/`, {
+          method: 'POST', headers: ghlHeaders(pit),
+          body: JSON.stringify({
+            altId: GHL_LOCATION_ID, altType: 'location', name: service.name, currency: 'USD',
+            issueDate: todayStr, dueDate: dueStr, liveMode: true,
+            contactDetails: { id: contactId, name: `${firstName} ${lastName}`.trim(), email },
+            businessDetails: { name: 'Executive AI Training' },
+            items: [{ name: service.name, currency: 'USD', amount: service.price, qty: 1 }],
+          }),
+        });
+        if (invRes.ok) {
+          const invoiceId = (await invRes.json())._id;
+          if (invoiceId) {
+            // "send" makes the invoice payable (and emails the customer a copy).
+            await fetch(`${GHL_BASE}/invoices/${invoiceId}/send`, {
+              method: 'POST', headers: ghlHeaders(pit),
+              body: JSON.stringify({ altId: GHL_LOCATION_ID, altType: 'location', userId: GHL_HOST_USER_ID, action: 'email', liveMode: true }),
+            }).catch(() => {});
+            paymentUrl = `https://link.marketsimple.pro/invoice/${invoiceId}`;
+          }
+        } else {
+          console.error('[booking/create] invoice create failed', invRes.status, (await invRes.text()).slice(0, 200));
+        }
+      } catch (e) {
+        console.error('[booking/create] invoice error', e instanceof Error ? e.message : e);
+      }
+    }
+
+    return jsonResponse({ success: true, appointmentId, startTime: iso, service: service.key, price: service.price, ...(paymentUrl && { paymentUrl }) });
   } catch (err) {
     console.error('[booking/create]', err instanceof Error ? err.message : err);
     return jsonResponse({ success: false, error: 'We could not complete your booking. Please try again.' }, 502);

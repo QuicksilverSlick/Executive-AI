@@ -2,9 +2,9 @@
 /**
  * BookingModal — fully custom, on-brand booking flow for Executive AI Training.
  *
- * Service selector → custom date/time picker → lead form → writes the contact +
- * appointment directly to GHL/MarketSimple via /api/booking/* (no GHL iframe, so the
- * UX stays fully on-brand). Availability is generated server-side from business hours.
+ * Service selector → month-calendar + time-column picker (Calendly/Cal.com pattern)
+ * → lead form → (paid: Stripe payment via GHL invoice) → confirmation. Writes the
+ * contact + appointment directly to GHL via /api/booking/* (no GHL iframe).
  *
  * Triggers: `.calendly-trigger`, `.book-session`, `[data-booking]`. Deep-link a service
  * with `data-booking-service="discovery|assessment|consulting|tech|automation"`.
@@ -48,7 +48,7 @@ const services = [
       </div>
     </div>
 
-    <!-- Step 2: custom date / time / form -->
+    <!-- Step 2: calendar + time + form -->
     <div class="bk-view" data-view="book" hidden>
       <div class="bk-book-head">
         <button class="bk-back" aria-label="Back to services">← All sessions</button>
@@ -58,10 +58,23 @@ const services = [
 
       <div class="bk-book-body">
         <div class="bk-step" data-step="when">
-          <label class="bk-label">Pick a day <span class="bk-tz">(Central Time)</span></label>
-          <div class="bk-dates"></div>
-          <label class="bk-label">Pick a time</label>
-          <div class="bk-slots"><p class="bk-hint">Select a day to see available times.</p></div>
+          <div class="bk-when">
+            <!-- Month calendar -->
+            <div class="bk-cal">
+              <div class="bk-cal-head">
+                <button type="button" class="bk-cal-nav" data-nav="-1" aria-label="Previous month">‹</button>
+                <span class="bk-cal-month"></span>
+                <button type="button" class="bk-cal-nav" data-nav="1" aria-label="Next month">›</button>
+              </div>
+              <div class="bk-cal-dow"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+              <div class="bk-cal-grid"></div>
+            </div>
+            <!-- Time column -->
+            <div class="bk-times">
+              <div class="bk-times-head"><span class="bk-times-date">Select a date</span><small>Central Time</small></div>
+              <div class="bk-slots"><p class="bk-hint">Pick a day to see available times.</p></div>
+            </div>
+          </div>
         </div>
 
         <form class="bk-step bk-form" data-step="who" hidden>
@@ -90,6 +103,12 @@ const services = [
           <button type="submit" class="bk-submit">Confirm Booking</button>
           <p class="bk-pay-note" hidden></p>
         </form>
+
+        <div class="bk-step bk-redirect" data-step="redirect" hidden>
+          <div class="bk-spin"></div>
+          <h3>Booked — taking you to secure payment…</h3>
+          <p class="bk-done-sub">If you're not redirected, <a class="bk-pay-link" href="#" target="_blank" rel="noopener">click here to pay</a>.</p>
+        </div>
 
         <div class="bk-step bk-done" data-step="done" hidden>
           <div class="bk-check">✓</div>
@@ -131,23 +150,38 @@ const services = [
   .bk-book-title { font-weight: 700; flex: 1; }
   .bk-book-price { font-weight: 800; color: #d4a24e; }
   .bk-book-body { padding: 22px 30px 30px; }
-  .bk-label { display: block; font-size: .82rem; font-weight: 600; color: #c3c3cf; margin: 16px 0 8px; }
-  .bk-label:first-child { margin-top: 0; }
-  .bk-tz, .bk-opt { color: #8a8a97; font-weight: 400; }
-  .bk-dates { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
-  .bk-chip { flex: 0 0 auto; min-width: 62px; text-align: center; padding: 9px 10px; border-radius: 11px; background: #1b1b26; border: 1px solid #2a2a38; color: #e6e6ee; cursor: pointer; font-size: .8rem; line-height: 1.3; }
-  .bk-chip small { display: block; color: #8a8a97; font-size: .7rem; }
-  .bk-chip:hover { border-color: #6a6a77; }
-  .bk-chip.is-sel { background: #d4a24e; border-color: #d4a24e; color: #16110a; font-weight: 700; }
-  .bk-chip.is-sel small { color: #4a3a1a; }
-  .bk-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px,1fr)); gap: 8px; margin-top: 4px; }
-  .bk-slot { padding: 9px 6px; border-radius: 9px; background: #1b1b26; border: 1px solid #2a2a38; color: #e6e6ee; cursor: pointer; font-size: .85rem; text-align: center; }
+
+  /* Calendar + times (two-panel, Calendly/Cal.com pattern) */
+  .bk-when { display: grid; grid-template-columns: 1fr 260px; gap: 26px; }
+  .bk-cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .bk-cal-month { font-weight: 700; font-size: 1.02rem; }
+  .bk-cal-nav { width: 34px; height: 34px; border-radius: 9px; background: #1b1b26; border: 1px solid #2a2a38; color: #e6e6ee; cursor: pointer; font-size: 1.1rem; line-height: 1; }
+  .bk-cal-nav:hover:not(:disabled) { border-color: #d4a24e; }
+  .bk-cal-nav:disabled { opacity: .3; cursor: default; }
+  .bk-cal-dow { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-bottom: 6px; }
+  .bk-cal-dow span { text-align: center; font-size: .72rem; color: #8a8a97; text-transform: uppercase; letter-spacing: .04em; }
+  .bk-cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+  .bk-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: none; background: none; color: #e6e6ee; font-size: .9rem; cursor: pointer; }
+  .bk-day.is-empty { visibility: hidden; }
+  .bk-day.is-disabled { color: #40404c; cursor: default; }
+  .bk-day.is-avail { background: rgba(212,162,78,.12); color: #f0d9ac; font-weight: 600; }
+  .bk-day.is-avail:hover { background: rgba(212,162,78,.28); }
+  .bk-day.is-sel { background: #d4a24e !important; color: #16110a !important; font-weight: 800; }
+
+  .bk-times { display: flex; flex-direction: column; min-height: 0; }
+  .bk-times-head { display: flex; flex-direction: column; margin-bottom: 10px; }
+  .bk-times-date { font-weight: 700; font-size: .95rem; }
+  .bk-times-head small { color: #8a8a97; font-size: .78rem; }
+  .bk-slots { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 320px; padding-right: 4px; }
+  .bk-slot { padding: 11px; border-radius: 10px; background: #1b1b26; border: 1px solid #2a2a38; color: #e6e6ee; cursor: pointer; font-size: .9rem; text-align: center; font-weight: 600; }
   .bk-slot:hover { border-color: #d4a24e; }
-  .bk-slot.is-sel { background: #d4a24e; border-color: #d4a24e; color: #16110a; font-weight: 700; }
-  .bk-hint { grid-column: 1/-1; color: #8a8a97; font-size: .9rem; margin: 4px 0; }
+  .bk-slot.is-sel { background: #d4a24e; border-color: #d4a24e; color: #16110a; }
+  .bk-hint { color: #8a8a97; font-size: .88rem; margin: 6px 0; }
 
   .bk-form input, .bk-form select, .bk-form textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; background: #14141d; border: 1px solid #2a2a38; color: #f4f4f6; font-size: .92rem; font-family: inherit; }
   .bk-form input:focus, .bk-form select:focus, .bk-form textarea:focus { outline: none; border-color: #d4a24e; }
+  .bk-label { display: block; font-size: .82rem; font-weight: 600; color: #c3c3cf; margin: 16px 0 8px; }
+  .bk-opt { color: #8a8a97; font-weight: 400; }
   .bk-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .bk-chosen { padding: 11px 14px; border-radius: 11px; background: rgba(212,162,78,.1); border: 1px solid rgba(212,162,78,.35); color: #e8c47a; font-weight: 600; font-size: .92rem; margin-bottom: 4px; }
   .bk-hp { position: absolute !important; left: -9999px !important; width: 1px !important; height: 1px !important; }
@@ -156,12 +190,18 @@ const services = [
   .bk-submit:hover { filter: brightness(1.05); }
   .bk-submit:disabled { opacity: .6; cursor: default; }
   .bk-pay-note { margin: 12px 0 0; font-size: .82rem; color: #8a8a97; text-align: center; }
-  .bk-done { text-align: center; padding: 34px 10px; }
+
+  .bk-redirect, .bk-done { text-align: center; padding: 40px 10px; }
+  .bk-spin { width: 42px; height: 42px; margin: 0 auto 18px; border: 3px solid #2a2a38; border-top-color: #d4a24e; border-radius: 50%; animation: bk-spin 0.8s linear infinite; }
+  @keyframes bk-spin { to { transform: rotate(360deg); } }
   .bk-check { width: 62px; height: 62px; margin: 0 auto 16px; border-radius: 50%; background: rgba(55,202,139,.15); color: #37ca8b; font-size: 34px; display: flex; align-items: center; justify-content: center; }
-  .bk-done h3 { margin: 0 0 8px; font-size: 1.4rem; }
+  .bk-done h3, .bk-redirect h3 { margin: 0 0 8px; font-size: 1.4rem; }
   .bk-done-detail { color: #e8c47a; font-weight: 600; margin: 0 0 6px; }
   .bk-done-sub { color: #a0a0ad; font-size: .92rem; margin: 0 0 20px; }
+  .bk-pay-link { color: #d4a24e; }
   .bk-done-close { padding: 11px 26px; border: 1px solid #2a2a38; border-radius: 11px; background: #1b1b26; color: #f4f4f6; cursor: pointer; }
+
+  @media (max-width: 720px) { .bk-when { grid-template-columns: 1fr; } .bk-slots { max-height: 220px; } }
   @media (max-width: 640px) { .bk-grid { grid-template-columns: 1fr; padding: 18px; } .bk-head { padding: 26px 20px 4px; } .bk-book-head, .bk-book-body { padding-left: 18px; padding-right: 18px; } .bk-row2 { grid-template-columns: 1fr; } }
 </style>
 
@@ -174,9 +214,12 @@ const services = [
     const viewBook = $('[data-view="book"]');
     const stepWhen = $('[data-step="when"]');
     const formEl = $('[data-step="who"]') as HTMLFormElement;
+    const stepRedirect = $('[data-step="redirect"]');
     const stepDone = $('[data-step="done"]');
-    const datesEl = $('.bk-dates');
+    const calGrid = $('.bk-cal-grid');
+    const calMonth = $('.bk-cal-month');
     const slotsEl = $('.bk-slots');
+    const timesDate = $('.bk-times-date');
     const titleEl = $('.bk-book-title');
     const priceEl = $('.bk-book-price');
     const chosenEl = $('.bk-chosen');
@@ -184,18 +227,24 @@ const services = [
     const payNote = $('.bk-pay-note') as HTMLElement;
     const submitBtn = $('.bk-submit') as HTMLButtonElement;
 
-    const SERVICES: Record<string, { name: string; price: string; duration: string }> = {
-      discovery: { name: 'Discovery Call', price: 'Free', duration: '15 min' },
-      assessment: { name: 'AI Readiness Assessment', price: '$997', duration: '30 min' },
-      consulting: { name: 'Consulting Session', price: '$297', duration: '60 min' },
-      tech: { name: 'Technical Support', price: '$197', duration: '60 min' },
-      automation: { name: 'Business Automation Consulting', price: '$497', duration: '60 min' },
+    const SERVICES: Record<string, { name: string; price: string; paid: boolean }> = {
+      discovery: { name: 'Discovery Call', price: 'Free', paid: false },
+      assessment: { name: 'AI Readiness Assessment', price: '$997', paid: true },
+      consulting: { name: 'Consulting Session', price: '$297', paid: true },
+      tech: { name: 'Technical Support', price: '$197', paid: true },
+      automation: { name: 'Business Automation Consulting', price: '$497', paid: true },
     };
+    const WINDOW_DAYS = 21;
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
     let current = { service: '', date: '', iso: '', label: '', dateLabel: '' };
+    let viewY = 0, viewM = 0;
     let lastFocus: HTMLElement | null = null;
 
     const show = (el: HTMLElement, on: boolean) => { el.hidden = !on; };
+    const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+
     const openModal = () => { lastFocus = document.activeElement as HTMLElement; modal.classList.add('is-open'); modal.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; };
     function closeModal() {
       modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = '';
@@ -203,60 +252,61 @@ const services = [
       if (lastFocus?.focus) lastFocus.focus();
     }
     function resetBook() {
-      show(stepWhen, true); show(formEl, false); show(stepDone, false);
-      formEl.reset(); errEl.hidden = true; slotsEl.innerHTML = '<p class="bk-hint">Select a day to see available times.</p>';
+      show(stepWhen, true); show(formEl, false); show(stepRedirect, false); show(stepDone, false);
+      formEl.reset(); errEl.hidden = true;
+      slotsEl.innerHTML = '<p class="bk-hint">Pick a day to see available times.</p>';
+      timesDate.textContent = 'Select a date';
       current = { service: '', date: '', iso: '', label: '', dateLabel: '' };
     }
 
-    function businessDays(n: number) {
-      const out: { date: string; dow: string; dom: string; mon: string }[] = [];
-      const d = new Date();
-      while (out.length < n) {
-        d.setDate(d.getDate() + 1);
-        const dow = d.getDay();
-        if (dow === 0 || dow === 6) continue;
-        const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
-        out.push({
-          date: `${y}-${m}-${day}`,
-          dow: d.toLocaleDateString('en-US', { weekday: 'short' }),
-          dom: String(d.getDate()),
-          mon: d.toLocaleDateString('en-US', { month: 'short' }),
-        });
-      }
-      return out;
+    function dayState(d: Date) {
+      const today = startOfDay(new Date());
+      const max = new Date(today); max.setDate(max.getDate() + WINDOW_DAYS);
+      const day = d.getDay();
+      if (d < today || d > max) return 'disabled';
+      if (day === 0 || day === 6) return 'disabled';
+      return 'avail';
     }
 
-    function openService(key: string) {
-      const svc = SERVICES[key]; if (!svc) return;
-      current.service = key;
-      titleEl.textContent = svc.name;
-      priceEl.textContent = svc.price === 'Free' ? '' : svc.price;
-      payNote.hidden = svc.price === 'Free';
-      payNote.textContent = svc.price === 'Free' ? '' : `${svc.price} — you'll receive a secure payment link to confirm your ${svc.name.toLowerCase()}.`;
-      show(viewSelect, false); show(viewBook, true); show(stepWhen, true); show(formEl, false); show(stepDone, false);
-      // Render date chips
-      datesEl.innerHTML = '';
-      businessDays(10).forEach((d, i) => {
+    function renderCalendar() {
+      calMonth.textContent = `${MONTHS[viewM]} ${viewY}`;
+      calGrid.innerHTML = '';
+      const first = new Date(viewY, viewM, 1);
+      const startPad = first.getDay();
+      const daysInMonth = new Date(viewY, viewM + 1, 0).getDate();
+      for (let i = 0; i < startPad; i++) { const s = document.createElement('span'); s.className = 'bk-day is-empty'; calGrid.appendChild(s); }
+      for (let dnum = 1; dnum <= daysInMonth; dnum++) {
+        const d = new Date(viewY, viewM, dnum);
+        const state = dayState(d);
         const b = document.createElement('button');
-        b.type = 'button'; b.className = 'bk-chip'; b.dataset.date = d.date;
-        b.innerHTML = `${d.dow}<small>${d.mon} ${d.dom}</small>`;
-        b.addEventListener('click', () => selectDate(d.date, `${d.dow}, ${d.mon} ${d.dom}`, b));
-        datesEl.appendChild(b);
-        if (i === 0) b.click();
-      });
-      if (window.gtag) window.gtag('event', 'begin_checkout', { items: [{ item_name: svc.name }] });
+        b.type = 'button'; b.className = `bk-day is-${state}`; b.textContent = String(dnum);
+        if (state === 'avail') {
+          const ds = ymd(d);
+          if (ds === current.date) b.classList.add('is-sel');
+          b.addEventListener('click', () => selectDate(d, b));
+        } else { b.disabled = true; }
+        calGrid.appendChild(b);
+      }
+      // nav bounds
+      const today = startOfDay(new Date());
+      const maxD = new Date(today); maxD.setDate(maxD.getDate() + WINDOW_DAYS);
+      (modal.querySelector('[data-nav="-1"]') as HTMLButtonElement).disabled = (viewY === today.getFullYear() && viewM === today.getMonth());
+      (modal.querySelector('[data-nav="1"]') as HTMLButtonElement).disabled = (viewY === maxD.getFullYear() && viewM === maxD.getMonth());
     }
 
-    async function selectDate(date: string, dateLabel: string, chip: HTMLElement) {
-      current.date = date; current.dateLabel = dateLabel; current.iso = '';
-      datesEl.querySelectorAll('.bk-chip').forEach((c) => c.classList.remove('is-sel'));
-      chip.classList.add('is-sel');
+    async function selectDate(d: Date, cell: HTMLElement) {
+      current.date = ymd(d);
+      current.dateLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      current.iso = '';
+      calGrid.querySelectorAll('.bk-day').forEach((c) => c.classList.remove('is-sel'));
+      cell.classList.add('is-sel');
+      timesDate.textContent = current.dateLabel;
       show(formEl, false);
       slotsEl.innerHTML = '<p class="bk-hint">Loading times…</p>';
       try {
-        const r = await fetch(`/api/booking/slots?service=${current.service}&date=${date}`);
+        const r = await fetch(`/api/booking/slots?service=${current.service}&date=${current.date}`);
         const j = await r.json();
-        if (!j.success || !j.slots.length) { slotsEl.innerHTML = '<p class="bk-hint">No times available this day — try another.</p>'; return; }
+        if (!j.success || !j.slots.length) { slotsEl.innerHTML = '<p class="bk-hint">No times available — try another day.</p>'; return; }
         slotsEl.innerHTML = '';
         j.slots.forEach((s: any) => {
           const b = document.createElement('button');
@@ -274,9 +324,40 @@ const services = [
       } catch { slotsEl.innerHTML = '<p class="bk-hint">Could not load times. Please try again.</p>'; }
     }
 
+    function firstAvailable(): Date {
+      const d = startOfDay(new Date());
+      for (let i = 0; i < WINDOW_DAYS + 2; i++) { d.setDate(d.getDate() + 1); if (dayState(d) === 'avail') return new Date(d); }
+      return new Date();
+    }
+
+    function openService(key: string) {
+      const svc = SERVICES[key]; if (!svc) return;
+      current.service = key;
+      titleEl.textContent = svc.name;
+      priceEl.textContent = svc.paid ? svc.price : '';
+      payNote.hidden = !svc.paid;
+      payNote.textContent = svc.paid ? `${svc.price} — you'll be taken to secure Stripe checkout to confirm your ${svc.name.toLowerCase()}.` : '';
+      show(viewSelect, false); show(viewBook, true);
+      show(stepWhen, true); show(formEl, false); show(stepRedirect, false); show(stepDone, false);
+      const fa = firstAvailable();
+      viewY = fa.getFullYear(); viewM = fa.getMonth();
+      current.date = '';
+      renderCalendar();
+      // auto-select first available date
+      const cell = [...calGrid.querySelectorAll('.bk-day.is-avail')].find((c) => Number(c.textContent) === fa.getDate()) as HTMLElement;
+      if (cell) selectDate(fa, cell);
+      if (window.gtag) window.gtag('event', 'begin_checkout', { items: [{ item_name: svc.name }] });
+    }
+
+    modal.querySelectorAll('[data-nav]').forEach((btn) => btn.addEventListener('click', () => {
+      const delta = Number((btn as HTMLElement).dataset.nav);
+      const nd = new Date(viewY, viewM + delta, 1);
+      viewY = nd.getFullYear(); viewM = nd.getMonth();
+      renderCalendar();
+    }));
+
     formEl.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      errEl.hidden = true;
+      e.preventDefault(); errEl.hidden = true;
       if (!current.iso) { errEl.textContent = 'Please pick a time.'; errEl.hidden = false; return; }
       const fd = new FormData(formEl);
       submitBtn.disabled = true; submitBtn.textContent = 'Booking…';
@@ -292,16 +373,21 @@ const services = [
         });
         const j = await r.json();
         if (!j.success) throw new Error(j.error || 'Booking failed');
-        ($('.bk-done-detail') as HTMLElement).textContent = `${SERVICES[current.service].name} — ${current.dateLabel} at ${current.label} (CT)`;
-        show(stepWhen, false); show(formEl, false); show(stepDone, true);
         if (window.gtag) window.gtag('event', 'generate_lead', { event_category: 'booking', event_label: SERVICES[current.service].name });
+        if (j.paymentUrl) {
+          (modal.querySelector('.bk-pay-link') as HTMLAnchorElement).href = j.paymentUrl;
+          show(stepWhen, false); show(formEl, false); show(stepRedirect, true);
+          window.location.href = j.paymentUrl;
+        } else {
+          ($('.bk-done-detail') as HTMLElement).textContent = `${SERVICES[current.service].name} — ${current.dateLabel} at ${current.label} (CT)`;
+          show(stepWhen, false); show(formEl, false); show(stepDone, true);
+        }
       } catch (err) {
         errEl.textContent = (err as Error).message || 'Something went wrong. Please try again.';
         errEl.hidden = false;
       } finally { submitBtn.disabled = false; submitBtn.textContent = 'Confirm Booking'; }
     });
 
-    // Wiring
     modal.querySelectorAll('.bk-card').forEach((c) => c.addEventListener('click', () => openService((c as HTMLElement).dataset.service!)));
     $('.bk-back').addEventListener('click', () => { show(viewBook, false); show(viewSelect, true); resetBook(); });
     $('.bk-close').addEventListener('click', closeModal);
@@ -309,16 +395,15 @@ const services = [
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('is-open')) closeModal(); });
 
-    const KEYS: Record<string, string> = { discovery: 'discovery', assessment: 'assessment', consulting: 'consulting', tech: 'tech', automation: 'automation' };
+    const KEYS = ['discovery', 'assessment', 'consulting', 'tech', 'automation'];
     function bindTriggers() {
       document.querySelectorAll('.calendly-trigger, .book-session, [data-booking]').forEach((el) => {
         const e = el as HTMLElement;
         if (e.dataset.bkBound) return; e.dataset.bkBound = '1';
         e.addEventListener('click', (ev) => {
-          ev.preventDefault();
-          openModal();
+          ev.preventDefault(); openModal();
           const key = e.getAttribute('data-booking-service');
-          if (key && KEYS[key]) openService(KEYS[key]);
+          if (key && KEYS.includes(key)) openService(key);
           else { show(viewBook, false); show(viewSelect, true); }
           if (window.gtag) window.gtag('event', 'cta_click', { cta_name: 'Book a Session', cta_location: (e.closest('section')?.id || 'page') });
         });
