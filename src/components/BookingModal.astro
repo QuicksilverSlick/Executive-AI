@@ -1,36 +1,24 @@
 ---
 /**
- * BookingModal — branded on-site booking experience for Executive AI Training.
+ * BookingModal — fully custom, on-brand booking flow for Executive AI Training.
  *
- * Replaces the (dead, placeholder) Calendly integration. Presents the five
- * MarketSimple/GHL services in a custom-branded selector, then opens the GHL
- * native booking widget (iframe) for the chosen service — which handles slot
- * availability, timezones, Stripe payment on paid sessions, lead capture, and
- * fires the subaccount's automations.
+ * Service selector → custom date/time picker → lead form → writes the contact +
+ * appointment directly to GHL/MarketSimple via /api/booking/* (no GHL iframe, so the
+ * UX stays fully on-brand). Availability is generated server-side from business hours.
  *
- * Triggers: any element with class `.calendly-trigger`, `.book-session`, or a
- * `[data-booking]` attribute opens the modal. Deep-link a specific service with
- * `data-booking-service="discovery|assessment|consulting|tech|automation"`.
- *
- * GHL location: j4vaC7dWTbtRCFQPsdWf (Executive AI Training).
+ * Triggers: `.calendly-trigger`, `.book-session`, `[data-booking]`. Deep-link a service
+ * with `data-booking-service="discovery|assessment|consulting|tech|automation"`.
  */
-const WIDGET_BASE = 'https://api.leadconnectorhq.com/widget/booking';
-
 const services = [
   { key: 'discovery',  name: 'Discovery Call',                 duration: '15 min', price: 'Free',
-    calendarId: 'bB47yVS5RrgtKvLZXGA2',
     blurb: 'A quick call to pinpoint where you are with AI — learning, exploring, or ready to implement — and point you the right way.' },
   { key: 'assessment', name: 'AI Readiness Assessment',        duration: '30 min', price: '$997',
-    calendarId: 'lAi7UVZLT0WVxqbV31dL',
     blurb: 'A comprehensive Q&A that produces your custom AI implementation roadmap and cost analysis.' },
   { key: 'consulting', name: 'Consulting Session',             duration: '60 min', price: '$297', priceNote: 'reg. $497',
-    calendarId: 'O3zcgACnkFdJ5BxMQBsq',
     blurb: 'One-on-one strategic consulting on your AI initiatives, priorities, and rollout.' },
   { key: 'tech',       name: 'Technical Support',              duration: '60 min', price: '$197',
-    calendarId: 'Tqkvu29AlbmSvSsrDWTM',
     blurb: 'Hands-on technical help implementing and troubleshooting your AI tools.' },
   { key: 'automation', name: 'Business Automation Consulting', duration: '60 min', price: '$497',
-    calendarId: 'vORaBvBYOivfCbhZ9jPM',
     blurb: 'Design and automate your business workflows end-to-end with AI.' },
 ];
 ---
@@ -40,14 +28,14 @@ const services = [
     <button class="bk-close" aria-label="Close">&times;</button>
 
     <!-- Step 1: service selector -->
-    <div class="bk-view bk-select" data-view="select">
+    <div class="bk-view" data-view="select">
       <header class="bk-head">
         <h2>Book Your Session</h2>
         <p>Choose the conversation that fits where you are with AI.</p>
       </header>
       <div class="bk-grid">
         {services.map((s) => (
-          <button class="bk-card" data-service={s.key} data-calendar={s.calendarId} data-name={s.name} data-price={s.price}>
+          <button class="bk-card" data-service={s.key} data-name={s.name} data-price={s.price} data-duration={s.duration}>
             <div class="bk-card-top">
               <span class="bk-name">{s.name}</span>
               <span class={`bk-price ${s.price === 'Free' ? 'is-free' : ''}`}>{s.price}</span>
@@ -60,51 +48,74 @@ const services = [
       </div>
     </div>
 
-    <!-- Step 2: GHL booking widget -->
-    <div class="bk-view bk-book" data-view="book" hidden>
+    <!-- Step 2: custom date / time / form -->
+    <div class="bk-view" data-view="book" hidden>
       <div class="bk-book-head">
         <button class="bk-back" aria-label="Back to services">← All sessions</button>
         <span class="bk-book-title"></span>
+        <span class="bk-book-price"></span>
       </div>
-      <div class="bk-frame-wrap">
-        <div class="bk-loading">Loading availability…</div>
-        <iframe class="bk-frame" title="Booking calendar" allow="payment" loading="lazy"></iframe>
+
+      <div class="bk-book-body">
+        <div class="bk-step" data-step="when">
+          <label class="bk-label">Pick a day <span class="bk-tz">(Central Time)</span></label>
+          <div class="bk-dates"></div>
+          <label class="bk-label">Pick a time</label>
+          <div class="bk-slots"><p class="bk-hint">Select a day to see available times.</p></div>
+        </div>
+
+        <form class="bk-step bk-form" data-step="who" hidden>
+          <div class="bk-chosen"></div>
+          <div class="bk-row2">
+            <div><label class="bk-label">First name*</label><input name="firstName" required autocomplete="given-name" /></div>
+            <div><label class="bk-label">Last name</label><input name="lastName" autocomplete="family-name" /></div>
+          </div>
+          <div class="bk-row2">
+            <div><label class="bk-label">Email*</label><input name="email" type="email" required autocomplete="email" /></div>
+            <div><label class="bk-label">Phone*</label><input name="phone" type="tel" required autocomplete="tel" /></div>
+          </div>
+          <label class="bk-label">Company</label>
+          <input name="company" autocomplete="organization" />
+          <label class="bk-label">Where are you with AI?</label>
+          <select name="aiMaturity">
+            <option value="">Select one…</option>
+            <option value="Learning">Learning about AI</option>
+            <option value="Exploring">Exploring if / how AI fits my business</option>
+            <option value="Implementing">Ready to implement AI</option>
+          </select>
+          <label class="bk-label">What do you want to achieve? <span class="bk-opt">(optional)</span></label>
+          <textarea name="goal" rows="2"></textarea>
+          <input type="text" name="hp" class="bk-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <p class="bk-err" hidden></p>
+          <button type="submit" class="bk-submit">Confirm Booking</button>
+          <p class="bk-pay-note" hidden></p>
+        </form>
+
+        <div class="bk-step bk-done" data-step="done" hidden>
+          <div class="bk-check">✓</div>
+          <h3>You're booked!</h3>
+          <p class="bk-done-detail"></p>
+          <p class="bk-done-sub">A confirmation is on its way. We look forward to speaking with you.</p>
+          <button class="bk-done-close">Done</button>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
 <style>
-  .bk-overlay {
-    position: fixed; inset: 0; z-index: 9999; display: none;
-    align-items: center; justify-content: center; padding: 1rem;
-    background: rgba(6, 6, 10, 0.78); backdrop-filter: blur(4px);
-  }
+  .bk-overlay { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center; padding: 1rem; background: rgba(6,6,10,.78); backdrop-filter: blur(4px); }
   .bk-overlay.is-open { display: flex; }
   #booking-modal [hidden] { display: none !important; }
-  .bk-panel {
-    position: relative; width: 100%; max-width: 940px; max-height: 92vh; overflow: hidden;
-    display: flex; flex-direction: column;
-    background: #12121a; color: #f4f4f6; border: 1px solid #2a2a38; border-radius: 18px;
-    box-shadow: 0 30px 80px rgba(0,0,0,.6);
-    font-family: Inter, system-ui, sans-serif;
-  }
-  .bk-close {
-    position: absolute; top: 12px; right: 16px; z-index: 2;
-    background: none; border: none; color: #a0a0ad; font-size: 30px; line-height: 1; cursor: pointer;
-  }
+  .bk-panel { position: relative; width: 100%; max-width: 940px; max-height: 92vh; overflow: hidden; display: flex; flex-direction: column; background: #12121a; color: #f4f4f6; border: 1px solid #2a2a38; border-radius: 18px; box-shadow: 0 30px 80px rgba(0,0,0,.6); font-family: Inter, system-ui, sans-serif; }
+  .bk-close { position: absolute; top: 12px; right: 16px; z-index: 3; background: none; border: none; color: #a0a0ad; font-size: 30px; line-height: 1; cursor: pointer; }
   .bk-close:hover { color: #f4f4f6; }
   .bk-view { overflow-y: auto; }
   .bk-head { padding: 34px 34px 8px; }
-  .bk-head h2 { margin: 0 0 6px; font-size: 1.7rem; font-weight: 800; }
-  .bk-head h2 { background: linear-gradient(90deg,#f4f4f6, #e8c47a); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .bk-head h2 { margin: 0 0 6px; font-size: 1.7rem; font-weight: 800; background: linear-gradient(90deg,#f4f4f6,#e8c47a); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
   .bk-head p { margin: 0; color: #a0a0ad; font-size: .98rem; }
-  .bk-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; padding: 22px 34px 34px; }
-  .bk-card {
-    text-align: left; cursor: pointer; padding: 18px; border-radius: 14px;
-    background: #1b1b26; border: 1px solid #2a2a38; color: inherit;
-    transition: border-color .15s, transform .15s, background .15s;
-  }
+  .bk-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; padding: 22px 34px 34px; }
+  .bk-card { text-align: left; cursor: pointer; padding: 18px; border-radius: 14px; background: #1b1b26; border: 1px solid #2a2a38; color: inherit; transition: border-color .15s, transform .15s, background .15s; }
   .bk-card:hover { border-color: #d4a24e; transform: translateY(-2px); background: #20202d; }
   .bk-card-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .bk-name { font-weight: 700; font-size: 1.05rem; }
@@ -113,106 +124,207 @@ const services = [
   .bk-dur { display: block; margin-top: 2px; font-size: .8rem; color: #8a8a97; text-transform: uppercase; letter-spacing: .04em; }
   .bk-blurb { margin: 10px 0 12px; font-size: .9rem; color: #c3c3cf; line-height: 1.45; }
   .bk-go { font-size: .85rem; font-weight: 600; color: #d4a24e; }
-  .bk-book { display: flex; flex-direction: column; height: 88vh; max-height: 860px; }
-  .bk-book-head { display: flex; align-items: center; gap: 14px; padding: 18px 34px; border-bottom: 1px solid #2a2a38; }
-  .bk-back { background: none; border: 1px solid #2a2a38; color: #c3c3cf; padding: 7px 12px; border-radius: 9px; cursor: pointer; font-size: .85rem; }
+
+  .bk-book-head { display: flex; align-items: center; gap: 14px; padding: 18px 30px; border-bottom: 1px solid #2a2a38; }
+  .bk-back { background: none; border: 1px solid #2a2a38; color: #c3c3cf; padding: 7px 12px; border-radius: 9px; cursor: pointer; font-size: .85rem; white-space: nowrap; }
   .bk-back:hover { border-color: #d4a24e; color: #f4f4f6; }
-  .bk-book-title { font-weight: 700; }
-  .bk-frame-wrap { position: relative; flex: 1; background: #fff; }
-  .bk-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #6a6a77; font-size: .95rem; }
-  .bk-frame { width: 100%; height: 100%; border: 0; display: block; position: relative; z-index: 1; }
-  @media (max-width: 640px) {
-    .bk-grid { grid-template-columns: 1fr; padding: 18px; }
-    .bk-head { padding: 26px 20px 4px; }
-    .bk-book-head { padding: 14px 18px; }
-  }
+  .bk-book-title { font-weight: 700; flex: 1; }
+  .bk-book-price { font-weight: 800; color: #d4a24e; }
+  .bk-book-body { padding: 22px 30px 30px; }
+  .bk-label { display: block; font-size: .82rem; font-weight: 600; color: #c3c3cf; margin: 16px 0 8px; }
+  .bk-label:first-child { margin-top: 0; }
+  .bk-tz, .bk-opt { color: #8a8a97; font-weight: 400; }
+  .bk-dates { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+  .bk-chip { flex: 0 0 auto; min-width: 62px; text-align: center; padding: 9px 10px; border-radius: 11px; background: #1b1b26; border: 1px solid #2a2a38; color: #e6e6ee; cursor: pointer; font-size: .8rem; line-height: 1.3; }
+  .bk-chip small { display: block; color: #8a8a97; font-size: .7rem; }
+  .bk-chip:hover { border-color: #6a6a77; }
+  .bk-chip.is-sel { background: #d4a24e; border-color: #d4a24e; color: #16110a; font-weight: 700; }
+  .bk-chip.is-sel small { color: #4a3a1a; }
+  .bk-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px,1fr)); gap: 8px; margin-top: 4px; }
+  .bk-slot { padding: 9px 6px; border-radius: 9px; background: #1b1b26; border: 1px solid #2a2a38; color: #e6e6ee; cursor: pointer; font-size: .85rem; text-align: center; }
+  .bk-slot:hover { border-color: #d4a24e; }
+  .bk-slot.is-sel { background: #d4a24e; border-color: #d4a24e; color: #16110a; font-weight: 700; }
+  .bk-hint { grid-column: 1/-1; color: #8a8a97; font-size: .9rem; margin: 4px 0; }
+
+  .bk-form input, .bk-form select, .bk-form textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; background: #14141d; border: 1px solid #2a2a38; color: #f4f4f6; font-size: .92rem; font-family: inherit; }
+  .bk-form input:focus, .bk-form select:focus, .bk-form textarea:focus { outline: none; border-color: #d4a24e; }
+  .bk-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .bk-chosen { padding: 11px 14px; border-radius: 11px; background: rgba(212,162,78,.1); border: 1px solid rgba(212,162,78,.35); color: #e8c47a; font-weight: 600; font-size: .92rem; margin-bottom: 4px; }
+  .bk-hp { position: absolute !important; left: -9999px !important; width: 1px !important; height: 1px !important; }
+  .bk-err { color: #ff8a8a; font-size: .85rem; margin: 12px 0 0; }
+  .bk-submit { width: 100%; margin-top: 18px; padding: 13px; border: none; border-radius: 11px; background: linear-gradient(90deg,#d4a24e,#e8c47a); color: #16110a; font-weight: 800; font-size: 1rem; cursor: pointer; }
+  .bk-submit:hover { filter: brightness(1.05); }
+  .bk-submit:disabled { opacity: .6; cursor: default; }
+  .bk-pay-note { margin: 12px 0 0; font-size: .82rem; color: #8a8a97; text-align: center; }
+  .bk-done { text-align: center; padding: 34px 10px; }
+  .bk-check { width: 62px; height: 62px; margin: 0 auto 16px; border-radius: 50%; background: rgba(55,202,139,.15); color: #37ca8b; font-size: 34px; display: flex; align-items: center; justify-content: center; }
+  .bk-done h3 { margin: 0 0 8px; font-size: 1.4rem; }
+  .bk-done-detail { color: #e8c47a; font-weight: 600; margin: 0 0 6px; }
+  .bk-done-sub { color: #a0a0ad; font-size: .92rem; margin: 0 0 20px; }
+  .bk-done-close { padding: 11px 26px; border: 1px solid #2a2a38; border-radius: 11px; background: #1b1b26; color: #f4f4f6; cursor: pointer; }
+  @media (max-width: 640px) { .bk-grid { grid-template-columns: 1fr; padding: 18px; } .bk-head { padding: 26px 20px 4px; } .bk-book-head, .bk-book-body { padding-left: 18px; padding-right: 18px; } .bk-row2 { grid-template-columns: 1fr; } }
 </style>
 
-<script define:vars={{ WIDGET_BASE }}>
+<script>
   (() => {
     const modal = document.getElementById('booking-modal');
     if (!modal) return;
-    const panel = modal.querySelector('.bk-panel');
-    const viewSelect = modal.querySelector('[data-view="select"]');
-    const viewBook = modal.querySelector('[data-view="book"]');
-    const frame = modal.querySelector('.bk-frame');
-    const loading = modal.querySelector('.bk-loading');
-    const bookTitle = modal.querySelector('.bk-book-title');
-    let lastFocus = null;
+    const $ = (s: string) => modal.querySelector(s) as HTMLElement;
+    const viewSelect = $('[data-view="select"]');
+    const viewBook = $('[data-view="book"]');
+    const stepWhen = $('[data-step="when"]');
+    const formEl = $('[data-step="who"]') as HTMLFormElement;
+    const stepDone = $('[data-step="done"]');
+    const datesEl = $('.bk-dates');
+    const slotsEl = $('.bk-slots');
+    const titleEl = $('.bk-book-title');
+    const priceEl = $('.bk-book-price');
+    const chosenEl = $('.bk-chosen');
+    const errEl = $('.bk-err') as HTMLElement;
+    const payNote = $('.bk-pay-note') as HTMLElement;
+    const submitBtn = $('.bk-submit') as HTMLButtonElement;
 
-    const show = (el, on) => { el.hidden = !on; };
+    const SERVICES: Record<string, { name: string; price: string; duration: string }> = {
+      discovery: { name: 'Discovery Call', price: 'Free', duration: '15 min' },
+      assessment: { name: 'AI Readiness Assessment', price: '$997', duration: '30 min' },
+      consulting: { name: 'Consulting Session', price: '$297', duration: '60 min' },
+      tech: { name: 'Technical Support', price: '$197', duration: '60 min' },
+      automation: { name: 'Business Automation Consulting', price: '$497', duration: '60 min' },
+    };
 
-    function openModal() {
-      lastFocus = document.activeElement;
-      modal.classList.add('is-open');
-      modal.setAttribute('aria-hidden', 'false');
-      document.body.style.overflow = 'hidden';
-    }
+    let current = { service: '', date: '', iso: '', label: '', dateLabel: '' };
+    let lastFocus: HTMLElement | null = null;
+
+    const show = (el: HTMLElement, on: boolean) => { el.hidden = !on; };
+    const openModal = () => { lastFocus = document.activeElement as HTMLElement; modal.classList.add('is-open'); modal.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; };
     function closeModal() {
-      modal.classList.remove('is-open');
-      modal.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
-      frame.src = 'about:blank';
-      show(viewBook, false); show(viewSelect, true);
-      if (lastFocus && lastFocus.focus) lastFocus.focus();
+      modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = '';
+      show(viewBook, false); show(viewSelect, true); resetBook();
+      if (lastFocus?.focus) lastFocus.focus();
     }
-    function openService(calendarId, name, price) {
-      bookTitle.textContent = name;
-      loading.style.display = 'flex';
-      frame.src = `${WIDGET_BASE}/${calendarId}`;
-      show(viewSelect, false); show(viewBook, true);
-      if (window.gtag) window.gtag('event', 'begin_checkout', { items: [{ item_name: name }], value: price });
+    function resetBook() {
+      show(stepWhen, true); show(formEl, false); show(stepDone, false);
+      formEl.reset(); errEl.hidden = true; slotsEl.innerHTML = '<p class="bk-hint">Select a day to see available times.</p>';
+      current = { service: '', date: '', iso: '', label: '', dateLabel: '' };
     }
 
-    frame.addEventListener('load', () => { if (frame.src !== 'about:blank') loading.style.display = 'none'; });
+    function businessDays(n: number) {
+      const out: { date: string; dow: string; dom: string; mon: string }[] = [];
+      const d = new Date();
+      while (out.length < n) {
+        d.setDate(d.getDate() + 1);
+        const dow = d.getDay();
+        if (dow === 0 || dow === 6) continue;
+        const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
+        out.push({
+          date: `${y}-${m}-${day}`,
+          dow: d.toLocaleDateString('en-US', { weekday: 'short' }),
+          dom: String(d.getDate()),
+          mon: d.toLocaleDateString('en-US', { month: 'short' }),
+        });
+      }
+      return out;
+    }
 
-    // Service card selection
-    modal.querySelectorAll('.bk-card').forEach((card) => {
-      card.addEventListener('click', () => openService(card.dataset.calendar, card.dataset.name, card.dataset.price));
+    function openService(key: string) {
+      const svc = SERVICES[key]; if (!svc) return;
+      current.service = key;
+      titleEl.textContent = svc.name;
+      priceEl.textContent = svc.price === 'Free' ? '' : svc.price;
+      payNote.hidden = svc.price === 'Free';
+      payNote.textContent = svc.price === 'Free' ? '' : `${svc.price} — you'll receive a secure payment link to confirm your ${svc.name.toLowerCase()}.`;
+      show(viewSelect, false); show(viewBook, true); show(stepWhen, true); show(formEl, false); show(stepDone, false);
+      // Render date chips
+      datesEl.innerHTML = '';
+      businessDays(10).forEach((d, i) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'bk-chip'; b.dataset.date = d.date;
+        b.innerHTML = `${d.dow}<small>${d.mon} ${d.dom}</small>`;
+        b.addEventListener('click', () => selectDate(d.date, `${d.dow}, ${d.mon} ${d.dom}`, b));
+        datesEl.appendChild(b);
+        if (i === 0) b.click();
+      });
+      if (window.gtag) window.gtag('event', 'begin_checkout', { items: [{ item_name: svc.name }] });
+    }
+
+    async function selectDate(date: string, dateLabel: string, chip: HTMLElement) {
+      current.date = date; current.dateLabel = dateLabel; current.iso = '';
+      datesEl.querySelectorAll('.bk-chip').forEach((c) => c.classList.remove('is-sel'));
+      chip.classList.add('is-sel');
+      show(formEl, false);
+      slotsEl.innerHTML = '<p class="bk-hint">Loading times…</p>';
+      try {
+        const r = await fetch(`/api/booking/slots?service=${current.service}&date=${date}`);
+        const j = await r.json();
+        if (!j.success || !j.slots.length) { slotsEl.innerHTML = '<p class="bk-hint">No times available this day — try another.</p>'; return; }
+        slotsEl.innerHTML = '';
+        j.slots.forEach((s: any) => {
+          const b = document.createElement('button');
+          b.type = 'button'; b.className = 'bk-slot'; b.textContent = s.label;
+          b.addEventListener('click', () => {
+            slotsEl.querySelectorAll('.bk-slot').forEach((x) => x.classList.remove('is-sel'));
+            b.classList.add('is-sel');
+            current.iso = s.iso; current.label = s.label;
+            chosenEl.textContent = `${current.dateLabel} at ${s.label} (CT)`;
+            show(formEl, true);
+            formEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          });
+          slotsEl.appendChild(b);
+        });
+      } catch { slotsEl.innerHTML = '<p class="bk-hint">Could not load times. Please try again.</p>'; }
+    }
+
+    formEl.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errEl.hidden = true;
+      if (!current.iso) { errEl.textContent = 'Please pick a time.'; errEl.hidden = false; return; }
+      const fd = new FormData(formEl);
+      submitBtn.disabled = true; submitBtn.textContent = 'Booking…';
+      try {
+        const r = await fetch('/api/booking/create', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            service: current.service, iso: current.iso,
+            firstName: fd.get('firstName'), lastName: fd.get('lastName'), email: fd.get('email'),
+            phone: fd.get('phone'), company: fd.get('company'), aiMaturity: fd.get('aiMaturity'),
+            goal: fd.get('goal'), hp: fd.get('hp'),
+          }),
+        });
+        const j = await r.json();
+        if (!j.success) throw new Error(j.error || 'Booking failed');
+        ($('.bk-done-detail') as HTMLElement).textContent = `${SERVICES[current.service].name} — ${current.dateLabel} at ${current.label} (CT)`;
+        show(stepWhen, false); show(formEl, false); show(stepDone, true);
+        if (window.gtag) window.gtag('event', 'generate_lead', { event_category: 'booking', event_label: SERVICES[current.service].name });
+      } catch (err) {
+        errEl.textContent = (err as Error).message || 'Something went wrong. Please try again.';
+        errEl.hidden = false;
+      } finally { submitBtn.disabled = false; submitBtn.textContent = 'Confirm Booking'; }
     });
 
-    // Back / close
-    modal.querySelector('.bk-back').addEventListener('click', () => { frame.src = 'about:blank'; show(viewBook, false); show(viewSelect, true); });
-    modal.querySelector('.bk-close').addEventListener('click', closeModal);
+    // Wiring
+    modal.querySelectorAll('.bk-card').forEach((c) => c.addEventListener('click', () => openService((c as HTMLElement).dataset.service!)));
+    $('.bk-back').addEventListener('click', () => { show(viewBook, false); show(viewSelect, true); resetBook(); });
+    $('.bk-close').addEventListener('click', closeModal);
+    $('.bk-done-close').addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('is-open')) closeModal(); });
 
-    // Map deep-link keys to calendar ids
-    const SERVICE = {
-      discovery: 'bB47yVS5RrgtKvLZXGA2', assessment: 'lAi7UVZLT0WVxqbV31dL',
-      consulting: 'O3zcgACnkFdJ5BxMQBsq', tech: 'Tqkvu29AlbmSvSsrDWTM', automation: 'vORaBvBYOivfCbhZ9jPM',
-    };
-
-    // Intercept existing CTAs across the site
-    function bindTriggers(root) {
-      root.querySelectorAll('.calendly-trigger, .book-session, [data-booking]').forEach((el) => {
-        if (el.dataset.bkBound) return;
-        el.dataset.bkBound = '1';
-        el.addEventListener('click', (e) => {
-          e.preventDefault();
-          const key = el.getAttribute('data-booking-service');
-          if (key && SERVICE[key]) {
-            const card = modal.querySelector(`.bk-card[data-service="${key}"]`);
-            openModal();
-            openService(SERVICE[key], card?.dataset.name || 'Session', card?.dataset.price || '');
-          } else {
-            openModal();
-          }
-          if (window.gtag) window.gtag('event', 'cta_click', { cta_name: 'Book a Session', cta_location: (el.closest('section')?.id || 'page') });
+    const KEYS: Record<string, string> = { discovery: 'discovery', assessment: 'assessment', consulting: 'consulting', tech: 'tech', automation: 'automation' };
+    function bindTriggers() {
+      document.querySelectorAll('.calendly-trigger, .book-session, [data-booking]').forEach((el) => {
+        const e = el as HTMLElement;
+        if (e.dataset.bkBound) return; e.dataset.bkBound = '1';
+        e.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          openModal();
+          const key = e.getAttribute('data-booking-service');
+          if (key && KEYS[key]) openService(KEYS[key]);
+          else { show(viewBook, false); show(viewSelect, true); }
+          if (window.gtag) window.gtag('event', 'cta_click', { cta_name: 'Book a Session', cta_location: (e.closest('section')?.id || 'page') });
         });
       });
     }
-    bindTriggers(document);
-    // Re-bind if content is injected later
-    new MutationObserver(() => bindTriggers(document)).observe(document.body, { childList: true, subtree: true });
-
-    // Booking conversion (GHL widget posts a message on completion)
-    window.addEventListener('message', (e) => {
-      if (typeof e.origin === 'string' && !e.origin.includes('leadconnectorhq.com')) return;
-      const t = JSON.stringify(e.data || '').toLowerCase();
-      if (t.includes('appointment') && (t.includes('booked') || t.includes('scheduled') || t.includes('success'))) {
-        if (window.gtag) window.gtag('event', 'generate_lead', { event_category: 'booking', event_label: bookTitle.textContent });
-      }
-    });
+    bindTriggers();
+    new MutationObserver(bindTriggers).observe(document.body, { childList: true, subtree: true });
   })();
 </script>

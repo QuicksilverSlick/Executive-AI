@@ -173,25 +173,5 @@ const schema = {
     </div>
   </section>
 
-  <!-- Calendly Script -->
-  <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
-  <script>
-    // Initialize Calendly on button clicks
-    document.addEventListener('DOMContentLoaded', function() {
-      const calendlyButtons = document.querySelectorAll('.calendly-trigger');
-      calendlyButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-          e.preventDefault();
-          Calendly.initPopupWidget({
-            url: 'https://calendly.com/your-link-here',
-            text: 'Schedule Your Custom Strategy Session',
-            color: '#B48628',
-            textColor: '#ffffff',
-            branding: false
-          });
-          return false;
-        });
-      });
-    });
-  </script>
+  <!-- Booking handled globally by BookingModal (custom GHL/MarketSimple flow). -->
 </Layout>
