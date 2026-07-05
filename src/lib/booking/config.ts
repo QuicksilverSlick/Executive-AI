@@ -39,6 +39,7 @@ export const CUSTOM_FIELDS = {
   role:        'oefnMt3y83g0EnSWi0sk',
   industry:    'GnrmYk50xXT27cDMxrwK',
   timeline:    'lZdctQgzUM6fbvYTukV5',
+  paymentLink: '1ZVtR3O8aSCZv2tGbEzS', // fieldKey contact.payment_link — used by the Unpaid-Sweep workflow SMS
 };
 
 export function getGhlPit(locals: any): string | undefined {

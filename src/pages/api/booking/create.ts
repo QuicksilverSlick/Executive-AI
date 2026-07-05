@@ -115,6 +115,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
               body: JSON.stringify({ altId: GHL_LOCATION_ID, altType: 'location', userId: GHL_HOST_USER_ID, action: 'email', liveMode: true }),
             }).catch(() => {});
             paymentUrl = `https://link.marketsimple.pro/invoice/${invoiceId}`;
+            // Store the pay link on the contact so the "Unpaid Session Follow-Up" workflow
+            // can text it via {{contact.payment_link}}.
+            await fetch(`${GHL_BASE}/contacts/${contactId}`, {
+              method: 'PUT', headers: ghlHeaders(pit),
+              body: JSON.stringify({ customFields: [{ id: CUSTOM_FIELDS.paymentLink, value: paymentUrl }] }),
+            }).catch(() => {});
           }
         } else {
           console.error('[booking/create] invoice create failed', invRes.status, (await invRes.text()).slice(0, 200));
