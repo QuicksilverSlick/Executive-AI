@@ -24,11 +24,11 @@ export interface ServiceDef {
 }
 
 export const SERVICES: Record<string, ServiceDef> = {
-  discovery:  { key: 'discovery',  calendarId: 'bB47yVS5RrgtKvLZXGA2', name: 'Discovery Call',                 durationMin: 15, price: 0 },
-  assessment: { key: 'assessment', calendarId: 'lAi7UVZLT0WVxqbV31dL', name: 'AI Readiness Assessment',        durationMin: 30, price: 997 },
-  consulting: { key: 'consulting', calendarId: 'O3zcgACnkFdJ5BxMQBsq', name: 'Consulting Session',             durationMin: 60, price: 297 },
-  tech:       { key: 'tech',       calendarId: 'Tqkvu29AlbmSvSsrDWTM', name: 'Technical Support',              durationMin: 60, price: 197 },
-  automation: { key: 'automation', calendarId: 'vORaBvBYOivfCbhZ9jPM', name: 'Business Automation Consulting', durationMin: 60, price: 497 },
+  discovery:  { key: 'discovery',  calendarId: 'jHGYCOshffkjUXlbGkbL', name: 'Discovery Call',                 durationMin: 15, price: 0 },
+  assessment: { key: 'assessment', calendarId: 'ISHn4KmHuBtE1JW0PjoQ', name: 'AI Readiness Assessment',        durationMin: 30, price: 997 },
+  consulting: { key: 'consulting', calendarId: 'rTcVbI0jPtG5R06QLJKW', name: 'Consulting Session',             durationMin: 60, price: 297 },
+  tech:       { key: 'tech',       calendarId: 'xCr5m6GKb1xFZKyYYdI7', name: 'Technical Support',              durationMin: 60, price: 197 },
+  automation: { key: 'automation', calendarId: 'iSSwgFctK3fZ2HEY9OqO', name: 'Business Automation Consulting', durationMin: 60, price: 497 },
 };
 
 /** Contact custom fields (ids from the subaccount). */
